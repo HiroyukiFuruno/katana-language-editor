@@ -27,11 +27,23 @@ impl EguiLanguageEditor {
 
     /// Draw the editor into an egui Ui. KatanA calls this during the MVP phase.
     pub fn show(&mut self, ui: &mut egui::Ui) {
-        let response = ui.text_edit_multiline(&mut self.content.text);
+        let response = ui.add(self.text_edit());
         if response.changed() {
             self.pending_events
                 .push(EditorEvent::ContentChanged(self.content.clone()));
         }
+    }
+
+    fn text_edit(&mut self) -> egui::TextEdit<'_> {
+        let rows = self.visible_rows();
+        egui::TextEdit::multiline(&mut self.content.text)
+            .desired_rows(rows)
+            .desired_width(f32::INFINITY)
+    }
+
+    fn visible_rows(&self) -> usize {
+        let base_rows = usize::from(self.config.word_wrap) + usize::from(self.config.line_numbers);
+        base_rows + usize::from(self.config.tab_size > 0) + 1
     }
 }
 

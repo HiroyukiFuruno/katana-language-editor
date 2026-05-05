@@ -12,6 +12,6 @@ description = "egui implementation of the katana-language-editor trait. MVP back
 path = "src/lib.rs"
 
 [dependencies]
-katana-language-editor = { path = "../katana-language-editor" }
+katana-language-editor = { path = "../katana-language-editor", version = "0.1.0" }
 egui = { workspace = true }
 serde = { workspace = true }
