@@ -58,3 +58,15 @@ katana-language-editor-floem    Floem + cosmic-text 実装（Phase 1 で新規�
 ```
 
 Phase 1 が最優先。editor 入力の IME・絵文字問題はユーザーが最初に触れる痛みであるため。
+
+---
+
+## KME構想での扱い
+
+KME構想ではP3として、P0 `katana-ast-lint`、P1 `katana-markdown-engine`、P2 `katana-ui-widget` の境界を受けて、保存時の外部メタデータ（metadata）同期を実装する。
+
+- KME文書モデルやmetadata schemaを再実装しない。
+- 保存時のmetadata同期は、KMEの位置解決APIを呼ぶ。
+- 自動復元できないtargetは削除せず、unresolvedとして保持する。
+- neutral interfaceへeguiやFloemの実装型を漏らさない。
+- 共通AST lintを品質ゲートにする。
