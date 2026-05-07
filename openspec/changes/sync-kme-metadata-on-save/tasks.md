@@ -18,7 +18,9 @@
 ### Definition of Done
 
 - [ ] editor neutral interfaceにegui型が入っていない
+- [ ] metadata schemaはKMEのpublic contractを使い、editorで独自定義しない
 - [ ] unresolved targetを削除しないcontractになっている
+- [ ] viewer、export、editor-viewer同期制御をKLEの責務に含めていない
 - [ ] editor固有のlint driftを品質ゲートにしていない
 
 ## 2. Save Flow Integration
@@ -32,6 +34,7 @@
 - [ ] 2.1 保存直後にmetadata syncを呼ぶ
 - [ ] 2.2 metadata更新結果を保存対象に含める
 - [ ] 2.3 sync失敗時のrecoverable errorを定義する
+- [ ] 2.4 KatanAがeditorへ命令できる中立surfaceを定義し、KLEからviewerを呼ばないことを確認する
 
 ### Definition of Done
 

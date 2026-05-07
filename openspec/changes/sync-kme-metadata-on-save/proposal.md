@@ -4,6 +4,8 @@
 
 `katana-language-editor` は保存時に編集前後の本文を把握できるため、KMEの位置解決APIを使ってmetadataを更新する責務を持つ。
 
+KLEはviewerやexportを知らない。editor-viewer同期制御はKatanAが持ち、KatanAがeditorまたはviewerへ命令する。
+
 このchangeはP3として扱う。P0 `katana-ast-lint` とP1 KMEのmetadata schemaが先に利用可能であることを前提にする。
 
 ## What Changes
@@ -11,6 +13,8 @@
 - 保存時metadata同期のcontractを定義する
 - 編集前本文、編集後本文、metadataをKMEへ渡す
 - 解決済みtargetを更新し、復元できないtargetをunresolvedとして保持する
+- viewer、export、editor-viewer同期制御をKLEの責務から外す
+- KatanAがeditorへ命令するための中立surfaceだけを許可する
 - Floem editorを前提にし、egui TextEdit継続を前提にしない
 - 共通AST lintをeditor側の品質ゲートとして使う
 

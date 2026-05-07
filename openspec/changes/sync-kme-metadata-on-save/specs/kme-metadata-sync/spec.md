@@ -35,3 +35,14 @@ The editor neutral interface SHALL NOT expose egui or Floem implementation types
 - **WHEN** the Floem editor implementation saves a Markdown document
 - **THEN** it uses neutral metadata sync DTOs
 - **THEN** downstream users are not required to import Floem types
+
+### Requirement: Editor does not own viewer synchronization control
+
+The editor SHALL expose editor-side command surfaces without coordinating viewer state.
+
+#### Scenario: KatanA synchronizes editor and viewer
+
+- **WHEN** KatanA decides that editor or viewer state should change
+- **THEN** KatanA sends commands to the editor or viewer
+- **THEN** the editor does not call the viewer
+- **THEN** the editor does not own scroll, selection, or highlight synchronization policy

@@ -2,17 +2,19 @@
 
 ## Project
 
-`katana-language-editor`（kle）は、language editor の neutral interface と egui MVP 実装を提供する library。KatanA はこれを git dependency として consume する。
+`katana-language-editor`（KLE）は、language editor の neutral interface と実装を提供するlibrary。KatanA はこれを git dependency としてconsumeする。
 
 ## Design Principles
 
 - `katana-language-editor` crate（neutral interface）は `egui` に依存しない。
-- `katana-language-editor-egui` crate が egui MVP 実装を持つ。将来の独自 input surface（`x-x-x-native-input-surface`）への差し替えはこの crate のみ変更すれば良い。
+- `katana-language-editor-floem` crate が正式実装を持つ。
 - `LanguageEditor` trait の surface に egui 型を含めない。
+- KLEはMarkdown viewer、export、editor-viewer同期制御を持たない。
+- 同期制御はKatanAが持ち、KatanAがeditorまたはviewerへscroll、selection、highlightなどの命令を送る。
 
 ## Versioning
 
-- `v0.1.x`: KatanA v0.27.0 で分離する editor 実装の移管。egui TextEdit MVP 確立。
+- `v0.1.x`: KatanAで分離するeditor実装の移管。KME metadata同期の接続方針を確立。
 - `v0.2.x`: 独自 input surface への差し替え（x-x-x-native-input-surface 対応）
 
 ## Consumers
@@ -68,5 +70,8 @@ KME構想ではP3として、P0 `katana-ast-lint`、P1 `katana-markdown-engine`�
 - KME文書モデルやmetadata schemaを再実装しない。
 - 保存時のmetadata同期は、KMEの位置解決APIを呼ぶ。
 - 自動復元できないtargetは削除せず、unresolvedとして保持する。
+- KLEはviewerやexportを知らない。
+- KLEはeditor-viewer同期のcoordinatorにならない。
+- KatanAからeditor操作命令を受けるsurfaceは持つが、viewerへ命令しない。
 - neutral interfaceへeguiやFloemの実装型を漏らさない。
 - 共通AST lintを品質ゲートにする。
