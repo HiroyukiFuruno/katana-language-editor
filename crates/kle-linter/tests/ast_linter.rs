@@ -17,6 +17,11 @@ fn workspace_root() -> Result<PathBuf, KleLintError> {
 }
 
 #[test]
+fn ast_linter_kal_standard_rules_are_clean() {
+    katana_ast_lint::KatanaAstLint::from_workspace().assert_clean();
+}
+
+#[test]
 fn ast_linter_workspace_rules() -> Result<(), KleLintError> {
     let root = workspace_root()?;
     let violations = KleLinter::lint_workspace(&root)?;

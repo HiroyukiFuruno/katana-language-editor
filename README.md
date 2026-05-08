@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/kle-icon.png" width="128" alt="katana-language-editor icon">
+</p>
+
 <h1 align="center">katana-language-editor</h1>
 
 <p align="center">
@@ -7,7 +11,9 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
-  <img src="https://img.shields.io/badge/status-scaffolding-orange" alt="Status: scaffolding">
+  <a href="https://github.com/HiroyukiFuruno/katana-language-editor/actions/workflows/test-and-build.yml"><img src="https://github.com/HiroyukiFuruno/katana-language-editor/actions/workflows/test-and-build.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/HiroyukiFuruno/katana-language-editor/releases/latest"><img src="https://img.shields.io/github/v/release/HiroyukiFuruno/katana-language-editor" alt="Latest Release"></a>
+  <a href="https://crates.io/crates/katana-language-editor"><img src="https://img.shields.io/crates/v/katana-language-editor.svg" alt="crates.io"></a>
 </p>
 
 ---

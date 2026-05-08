@@ -1,5 +1,25 @@
-target/
-.DS_Store
+/target
+/.DS_Store
+/skill.md
+/CLAUDE.md
+/AGENTS.md
+.claude/scheduled_tasks.lock
+*.skill.md
+tmp
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# openspec workfiles
+openspec*
+!openspec/
+!openspec/**
+opsx*
+!/scripts/openspec
+
+# Editors
 .idea/
 .vscode/
 *.swp

@@ -2,29 +2,30 @@
 
 ## 方針
 
-`release/vX.Y.Z` ブランチから `main` または `master` へ取り込み依頼（Pull Request）を作る。
+`release/vX.Y.Z` ブランチから `master` へ取り込み依頼（Pull Request）を作る。
 その取り込み依頼（Pull Request）では通常の品質ゲート（quality gate）とリリース前検査を必須にする。
 取り込み（merge）後は自動実行基盤（GitHub Actions）がタグ（tag）、GitHub リリース（GitHub Release）、crates.io 公開を実行する。
 
 ## 必須検査
 
-GitHub のブランチ保護（branch protection）では、少なくとも次を必須検査（required check）にする。
+GitHub のブランチ保護（branch protection）では、KML と同じ形で次を必須検査（required check）にする。
 
-- `lint`
-- `ast-lint`
-- `test`
-- `coverage`
-- `release-preflight`
+- `Test and Build (macos-latest)`
+- `Test and Build (ubuntu-latest)`
+- `Test and Build (windows-latest)`
+- `preflight`
 
 ## リリース前検査
 
-`release-preflight` は `release/v...` ブランチの取り込み依頼（Pull Request）で `just release-check` を実行する。
+`release-preflight` は通常の取り込み依頼（Pull Request）で `just check` を実行する。
+`release/v...` ブランチでは追加で `just VERSION=vX.Y.Z release-check` を実行する。
 内容は次の通り。
 
 - 整形確認（format）、静的検査（lint）、単体テスト（unit test）、抽象構文木検査（AST lint）
 - カバレッジ（coverage）。現状の下限は行カバレッジ（line coverage）64%
 - `Cargo.toml` の版番号（version）とブランチ版番号（branch version）の一致
 - 作業領域（workspace）内部依存の版番号（version）一致
+- 対象版番号（version）が公開済み release line から自然な次版であること
 - 対象版番号（version）が crates.io に未公開であること
 - `katana-language-editor` の梱包（package）と公開の事前実行（publish dry-run）
 - `katana-language-editor-egui` の梱包（package）収録対象確認
@@ -34,9 +35,10 @@ GitHub のブランチ保護（branch protection）では、少なくとも次�
 
 ## 公開順序
 
-取り込み（merge）後の `Release` ワークフロー（workflow）は次の順で動く。
+`release/vX.Y.Z` の取り込み（merge）後に `Release` ワークフロー（workflow）が動く。
+順序は次の通り。
 
-1. `just release-verify`
+1. `just VERSION=vX.Y.Z release-check`
 2. リリースタグ（release tag）作成
 3. GitHub リリース（GitHub Release）作成
 4. `katana-language-editor` を crates.io に公開

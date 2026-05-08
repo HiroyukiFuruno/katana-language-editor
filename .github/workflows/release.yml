@@ -3,7 +3,7 @@ name: Release
 on:
   pull_request:
     types: [closed]
-    branches: [main, master]
+    branches: [master]
   workflow_dispatch:
     inputs:
       version:
@@ -11,9 +11,9 @@ on:
         required: false
         type: string
       publish_crates:
-        description: "Publish workspace crates to crates.io"
+        description: "Publish workspace crates to crates.io after GitHub Release is created"
         required: false
-        default: true
+        default: false
         type: boolean
 
 concurrency:
@@ -37,34 +37,47 @@ jobs:
       )
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref }}
           fetch-depth: 0
-      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
         with:
+          toolchain: stable
           components: clippy, rustfmt
-      - uses: Swatinem/rust-cache@v2
-      - uses: taiki-e/install-action@just
-      - uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: release-ubuntu-stable-publish
+
+      - name: Install just
+        uses: taiki-e/install-action@just
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
       - name: Resolve version
         id: version
-        shell: bash
         run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            version="${{ github.event.pull_request.head.ref }}"
-            version="${version#release/}"
-          elif [[ -n "${{ inputs.version }}" ]]; then
-            version="${{ inputs.version }}"
-          else
-            version="$(awk -F '"' '/^version = / { print "v" $2; exit }' Cargo.toml)"
-          fi
-          bash scripts/release/verify-version.sh "${version}" >> "$GITHUB_OUTPUT"
-      - run: just VERSION="${{ steps.version.outputs.version }}" release-verify
+          bash scripts/release/resolve-release-version.sh \
+            "${{ github.event_name }}" \
+            "${{ inputs.version }}" \
+            "${{ github.event.pull_request.head.ref }}"
+
+      - name: Release check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: just VERSION="${{ steps.version.outputs.version }}" release-check
+
       - name: Create release tag
         env:
           TAG: ${{ steps.version.outputs.version }}
         run: |
+          git fetch --force origin "refs/tags/${TAG}:refs/tags/${TAG}" || true
           if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
             echo "Tag ${TAG} already exists."
             exit 0

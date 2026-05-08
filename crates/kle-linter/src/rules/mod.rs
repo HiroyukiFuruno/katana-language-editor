@@ -21,6 +21,7 @@ use nesting_depth::NestingDepthRule;
 use pub_free_fn::PublicFreeFunctionRule;
 
 type RuleCheck = fn(&WorkspaceModel) -> Result<Vec<Violation>, KleLintError>;
+const RULE_COUNT: usize = 8;
 
 pub struct RuleRunner;
 
@@ -33,7 +34,7 @@ impl RuleRunner {
         Ok(violations)
     }
 
-    fn rules() -> [RuleCheck; 8] {
+    fn rules() -> [RuleCheck; RULE_COUNT] {
         [
             FileLengthRule::check,
             FunctionLengthRule::check,

@@ -10,7 +10,7 @@ description: katana-language-editorで指定バージョンのOpenSpec実装、�
 ## 実行ルール
 
 1. ユーザー指定のバージョン（例: `v0.1.0`）を対象にする。
-2. 詳細手順は `.codex/workflows/impl-release.md` を正として読み込む。
+2. 詳細手順は `.agent/workflows/impl-release.md` を正として読み込む。
 3. OpenSpec 実装、検証、リリース準備、PR 作成、自己レビュー、公開、事後整理まで進める。
 4. 作業開始前に必ず `git status --short --branch` を確認し、既存差分と関心事を混ぜない。
 5. merge 後の自動 release が失敗した場合、別の tag / publish コマンドで迂回しない。原因を直して同じフローへ戻る。
