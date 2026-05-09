@@ -67,7 +67,7 @@ sweep:
     @{{CARGO}} sweep --time 7 || true
 
 # Remove build artifacts
-clean: sweep
+clean:
     {{CARGO}} clean
 
 # Update dependency crates to latest compatible versions
