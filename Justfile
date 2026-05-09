@@ -62,6 +62,14 @@ coverage:
 check: fmt-check check-types lint unit-test ast-lint
     @echo "checks passed"
 
+# Sweep old build artifacts locally (older than 7 days)
+sweep:
+    @{{CARGO}} sweep --time 7 || true
+
+# Remove build artifacts
+clean: sweep
+    {{CARGO}} clean
+
 # Update dependency crates to latest compatible versions
 update-safe:
     {{RTK_CMD}}cargo update
