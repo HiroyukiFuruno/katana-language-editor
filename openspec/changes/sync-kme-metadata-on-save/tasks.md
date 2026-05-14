@@ -4,21 +4,21 @@
 
 ### Definition of Ready
 
-- [ ] KME metadata schemaとtarget resolution APIが定義済みである
+- [ ] KMM metadata schemaとtarget resolution APIが定義済みである
 - [ ] P0 `katana-ast-lint` の共通品質ゲート方針が利用可能である
 - [ ] Floem editor実装が保存処理へ接続できる
 
 ### Tasks
 
 - [ ] 1.1 保存時metadata同期request/result DTOを定義する
-- [ ] 1.2 old source、new source、metadata contentをKMEへ渡す境界を定義する
+- [ ] 1.2 old source、new source、metadata contentをKMMへ渡す境界を定義する
 - [ ] 1.3 resolved、moved、conflicted、unresolvedの結果を扱う
 - [ ] 1.4 共通AST lintをeditor repository adapterで実行する方針を決める
 
 ### Definition of Done
 
 - [ ] editor neutral interfaceにegui型が入っていない
-- [ ] metadata schemaはKMEのpublic contractを使い、editorで独自定義しない
+- [ ] metadata schemaはKMMのpublic contractを使い、editorで独自定義しない
 - [ ] unresolved targetを削除しないcontractになっている
 - [ ] viewer、export、editor-viewer同期制御をKLEの責務に含めていない
 - [ ] editor固有のlint driftを品質ゲートにしていない

@@ -14,7 +14,7 @@
 
 ## Versioning
 
-- `v0.1.x`: KatanAで分離するeditor実装の移管。KME metadata同期の接続方針を確立。
+- `v0.1.x`: KatanAで分離するeditor実装の移管。KMM metadata同期の接続方針を確立。
 - `v0.2.x`: 独自 input surface への差し替え（x-x-x-native-input-surface 対応）
 
 ## Consumers
@@ -63,12 +63,12 @@ Phase 1 が最優先。editor 入力の IME・絵文字問題はユーザーが�
 
 ---
 
-## KME構想での扱い
+## KMM構想での扱い
 
-KME構想ではP3として、P0 `katana-ast-lint`、P1 `katana-markdown-engine`、P2 `katana-ui-widget` の境界を受けて、保存時の外部メタデータ（metadata）同期を実装する。
+KMM構想ではP3として、P0 `katana-ast-lint`、P1 `katana-markdown-model`、P2 `katana-ui-widget` の境界を受けて、保存時の外部メタデータ（metadata）同期を実装する。
 
-- KME文書モデルやmetadata schemaを再実装しない。
-- 保存時のmetadata同期は、KMEの位置解決APIを呼ぶ。
+- KMM文書モデルやmetadata schemaを再実装しない。
+- 保存時のmetadata同期は、KMMの位置解決APIを呼ぶ。
 - 自動復元できないtargetは削除せず、unresolvedとして保持する。
 - KLEはviewerやexportを知らない。
 - KLEはeditor-viewer同期のcoordinatorにならない。
