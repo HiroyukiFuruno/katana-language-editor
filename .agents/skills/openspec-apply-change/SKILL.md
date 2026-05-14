@@ -13,7 +13,7 @@ OpenSpec の artifact を一次情報として読み、`tasks.md` の順番で�
 専用入口があればそれを優先します。なければリポジトリルートから次を使います。
 
 ```bash
-npx -y @fission-ai/openspec <command>
+scripts/openspec <command>
 ```
 
 ## 手順
@@ -23,7 +23,7 @@ npx -y @fission-ai/openspec <command>
    名前が指定されていない場合は、active change を確認します。
 
    ```bash
-   npx -y @fission-ai/openspec list --json
+   scripts/openspec list --json
    ```
 
    active change が複数ある場合は、勝手に選ばずユーザーに確認します。
@@ -31,13 +31,13 @@ npx -y @fission-ai/openspec <command>
 2. 状態を確認する。
 
    ```bash
-   npx -y @fission-ai/openspec status --change "<change-id>" --json
+   scripts/openspec status --change "<change-id>" --json
    ```
 
 3. 実装指示を取得する。
 
    ```bash
-   npx -y @fission-ai/openspec instructions apply --change "<change-id>" --json
+   scripts/openspec instructions apply --change "<change-id>" --json
    ```
 
 4. `contextFiles` に含まれる artifact を読む。

@@ -21,6 +21,8 @@ TAG := "v" + VERSION_BARE
 COVERAGE_MIN_LINES := env_var_or_default("COVERAGE_MIN_LINES", "64")
 RELEASE_REPO := env_var_or_default("RELEASE_REPO", "HiroyukiFuruno/katana-language-editor")
 
+export RUSTFLAGS := env_var_or_default("RUSTFLAGS", "-D warnings")
+
 default: help
 
 # Show this help
@@ -41,7 +43,7 @@ check-types:
 
 # Run strict Clippy checks
 lint:
-    RUSTFLAGS="-D warnings" {{CARGO}} clippy -j {{JOBS}} --workspace --all-targets --all-features --locked -- -D warnings -D clippy::unwrap_used -D clippy::expect_used -D clippy::todo -D clippy::unimplemented -D clippy::dbg_macro -D clippy::panic -D clippy::wildcard_imports
+    {{CARGO}} clippy -j {{JOBS}} --workspace --all-targets --all-features --locked -- -D warnings -D clippy::unwrap_used -D clippy::expect_used -D clippy::todo -D clippy::unimplemented -D clippy::dbg_macro -D clippy::panic -D clippy::wildcard_imports
 
 # Run Rust syntax based structural checks
 ast-lint:
@@ -67,7 +69,7 @@ sweep:
     @{{CARGO}} sweep --time 7 || true
 
 # Remove build artifacts
-clean:
+clean: sweep
     {{CARGO}} clean
 
 # Update dependency crates to latest compatible versions

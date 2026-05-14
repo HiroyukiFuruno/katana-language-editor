@@ -12,7 +12,7 @@ description: katana-language-editor の実装が OpenSpec の提案、設計、�
 専用入口がなければ、リポジトリルートから次を使います。
 
 ```bash
-npx -y @fission-ai/openspec <command>
+scripts/openspec <command>
 ```
 
 ## 手順
@@ -22,19 +22,19 @@ npx -y @fission-ai/openspec <command>
    指定がない場合は active change を確認し、複数あればユーザーに確認します。
 
    ```bash
-   npx -y @fission-ai/openspec list --json
+   scripts/openspec list --json
    ```
 
 2. 状態を確認する。
 
    ```bash
-   npx -y @fission-ai/openspec status --change "<change-id>" --json
+   scripts/openspec status --change "<change-id>" --json
    ```
 
 3. context files を取得する。
 
    ```bash
-   npx -y @fission-ai/openspec instructions apply --change "<change-id>" --json
+   scripts/openspec instructions apply --change "<change-id>" --json
    ```
 
 4. artifact を読む。

@@ -13,7 +13,7 @@ archive は「作業を終えた記録」であり、未完了の作業を隠す
 専用入口がなければ、リポジトリルートから次を使います。
 
 ```bash
-npx -y @fission-ai/openspec <command>
+scripts/openspec <command>
 ```
 
 ## 事前条件
@@ -28,7 +28,7 @@ npx -y @fission-ai/openspec <command>
 1. change を選ぶ。
 
    ```bash
-   npx -y @fission-ai/openspec list --json
+   scripts/openspec list --json
    ```
 
    指定がなく、active change が複数ある場合はユーザーに確認します。
@@ -36,7 +36,7 @@ npx -y @fission-ai/openspec <command>
 2. 状態を確認する。
 
    ```bash
-   npx -y @fission-ai/openspec status --change "<change-id>" --json
+   scripts/openspec status --change "<change-id>" --json
    ```
 
 3. `tasks.md` を読み、未完了がないことを確認する。
@@ -63,7 +63,7 @@ npx -y @fission-ai/openspec <command>
 7. 検証する。
 
    ```bash
-   npx -y @fission-ai/openspec validate --strict
+   scripts/openspec validate --strict
    ```
 
 ## 報告形式

@@ -1,8 +1,8 @@
 /target
 /.DS_Store
-/skill.md
-/CLAUDE.md
-/AGENTS.md
+skill.md
+CLAUDE.md
+AGENTS.md
 .claude/scheduled_tasks.lock
 *.skill.md
 tmp
@@ -16,7 +16,21 @@ __pycache__/
 openspec*
 !openspec/
 !openspec/**
+!/.agent/skills/openspec*/
+!/.agent/skills/openspec*/**
+!/.agents/skills/openspec*/
+!/.agents/skills/openspec*/**
+!/.claude/skills/openspec*/
+!/.claude/skills/openspec*/**
+!/.codex/skills/openspec*/
+!/.codex/skills/openspec*/**
+!/.github/skills/openspec*/
+!/.github/skills/openspec*/**
 opsx*
+!/.agent/workflows/opsx*
+!/.claude/commands/opsx*/
+!/.claude/commands/opsx/**
+!/.github/prompts/opsx*
 !/scripts/openspec
 
 # Editors

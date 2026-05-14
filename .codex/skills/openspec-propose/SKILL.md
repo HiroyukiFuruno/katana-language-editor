@@ -14,7 +14,7 @@ kle の変更を実装前に言語化し、後続の実装者が迷わない Ope
 現時点で専用入口がない場合は、リポジトリルートから次を使います。
 
 ```bash
-npx -y @fission-ai/openspec <command>
+scripts/openspec <command>
 ```
 
 ## 入力
@@ -38,7 +38,7 @@ npx -y @fission-ai/openspec <command>
 1. 既存の active change を確認する。
 
    ```bash
-   npx -y @fission-ai/openspec list --json
+   scripts/openspec list --json
    ```
 
 2. 同じ責務の active change がないか確認する。
@@ -47,19 +47,19 @@ npx -y @fission-ai/openspec <command>
 3. change を作る。
 
    ```bash
-   npx -y @fission-ai/openspec new change "<change-id>"
+   scripts/openspec new change "<change-id>"
    ```
 
 4. artifact の状態を確認する。
 
    ```bash
-   npx -y @fission-ai/openspec status --change "<change-id>" --json
+   scripts/openspec status --change "<change-id>" --json
    ```
 
 5. `instructions` の順序に従って artifact を作る。
 
    ```bash
-   npx -y @fission-ai/openspec instructions <artifact-id> --change "<change-id>" --json
+   scripts/openspec instructions <artifact-id> --change "<change-id>" --json
    ```
 
 6. 次の観点を必ず入れる。
@@ -74,7 +74,7 @@ npx -y @fission-ai/openspec <command>
 7. 作成後に検証する。
 
    ```bash
-   npx -y @fission-ai/openspec validate "<change-id>" --strict
+   scripts/openspec validate "<change-id>" --strict
    ```
 
 ## 出力
