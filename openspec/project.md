@@ -61,6 +61,43 @@ katana-language-editor-floem    Floem + cosmic-text 実装（Phase 1 で新規�
 
 Phase 1 が最優先。editor 入力の IME・絵文字問題はユーザーが最初に触れる痛みであるため。
 
+### Floem dependency の取り扱い（必須ルール）
+
+`floem` は **必ず git dependency** として取り込む。crates.io の `floem = "0.2.0"`（2024-11 頃公開）以降は main 側の進行と乖離しており、theme / styling / editor view API が満たせない。
+
+```toml
+# Cargo.toml (workspace.dependencies)
+floem = { git = "https://github.com/lapce/floem", rev = "<pinned-sha>" }
+```
+
+- `rev`（commit sha）でピン留めする。ブランチ追従はしない。
+- `katana-language-editor-floem` crate は v0.1.0 段階では skeleton（コンパイル可能）にとどめ、本実装は v0.2.x で行う。
+- `cargo tree -p katana-language-editor-floem` で `floem` の source が `git+https://github.com/lapce/floem` を指していることを CI で確認する。
+- 更新時は rev を bump し、PR 内で behavior 差分・依存（vello / wgpu / cosmic-text）の波及を明示する。
+
+### Neutral interface の DI 必須ルール（v0.1.0 以降）
+
+`katana-language-editor` neutral crate は host (KDV) からの DI を **non-nullable** で受け取り、KLE 内に default preset を持たない。`Option<Theme>` / `Option<Strings>` / `Option<EditorSettings>` などは禁止する。
+
+| DI | 何を渡すか | preset 提供元 |
+|----|-----------|---------------|
+| `Theme` | 色トークン（semantic alias 含む） | `kdv-presets::theme` |
+| `Strings` + `Locale` | UI 文字列 + LTR/RTL direction | `kdv-presets::strings`（en 必須） |
+| `Typography` / `Spacing` | font / 余白 / radius トークン | `kdv-presets::typography` |
+| `EditorSettings` | autosave / shortcuts / wrap / tab | `kdv-presets::settings` |
+| `SyntaxHighlighter` | 言語別ハイライタ | KatanA など host が実装 |
+| `ClipboardBackend` | clipboard 操作の抽象化 | host |
+
+色のハードコードは `kle-linter` の `prohibited-color-literal` で機械的に禁止する。文字列リテラルも将来同様のルールで補強する方針。
+
+`katana-language-editor` は以下の host 制御 API を public に公開する：
+
+- `EditorScrollControl` / `EditorWriteAccess` / `EditorViewControl`（read-only / focus）
+- `EditorHistoryControl` / `EditorSelectionControl` / `EditorSearchControl` / `EditorClipboardControl`
+- `EditorDiagnosticsSink` / `EditorDecorationsSink` / `EditorAccessibility`
+
+egui MVP で未対応の API は `EditorError::Unsupported` を返し、Floem 実装で完全対応する。
+
 ---
 
 ## KMM構想での扱い

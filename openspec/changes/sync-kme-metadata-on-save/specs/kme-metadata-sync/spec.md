@@ -46,3 +46,31 @@ The editor SHALL expose editor-side command surfaces without coordinating viewer
 - **THEN** KatanA sends commands to the editor or viewer
 - **THEN** the editor does not call the viewer
 - **THEN** the editor does not own scroll, selection, or highlight synchronization policy
+
+### Requirement: Save flow MUST go through v0.1.0 neutral DI (theme / strings / settings / host-control)
+
+The save and metadata sync flow SHALL not embed UI strings, colors, autosave intervals, or shortcuts inside the editor crate. All such values MUST come from `Strings` / `Theme` / `EditorSettings` injected via `EditorConfig`, and unresolved-target indications MUST be pushed through `EditorDiagnosticsSink` or `EditorDecorationsSink`.
+
+#### Scenario: Save UI strings come from injected Strings
+
+- **WHEN** the editor emits a save / autosave / unresolved indicator label
+- **THEN** the label text is resolved through `Strings` keys supplied by host (KDV en preset is mandatory)
+- **THEN** no English / Japanese string literal exists inside the editor crate for these labels
+
+#### Scenario: Unresolved indicators are pushed to host sinks
+
+- **WHEN** KMM resolution yields unresolved targets
+- **THEN** the editor pushes diagnostics or decorations through `EditorDiagnosticsSink` / `EditorDecorationsSink`
+- **THEN** the editor itself does not render a modal or call the viewer
+
+#### Scenario: Autosave timing follows EditorSettings
+
+- **WHEN** the editor decides whether and when to auto-save
+- **THEN** it consults `EditorSettings::autosave`
+- **THEN** it does not maintain its own enabled flag or interval
+
+#### Scenario: Host-driven post-resolve writes are tagged
+
+- **WHEN** the host applies follow-up edits via `EditorWriteAccess` after a sync resolution
+- **THEN** the host calls `with_origin("kme-sync")` (or an equivalent tag)
+- **THEN** those writes are distinguishable from normal user edits in editor events

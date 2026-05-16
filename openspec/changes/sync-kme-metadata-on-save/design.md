@@ -40,3 +40,13 @@ metadata同期は保存直後に行う。editorはold source、new source、meta
 `katana-language-editor` のpublic contractはKMM public DTOまたはeditor-owned neutral DTOだけを扱う。Floem実装型をneutral interfaceへ漏らさない。
 
 KatanAがeditorへscroll、selection、highlightなどの命令を送る場合、KLEはeditor側の命令surfaceだけを提供する。KLEからKDVを呼ばない。
+
+### v0.1.0 Neutral Interface との整合
+
+v0.1.0 の `language-editor-component` / `language-editor-theming` / `language-editor-i18n` / `language-editor-host-control` / `language-editor-settings` で確定する DI 契約を前提にする。
+
+- 保存ボタン文言・自動保存通知・unresolved 警告・conflict 表示など save flow が生む全 UI 文字列は `Strings` 経由（KDV en preset を必須）で解決する。KLE 内に literal 文字列を持たない。
+- save / autosave 関連のインジケータ色（diagnostic_warn / decoration_accent 等）は `Theme::colors` のセマンティック alias を引く。色リテラルは `kle-linter` の `prohibited-color-literal` で禁止する。
+- unresolved target は `EditorDiagnosticsSink::push(Diagnostic { severity: Warning, .. })` または `EditorDecorationsSink::push_gutter_marker(..)` で host に通知する。KLE は viewer へ通知せず、host が viewer / dialog を決める。
+- 保存トリガと自動保存タイマは `EditorSettings::autosave` に従う。KLE 独自の interval を持たない。
+- host が `EditorWriteAccess` で metadata sync 結果に基づく後処理書き込みを行う場合、`with_origin("kme-sync")` 等で origin タグを付け、通常編集と区別する。

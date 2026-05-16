@@ -17,6 +17,10 @@ KLEはviewerやexportを知らない。editor-viewer同期制御はKatanAが持�
 - KatanAがeditorへ命令するための中立surfaceだけを許可する
 - Floem editorを前提にし、egui TextEdit継続を前提にしない
 - 共通AST lintをeditor側の品質ゲートとして使う
+- v0.1.0 で確定する neutral interface（theme / i18n / host-control API / settings）と整合する形で、保存フローが host (KDV) preset と各種 DI を尊重する
+- save 完了 / 自動保存 / unresolved 通知は editor 内部の文字列リテラルや色を持たず、`Strings` / `Theme` 経由のみで表現する
+- unresolved target は `EditorDecorationsSink` / `EditorDiagnosticsSink` で host に push し、host が viewer 表示・UI 決定を担う
+- 自動保存タイミングは `EditorSettings::autosave` に従い、KLE は独自に間隔を決めない
 
 ## Capabilities
 
