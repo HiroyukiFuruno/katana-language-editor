@@ -23,6 +23,7 @@
 ```
 katana-language-editor        ← neutral trait + DTO (no egui, no framework)
 katana-language-editor-egui   ← egui MVP implementation (TextEdit)
+katana-language-editor-floem  ← Floem 実装の骨組み（skeleton、git 固定の依存関係）
 ```
 
 KatanA depends on both crates but calls only the neutral interface. When the
@@ -33,6 +34,7 @@ custom input surface replaces egui (`x-x-x-native-input-surface`), only the
 
 Scaffolding. Full implementation migrated from KatanA in the `v0.27.0` change
 (`openspec/changes/v0-1-0-language-editor-extraction`).
+Floem は crates.io 公開版が上流 API（upstream API）より古いため、git 固定の依存関係（dependency）として取り込んでいます。
 
 ## License
 

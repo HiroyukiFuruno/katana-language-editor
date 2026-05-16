@@ -3,6 +3,7 @@ members = [
     "crates/kle-linter",
     "crates/katana-language-editor",
     "crates/katana-language-editor-egui",
+    "crates/katana-language-editor-floem",
 ]
 resolver = "2"
 
@@ -18,6 +19,7 @@ authors = ["Hiroyuki Furuno"]
 serde = { version = "1", features = ["derive"] }
 thiserror = "2"
 egui = "0.34"
+floem = { git = "https://github.com/lapce/floem", rev = "bcafaaad3fbf47091e28a64934295194d8e14463" }
 ignore = "0.4"
 proc-macro2 = { version = "1", features = ["span-locations"] }
 syn = { version = "2", features = ["full", "visit"] }

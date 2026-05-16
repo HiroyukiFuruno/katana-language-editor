@@ -1,0 +1,16 @@
+[package]
+name = "katana-language-editor-floem"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "Floem implementation skeleton for the katana-language-editor trait."
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+katana-language-editor = { path = "../katana-language-editor", version = "0.1.0" }
+floem = { workspace = true }
