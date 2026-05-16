@@ -58,6 +58,7 @@ impl WorkspaceModel {
             root.join("crates/kle-linter/tests"),
             root.join("crates/katana-language-editor/src"),
             root.join("crates/katana-language-editor-egui/src"),
+            root.join("crates/katana-language-editor-floem/src"),
         ]
     }
 

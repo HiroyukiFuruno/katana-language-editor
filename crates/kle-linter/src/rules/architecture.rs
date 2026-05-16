@@ -6,6 +6,7 @@ use super::manifest_boundary::ManifestBoundaryRule;
 
 pub const LIB_CRATE: &str = "crates/katana-language-editor";
 pub const EGUI_CRATE: &str = "crates/katana-language-editor-egui";
+pub const FLOEM_CRATE: &str = "crates/katana-language-editor-floem";
 
 pub struct ArchitectureRule;
 

@@ -5,9 +5,11 @@ mod file_length;
 mod function_length;
 mod lazy_code;
 mod manifest_boundary;
+mod manifest_reader;
 mod method_calls;
 mod nesting_depth;
 mod pub_free_fn;
+mod ui_dependency_policy;
 
 use crate::diagnostics::{KleLintError, Violation};
 use crate::workspace::WorkspaceModel;
