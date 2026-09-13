@@ -4,6 +4,11 @@ members = [
     "crates/katana-language-editor",
     "crates/katana-language-editor-egui",
     "crates/katana-language-editor-floem",
+    "tools/katana-interface-check",
+    "tools/katana-downstream-check",
+    "tools/katana-parity-check",
+    "tools/katana-repo-adapter-check",
+    "tools/kle-storybook",
 ]
 resolver = "2"
 
@@ -18,10 +23,15 @@ authors = ["Hiroyuki Furuno"]
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }
 thiserror = "2"
-egui = "0.34"
-floem = { git = "https://github.com/lapce/floem", rev = "bcafaaad3fbf47091e28a64934295194d8e14463" }
+egui = "0.36.2"
+eframe = "0.36.2"
+floem = { git = "https://github.com/lapce/floem", rev = "778bb5f2aa08429e579ee2e6ac97e84fbf18b618" }
 ignore = "0.4"
 proc-macro2 = { version = "1", features = ["span-locations"] }
-syn = { version = "2", features = ["full", "visit"] }
+syn = { version = "3", features = ["full", "visit"] }
 toml = "1.1"
 katana-ast-lint = "0.5.1"
+katana-ui-core = { version = "=0.3.10", features = ["egui", "text-raster"] }
+
+[profile.dev.package.color_quant]
+opt-level = 3
