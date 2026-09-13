@@ -45,6 +45,17 @@ fn source_closure_contract_rejects_unpinned_kuc_dependency_checkout() -> Result<
 }
 
 #[test]
+fn source_closure_contract_rejects_missing_fixed_katana_dependency_fetch() -> Result<(), String> {
+    let lines = workflow_fixture().replace(
+        "      - name: Fetch fixed KatanA dependencies",
+        "      - name: Fetch missing KatanA dependencies",
+    );
+    let lines = lines.lines().collect::<Vec<_>>();
+    let result = ReleaseGateAudit::validate_source_closure_native_host_contract_from_lines(&lines);
+    assert_error_contains(result, "Fetch fixed KatanA dependencies")
+}
+
+#[test]
 fn source_closure_contract_rejects_default_artifact_directory() -> Result<(), String> {
     let lines = workflow_fixture().replace(
         "artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts",

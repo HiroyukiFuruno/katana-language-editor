@@ -134,7 +134,7 @@ fn make_profile(
         cargo_resolution_raw: profile_evidence(
             cargo,
             id,
-            "cargo metadata --locked --format-version 1",
+            "cargo metadata --locked --offline --format-version 1",
         ),
         cargo_lock_raw: profile_evidence(lock, id, "KatanA/Cargo.lock"),
         source_tree_fingerprint: EvidenceRef::set_fingerprint(&source),

@@ -8,6 +8,7 @@ impl ReleaseGateAudit {
         lines: &[&str],
     ) -> Result<(), String> {
         Self::validate_source_closure_kuc_checkout_contract(lines)?;
+        Self::validate_source_closure_fixed_dependency_fetch(lines)?;
         let native = Self::job_section(lines, "native-host-e2e")?;
         let step = Self::step_section(native, "Run full KatanA editor parity gate")?;
         let command = step
@@ -20,6 +21,18 @@ impl ReleaseGateAudit {
         if !command.contains(&expected) {
             return Err(format!(
                 "source-closure native parity gate is missing canonical artifact directory `{CANONICAL_ARTIFACT_DIRECTORY}`"
+            ));
+        }
+        Ok(())
+    }
+
+    fn validate_source_closure_fixed_dependency_fetch(lines: &[&str]) -> Result<(), String> {
+        let capture = Self::job_section(lines, "capture-profile")?;
+        let step = Self::step_section(capture, "Fetch fixed KatanA dependencies")?;
+        let expected = "run: cargo fetch --locked --manifest-path ../katana/Cargo.toml";
+        if !step.iter().any(|line| line.trim() == expected) {
+            return Err(format!(
+                "source-closure capture-profile must run `{expected}` before offline metadata capture"
             ));
         }
         Ok(())

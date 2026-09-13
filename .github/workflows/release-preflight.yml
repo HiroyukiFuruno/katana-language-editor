@@ -50,6 +50,9 @@ jobs:
           ref: v0.3.10
           path: katana-ui-core
 
+      - name: Install Linux native dependencies
+        run: sudo apt-get update && sudo apt-get install --yes libgtk-3-dev libxkbcommon-dev
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
         with:

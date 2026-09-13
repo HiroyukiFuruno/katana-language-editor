@@ -48,7 +48,7 @@ impl<'a> InputVerifier<'a> {
         if !probe
             .cargo_resolution_raw
             .command_or_source
-            .starts_with("cargo metadata --locked --format-version 1")
+            .starts_with("cargo metadata --locked --offline --format-version 1")
         {
             return Err(format!("{id} cargo resolution command is not registered"));
         }

@@ -56,6 +56,7 @@ pub(super) fn cargo_metadata_args(katana_root: &Path) -> Vec<String> {
     vec![
         "metadata".into(),
         "--locked".into(),
+        "--offline".into(),
         "--format-version".into(),
         "1".into(),
         "--manifest-path".into(),
@@ -140,4 +141,19 @@ pub(super) fn read_repo_file(root: &Path, relative: &str) -> Result<Vec<u8>, Str
         return Err(format!("source file is foreign or not a file: {relative}"));
     }
     fs::read(canonical).map_err(|error| format!("source file is unreadable: {relative}: {error}"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::cargo_metadata_args;
+    use std::path::Path;
+
+    #[test]
+    fn source_closure_metadata_is_locked_and_offline_after_dependency_fetch() {
+        let args = cargo_metadata_args(Path::new("/fixed/katana"));
+        assert_eq!(
+            args[..5],
+            ["metadata", "--locked", "--offline", "--format-version", "1"]
+        );
+    }
 }

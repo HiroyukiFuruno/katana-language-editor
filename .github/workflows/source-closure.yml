@@ -68,6 +68,10 @@ jobs:
         with:
           toolchain: stable
 
+      - name: Fetch fixed KatanA dependencies
+        working-directory: katana-language-editor
+        run: cargo fetch --locked --manifest-path ../katana/Cargo.toml
+
       - name: Capture native profile
         working-directory: katana-language-editor
         run: >-
