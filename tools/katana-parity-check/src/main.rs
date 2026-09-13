@@ -23,6 +23,8 @@ mod release_gate;
 mod release_gate_dependency;
 mod release_gate_kle;
 mod release_gate_native_host_workflow;
+#[cfg(test)]
+mod release_gate_preflight_tests;
 mod release_gate_publish;
 #[cfg(test)]
 mod release_gate_publish_tests;
