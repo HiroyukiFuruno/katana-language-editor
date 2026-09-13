@@ -6,12 +6,16 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 authors.workspace = true
-description = "egui implementation of the katana-language-editor trait. MVP backend; swap for custom UI without changing KatanA."
+description = "egui host boundary for the KUC retained editor root."
+
+[features]
+default = []
+storybook-artifacts = ["katana-ui-core/storybook-artifacts"]
 
 [lib]
 path = "src/lib.rs"
 
 [dependencies]
 katana-language-editor = { path = "../katana-language-editor", version = "0.1.0" }
+katana-ui-core = { workspace = true }
 egui = { workspace = true }
-serde = { workspace = true }

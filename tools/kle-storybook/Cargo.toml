@@ -1,0 +1,16 @@
+[package]
+name = "kle-storybook"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+katana-language-editor = { path = "../../crates/katana-language-editor" }
+katana-language-editor-egui = { path = "../../crates/katana-language-editor-egui", features = ["storybook-artifacts"] }
+katana-ui-core = { workspace = true, features = ["storybook-artifacts"] }
+egui = { workspace = true }
+eframe = { workspace = true }

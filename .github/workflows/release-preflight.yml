@@ -34,9 +34,21 @@ env:
 jobs:
   preflight:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: katana-language-editor
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          path: katana-language-editor
+
+      - name: Checkout katana-ui-core
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: HiroyukiFuruno/katana-ui-core
+          ref: v0.3.10
+          path: katana-ui-core
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master

@@ -1,0 +1,13 @@
+[package]
+name = "katana-interface-check"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "Compile-only KatanA host probe that depends on the neutral language editor interface only."
+publish = false
+
+[dependencies]
+katana-language-editor = { path = "../../crates/katana-language-editor", version = "0.1.0" }
