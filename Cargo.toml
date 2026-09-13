@@ -31,7 +31,7 @@ proc-macro2 = { version = "1", features = ["span-locations"] }
 syn = { version = "3", features = ["full", "visit"] }
 toml = "1.1"
 katana-ast-lint = "0.5.1"
-katana-ui-core = { version = "=0.3.10", features = ["egui", "text-raster"] }
+katana-ui-core = { version = "=0.3.11", features = ["egui", "text-raster"] }
 
 [profile.dev.package.color_quant]
 opt-level = 3

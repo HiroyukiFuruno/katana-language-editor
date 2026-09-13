@@ -3208,9 +3208,9 @@ version = "0.1.0"
 
 [[package]]
 name = "katana-ui-core"
-version = "0.3.10"
+version = "0.3.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1180cf3ff66d8f030179f60633aec012885047434676c85db4eca38f27d69d54"
+checksum = "45eacea577b7a36cbdc7aecbcabbe56ebce11239ae9e6d36f4f244fdabbf6557"
 dependencies = [
  "cap-fs-ext",
  "cap-std",

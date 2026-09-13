@@ -46,7 +46,7 @@ GitHub のブランチ保護（branch protection）では、KML と同じ形で�
 手動実行で `publish_crates=false` が指定された場合、tag / GitHub Release の作成前に失敗させる。
 順序は次の通り。
 
-1. KUC 側で `katana-ui-core@0.3.10` を公開し、KLE 外部 package resolution が同 crate の `egui` / `text-raster` / `storybook-artifacts` feature を選ぶことを確認する。この KUC release は KLE tag / GitHub Release / KLE crate publish より先でなければならない。
+1. KUC 側で `katana-ui-core@0.3.11` を公開し、KLE 外部 package resolution が同 crate の `egui` / `text-raster` / `storybook-artifacts` feature を選ぶことを確認する。この KUC release は KLE tag / GitHub Release / KLE crate publish より先でなければならない。
 2. `just VERSION=vX.Y.Z release-check`。KLE の公開前 evidence を fail-closed で検証する
 3. リリースタグ（release tag）作成。既存 tag がある場合は current HEAD と一致する場合だけ続行
 4. GitHub リリース（GitHub Release）作成
@@ -75,7 +75,7 @@ gh secret set CARGO_REGISTRY_TOKEN
 
 トークン（token）は秘匿値として扱い、リポジトリ（repository）に保存しない。
 
-なお、`release-preflight.yml` / `release.yml` は KUC v0.3.10 の Unicode と variable-viewport motion evidence contract を再実行するため、`KLE` ワークスペースと上流 KUC checkout を含む CI 作業ディレクトリを前提にしています。KLE の Cargo 依存は crates.io から解決し、checkout を path dependency として使用しません。
+なお、`release-preflight.yml` / `release.yml` は KUC v0.3.11 の Unicode と variable-viewport motion evidence contract を再実行するため、`KLE` ワークスペースと上流 KUC checkout を含む CI 作業ディレクトリを前提にしています。KLE の Cargo 依存は crates.io から解決し、checkout を path dependency として使用しません。
 
 - `$GITHUB_WORKSPACE/katana-language-editor`
 - `$GITHUB_WORKSPACE/katana-ui-core`

@@ -38,10 +38,10 @@ fn source_closure_contract_rejects_kuc_checkout_missing_only_from_native_host_jo
 
 #[test]
 fn source_closure_contract_rejects_unpinned_kuc_dependency_checkout() -> Result<(), String> {
-    let lines = workflow_fixture().replace("ref: v0.3.10", "ref: master");
+    let lines = workflow_fixture().replace("ref: v0.3.11", "ref: master");
     let lines = lines.lines().collect::<Vec<_>>();
     let result = ReleaseGateAudit::validate_source_closure_native_host_contract_from_lines(&lines);
-    assert_error_contains(result, "ref: v0.3.10")
+    assert_error_contains(result, "ref: v0.3.11")
 }
 
 #[test]
