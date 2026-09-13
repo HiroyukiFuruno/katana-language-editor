@@ -3,6 +3,7 @@
 
 import hashlib
 import io
+import os
 from pathlib import Path
 import tarfile
 from urllib.parse import unquote, urlparse
@@ -36,7 +37,14 @@ def _path_from_uri(uri):
     parsed = urlparse(uri)
     if parsed.scheme != "file" or parsed.netloc not in ("", "localhost"):
         raise ValueError("show definition is not a local file URI")
-    return Path(unquote(parsed.path)).resolve(strict=False)
+    return Path(_local_file_uri_path(unquote(parsed.path))).resolve(strict=False)
+
+
+def _local_file_uri_path(path):
+    """Convert a file URI path without turning a Windows drive into a relative path."""
+    if os.name == "nt" and len(path) >= 3 and path[0] == "/" and path[1].isalpha() and path[2] == ":":
+        return path[1:]
+    return path
 
 
 def _authenticated_source(uri, member, source_suffix, label):

@@ -27,6 +27,13 @@ class FakeClient:
 
 
 class ValidationTests(unittest.TestCase):
+    def test_windows_file_uri_keeps_the_drive_absolute(self):
+        with mock.patch.object(probe.os, "name", "nt"):
+            self.assertEqual(
+                probe._local_file_uri_path("/C:/Users/runner/.cargo/registry/src/file.rs"),
+                "C:/Users/runner/.cargo/registry/src/file.rs",
+            )
+
     def test_location_rejects_null_multi_and_wrong_uri(self):
         for result in (None, [], [{"uri": "a", "range": {}}] * 2):
             with self.subTest(result=result), self.assertRaises(ValueError):
