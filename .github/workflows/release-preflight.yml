@@ -77,8 +77,8 @@ jobs:
         run: bash scripts/release/resolve-release-version.sh "${{ github.event_name }}" "" "${{ github.head_ref }}"
 
       - name: Quality gate
-        run: just check
+        run: just pre-push-check
 
-      - name: Release check
+      - name: Release preflight
         if: github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'release/v')
-        run: just VERSION="${{ steps.version.outputs.version }}" release-check
+        run: just VERSION="${{ steps.version.outputs.version }}" release-preflight-check

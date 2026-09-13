@@ -12,7 +12,9 @@ const WORD_LEFT: usize = 6;
 const WORD_RIGHT: usize = 10;
 const LINE_TEXT: &str = "one\nmiddle line\nthree";
 const LINE_CURSOR: usize = 8;
+#[cfg(target_os = "macos")]
 const LINE_START: usize = 4;
+#[cfg(target_os = "macos")]
 const LINE_END: usize = 15;
 const DOCUMENT_END: usize = 21;
 

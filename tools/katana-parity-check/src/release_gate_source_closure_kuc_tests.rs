@@ -45,6 +45,17 @@ fn source_closure_contract_rejects_unpinned_kuc_dependency_checkout() -> Result<
 }
 
 #[test]
+fn source_closure_contract_rejects_line_ending_conversion() -> Result<(), String> {
+    let lines = workflow_fixture().replace(
+        "      - name: Disable Git line-ending conversion",
+        "      - name: Allow Git line-ending conversion",
+    );
+    let lines = lines.lines().collect::<Vec<_>>();
+    let result = ReleaseGateAudit::validate_source_closure_native_host_contract_from_lines(&lines);
+    assert_error_contains(result, "Disable Git line-ending conversion")
+}
+
+#[test]
 fn source_closure_contract_rejects_missing_fixed_katana_dependency_fetch() -> Result<(), String> {
     let lines = workflow_fixture().replace(
         "      - name: Fetch fixed KatanA dependencies",
@@ -53,6 +64,17 @@ fn source_closure_contract_rejects_missing_fixed_katana_dependency_fetch() -> Re
     let lines = lines.lines().collect::<Vec<_>>();
     let result = ReleaseGateAudit::validate_source_closure_native_host_contract_from_lines(&lines);
     assert_error_contains(result, "Fetch fixed KatanA dependencies")
+}
+
+#[test]
+fn source_closure_contract_rejects_missing_kle_release_parity_validation() -> Result<(), String> {
+    let lines = workflow_fixture().replace(
+        "      - name: Validate KLE release parity",
+        "      - name: Skip KLE release parity",
+    );
+    let lines = lines.lines().collect::<Vec<_>>();
+    let result = ReleaseGateAudit::validate_source_closure_native_host_contract_from_lines(&lines);
+    assert_error_contains(result, "Validate KLE release parity")
 }
 
 #[test]

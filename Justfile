@@ -263,6 +263,16 @@ release-verify: check coverage
     {{CARGO}} package -p katana-language-editor-egui --locked --allow-dirty --list >/dev/null
     {{CARGO}} publish -p katana-language-editor --dry-run --locked --allow-dirty
 
+# Run every release prerequisite that does not require the separately generated
+# three-OS source-closure artifact.
+release-preflight-check: release-target-check pre-push-check coverage
+    bash scripts/release/verify-version.sh "{{VERSION}}"
+    bash scripts/release/verify-internal-dependencies.sh "{{VERSION}}"
+    {{CARGO}} package -p katana-language-editor --locked --allow-dirty
+    {{CARGO}} package -p katana-language-editor-egui --locked --allow-dirty --list >/dev/null
+    {{CARGO}} publish -p katana-language-editor --dry-run --locked --allow-dirty
+    bash scripts/release/assert-crates-not-published.sh "{{VERSION}}"
+
 # release-check の coverage/package 実行後に生成物を解放する
 release-check-clean-generated-artifacts:
     {{CARGO}} clean

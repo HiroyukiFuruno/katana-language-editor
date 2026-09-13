@@ -44,6 +44,9 @@ jobs:
         profile: [macos-latest, windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.profile }}
     steps:
+      - name: Disable Git line-ending conversion
+        run: git config --global core.autocrlf false
+
       - name: Checkout KLE
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -173,6 +176,12 @@ jobs:
           --input target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}/assembled/source-closure-input.json
           --katana-repo ../katana
           --canonical-root artifacts
+
+      - name: Validate KLE release parity
+        working-directory: katana-language-editor
+        env:
+          KATANA_PARITY_SOURCE_CLOSURE_ARTIFACT_DIR: artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts
+        run: cargo run --locked -p katana-parity-check -- --mode kle-release
 
       - name: Upload assembled source-closure evidence
         uses: actions/upload-artifact@v4
