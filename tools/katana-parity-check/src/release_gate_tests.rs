@@ -209,6 +209,11 @@ fn release_dependency_graph_includes_expected_tasks() -> Result<(), String> {
 }
 
 #[test]
+fn pre_push_gate_keeps_all_local_checks_and_defers_only_three_os_artifacts() -> Result<(), String> {
+    ReleaseGateAudit::validate_pre_push_gate()
+}
+
+#[test]
 fn release_completion_audit_is_read_only() -> Result<(), String> {
     ReleaseGateAudit::validate_completion_audit_is_read_only()
 }

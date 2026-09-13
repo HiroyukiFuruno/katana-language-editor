@@ -225,6 +225,11 @@ coverage:
 check: fmt-check check-types lint unit-test ast-lint kuc-contract-check katana-interface-check katana-downstream-check storybook-motion-artifact-gate katana-parity-rc-check
     @echo "checks passed"
 
+# Run every strict local gate before push. Three-OS source-closure artifacts are
+# intentionally excluded because this push publishes the workflow that creates them.
+pre-push-check: fmt-check check-types lint unit-test ast-lint kuc-contract-check katana-interface-check katana-downstream-check storybook-motion-artifact-gate
+    @echo "pre-push checks passed"
+
 # Compatibility alias for the advisory precheck; it is not a release prerequisite.
 kle-rc-check: check
 

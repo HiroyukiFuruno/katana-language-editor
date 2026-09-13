@@ -50,6 +50,7 @@ impl ReleaseGateAudit {
         Self::validate_test_and_build_workflow()?;
         Self::validate_release_workflow_ordering()?;
         Self::validate_release_dependency_graph_ordering()?;
+        Self::validate_pre_push_gate()?;
         Self::validate_publish_crate_visibility_ordering()?;
         Self::validate_source_closure_native_host_contract()?;
         Self::validate_release_docs_completion_boundary()?;

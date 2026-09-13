@@ -1,4 +1,5 @@
 pub(crate) const JUSTFILE: &str = include_str!("../../../Justfile");
+pub(crate) const LEFTHOOK: &str = include_str!("../../../lefthook.yml");
 pub(crate) const WORKSPACE_MANIFEST: &str = include_str!("../../../Cargo.toml");
 pub(crate) const RELEASE_WORKFLOW: &str = include_str!("../../../.github/workflows/release.yml");
 pub(crate) const TEST_AND_BUILD_WORKFLOW: &str =

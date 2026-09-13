@@ -1,5 +1,17 @@
 use crate::release_gate::ReleaseGateAudit;
-use crate::release_gate_sources::JUSTFILE;
+use crate::release_gate_sources::{JUSTFILE, LEFTHOOK};
+
+const PRE_PUSH_LOCAL_GATES: &[&str] = &[
+    "fmt-check",
+    "check-types",
+    "lint",
+    "unit-test",
+    "ast-lint",
+    "kuc-contract-check",
+    "katana-interface-check",
+    "katana-downstream-check",
+    "storybook-motion-artifact-gate",
+];
 
 impl ReleaseGateAudit {
     pub(crate) fn validate_release_dependency_graph_ordering() -> Result<(), String> {
@@ -42,6 +54,28 @@ impl ReleaseGateAudit {
             }
         }
 
+        Ok(())
+    }
+
+    pub(crate) fn validate_pre_push_gate() -> Result<(), String> {
+        let expected_hook = "run: just JOBS=2 pre-push-check";
+        if !LEFTHOOK.lines().any(|line| line.trim() == expected_hook) {
+            return Err(format!("lefthook pre-push must run `{expected_hook}`"));
+        }
+
+        let lines = JUSTFILE.lines().collect::<Vec<_>>();
+        let dependencies = Self::dependencies_for_recipe(&lines, "pre-push-check")?;
+        for required in PRE_PUSH_LOCAL_GATES {
+            if !dependencies.contains(required) {
+                return Err(format!("pre-push-check must include {required} dependency"));
+            }
+        }
+        if dependencies.contains(&"katana-parity-rc-check") {
+            return Err(
+                "pre-push-check must leave three-OS source-closure artifact validation to CI"
+                    .to_string(),
+            );
+        }
         Ok(())
     }
 }
