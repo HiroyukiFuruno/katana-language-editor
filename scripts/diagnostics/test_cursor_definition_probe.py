@@ -88,8 +88,8 @@ class CursorDefinitionTests(unittest.TestCase):
         cursor_path = source_root / probe.CURSOR_RANGE_SOURCE_SUFFIX
         builder_path.parent.mkdir(parents=True, exist_ok=True)
         cursor_path.parent.mkdir(parents=True, exist_ok=True)
-        builder_path.write_text(builder, encoding="utf-8")
-        cursor_path.write_text(cursor, encoding="utf-8")
+        builder_path.write_bytes(builder.encode("utf-8"))
+        cursor_path.write_bytes(cursor.encode("utf-8"))
         archive = root / ".cargo" / "registry" / "cache" / registry / "egui-0.36.1.crate"
         archive.parent.mkdir(parents=True, exist_ok=True)
         with tarfile.open(archive, "w") as target:

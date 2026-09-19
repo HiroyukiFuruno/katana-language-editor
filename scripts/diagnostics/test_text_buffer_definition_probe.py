@@ -64,8 +64,8 @@ class TextBufferDefinitionTests(unittest.TestCase):
         builder_path = source_root / egui_probe.BUILDER_SOURCE_SUFFIX
         text_buffer_path = source_root / probe.TEXT_BUFFER_SOURCE_SUFFIX
         builder_path.parent.mkdir(parents=True)
-        builder_path.write_text(builder, encoding="utf-8")
-        text_buffer_path.write_text(text_buffer, encoding="utf-8")
+        builder_path.write_bytes(builder.encode("utf-8"))
+        text_buffer_path.write_bytes(text_buffer.encode("utf-8"))
         archive = root / ".cargo" / "registry" / "cache" / registry / "egui-0.36.1.crate"
         archive.parent.mkdir(parents=True)
         with tarfile.open(archive, "w") as target:
