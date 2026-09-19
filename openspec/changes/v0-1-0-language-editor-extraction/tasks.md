@@ -24,7 +24,7 @@
 - [x] `scripts/release/publish-crates.sh` を含む公開契約を KUC `0.3.6` に同期した。
 - [x] R4 T1: 検証済み requirement source alias の入力 API と 7 回帰 tests を実装した。全 branch との結合・要件網羅性の証明は後続 T2 以降であり未完了。
 - [x] test fixture の同時刻衝突と既存 path の誤削除を防ぐ排他的予約、および 2 回帰 tests を追加した。最終 fmt / workspace 380 tests / lint / AST 検査は合格。
-- [/] R7 公開境界を実装する。KLE 公開前は source-derived 全 leaf、三 OS profile、KUC opaque receipt の `kle-release` evidence だけを fail-closed で検証し、KatanA #336 host E2E は final v0.1.0 公開後の `downstream-full` に分離する。KLE 所有の全 leaf 検証は減らさない。KUC #40 published producer が未提供のため `kle-release` は現在も意図して失敗する。
+- [/] R7 公開境界を実装する。KLE 公開前は source-derived 全 leaf、三 OS profile、KUC opaque receipt の `kle-release` evidence だけを fail-closed で検証し、KatanA #336 host E2E は final v0.1.0 公開後の `downstream-full` に分離する。KLE 所有の全 leaf 検証は減らさない。公開KUC `0.3.11` のgeneric consumer planは利用可能だが、現KLEはsynthetic stage IDを使いsource leafと結合していない。`docs/v0-1-0-full-storybook-artifact-design.md`でsource leaf、generic interaction、KUC stage、execution/media recordの一対一結合と三OS assembler契約を先に固定した。KLE join/producerとcanonical artifact生成が未実装のため、`kle-release` は現在も意図して失敗する。
 
 最新の状態・作業順・検証結果は `docs/v0-1-0-resume-plan-2026-09-05.md` を参照する。
 - [x] neutral provider接続: trait/errorをneutralへ一本化し、adapterは実KUC Leaseの等価制約と同一定義の再exportを使う。neutral consumer、型同一性、6 doctests、実KUC同期回帰を確認。全体unitは検索Closeで535成功/1失敗のため公開完了ではない。

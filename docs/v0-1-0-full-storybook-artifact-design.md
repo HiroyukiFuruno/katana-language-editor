@@ -14,18 +14,26 @@ before the final release gate passes.
 
 ## Current Gap
 
-`katana-ui-core@0.3.5` publishes a generic root factory and projection encoder,
-but its public Storybook replay path is closed over the eight
-`FullTextCommandSurfaceScenarioId` values. The public
-`FullTextCommandSurfaceScenarioFactory::issue` accepts only that enum, and the
-opaque raw-input stage constructor is private. KLE's current `StorybookHost` is
-therefore limited to those fixture scenarios; it cannot request a KUC-owned stage
-for every source-derived generic interaction class without either manufacturing
-input in KLE or reusing an unrelated fixture. Both would be invalid evidence.
+`katana-ui-core@0.3.11` publishes `ConsumerArtifactPlanIssuer` and the opaque
+consumer-artifact execution path. Its ten-stage
+`GenericInteractionClass::FULL_EDITOR_SEQUENCE` is KUC-owned and emits physical
+PNG, Unicode/IME/measurement/hit-test evidence, and one-shot receipts. KLE must
+use that published registry API; it must not reproduce a renderer, raw-input
+builder, glyph fallback, or stage writer.
 
-This is a KUC capability gap, not a KLE renderer gap. The required generic API is
-tracked in [KUC Issue #40](https://github.com/HiroyukiFuruno/katana-ui-core/issues/40).
-KLE must not implement a local substitute.
+KLE's current consumer uses synthetic identifiers
+`kle-full-editor-stage-<index>` and the fixed generic action target
+`kuc.rich.inline-strong`. That proves the KUC contract only. It does **not**
+prove that a KatanA source-derived leaf was mapped to the corresponding generic
+interaction, nor can it populate canonical `execution-record.json` and
+`storybook-artifacts.json`. Reusing those fixture stages as proof for arbitrary
+source leaves is invalid.
+
+The remaining KLE work is therefore a fail-closed source-to-KUC join. It is not
+a KUC rendering change. If the authenticated source leaf set cannot be mapped
+bijectively to the published ten-stage generic sequence, KLE must reject the
+run with the unmapped/ambiguous leaf diagnostics; an upstream capability request
+must then be raised through a KUC Issue before changing KUC.
 
 ## Required KUC Consumer Contract
 
@@ -44,25 +52,42 @@ The KUC API must provide a versioned, opaque, consumer-defined artifact plan tha
    target; and
 5. is available through the published registry crate on macOS, Windows, and Linux.
 
-## KLE Integration Plan After Published KUC Support
+## KLE Integration Plan
 
-1. Generate the canonical source closure, then run a separate deterministic leaf
-   join stage. Its input is only the fixed-source branch/action-origin record and
-   a versioned KLE mapping table. Each mapping names a generic KUC interaction
-   class, source-span-based visible path and preconditions, KUC component family,
-   KLE public show signature, and one-shot opaque transit class. It has no
-   KatanA semantic action, payload, coordinate, content, URL, or mutable editor
-   state. Duplicate, stale, unmapped, or `unresolved:*` leaves fail before any
-   artifact request.
-2. Ask KUC for the full generic plan, execute it using only KUC-owned stages, and
-   copy only the resulting KUC receipt/frame identifiers and media hashes into
-   `storybook-artifacts.json`.
-3. Require three independent OS profile runs. Every KLE/KUC-owned leaf must have
-   one complete artifact per required profile. KatanA-owned leaves must state
-   `downstream_required`, not `passing`.
-4. The RC validator accepts only this complete pre-adoption evidence. The final
-   validator additionally requires KatanA #336 physical host execution records
-   for every host-effect leaf and the final registry version.
+1. Materialize the authenticated fixed-KatanA source closure before requesting
+   any UI artifact. Build a versioned KLE mapping table from immutable leaf
+   provenance only: source candidate fingerprint, action-origin ID, branch ID,
+   required profile IDs, generic interaction class, component family, public
+   KLE show signature, and opaque transit class. It must contain no KatanA
+   payload, Markdown text, document content, coordinate, URL, renderer callback,
+   font policy, or raw input.
+2. Verify the mapping is a bijection between the source-derived KLE-owned leaf
+   set and `GenericInteractionClass::FULL_EDITOR_SEQUENCE`: every source leaf is
+   mapped once, every generic stage is used once, source/profile identities are
+   unchanged, and no `unresolved:*` field remains. A host-effect leaf remains
+   `downstream_required` for KatanA #336 but still requires the KLE/KUC generic
+   stage evidence.
+3. Create `ConsumerArtifactStageBinding` values from the verified leaf IDs, not
+   synthetic ordinal names. Obtain each lease exclusively through the KUC
+   scenario session, issue the KUC plan, and execute it using only
+   `IssuedConsumerArtifactPlan::execute_next`. KLE may read KUC-produced IDs,
+   hashes, and receipt metadata; it may not create or alter PNG, accessibility,
+   Unicode, IME, measurement, hit-test, or receipt data.
+4. Write the canonical execution and Storybook records only by joining KUC output
+   to the already verified leaf/profile tuple. Each output entry must include the
+   source leaf ID, declared KUC stage ID, KUC frame record ID, relative numbered
+   PNG path, KUC media SHA-256, execution status, and profile ID. Reject duplicate
+   receipt/frame/stage/leaf bindings, profile drift, stale root fingerprints,
+   missing numbered PNGs, or overwrite attempts before publication.
+5. Run the same producer independently on macOS, Windows, and Linux. The
+   assembler accepts each profile only when every required source leaf has one
+   matching execution record and KUC media entry. It copies verified records and
+   media into the canonical source-closure root, then runs the existing strict
+   artifact validator. No static fixture, prior-run artifact, or local path/git
+   KUC dependency is accepted.
+6. `kle-release` validates this KLE/KUC evidence and leaves KatanA host effects
+   as `downstream_required`. KatanA #336 remains a separate post-publication
+   downstream adoption and real-host E2E gate.
 
 ## Non-Goals
 
