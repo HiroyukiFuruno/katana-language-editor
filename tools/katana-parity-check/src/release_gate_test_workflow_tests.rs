@@ -33,3 +33,33 @@ fn test_and_build_workflow_rejects_missing_commands() {
         assert!(matches!(result, Err(error) if error.contains("must run")));
     }
 }
+
+#[test]
+fn test_and_build_workflow_rejects_nested_fixed_katana_checkout() {
+    for (anchor, replacement) in [
+        (
+            "        working-directory: katana-language-editor",
+            "        working-directory: .",
+        ),
+        (
+            "          path: katana-language-editor",
+            "          path: .",
+        ),
+        (
+            "          path: katana",
+            "          path: katana-language-editor/katana",
+        ),
+        (
+            "  KATANA_REPO: ${{ github.workspace }}/katana",
+            "  KATANA_REPO: ${{ github.workspace }}/katana-language-editor/katana",
+        ),
+    ] {
+        assert!(TEST_AND_BUILD_WORKFLOW.contains(anchor));
+        let workflow = TEST_AND_BUILD_WORKFLOW.replacen(anchor, replacement, 1);
+        let lines = workflow.lines().collect::<Vec<_>>();
+        let result = ReleaseGateAudit::validate_test_and_build_workflow_from_lines(&lines);
+        assert!(
+            matches!(result, Err(error) if error.contains("KatanA") || error.contains("checkout"))
+        );
+    }
+}

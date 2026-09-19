@@ -23,6 +23,7 @@ impl ReleaseGateAudit {
         }
 
         let test_job = Self::job_section(lines, "test")?;
+        Self::validate_test_and_build_checkout_layout(lines, test_job)?;
         let tests = Self::step_section(test_job, "Run tests")?;
         if !tests
             .iter()
@@ -33,6 +34,50 @@ impl ReleaseGateAudit {
 
         let coverage = Self::step_section(test_job, "Run coverage")?;
         Self::validate_mandatory_coverage_step(coverage)
+    }
+
+    fn validate_test_and_build_checkout_layout(
+        workflow: &[&str],
+        test_job: &[&str],
+    ) -> Result<(), String> {
+        for expected in [
+            "KATANA_REPO: ${{ github.workspace }}/katana",
+            "working-directory: katana-language-editor",
+        ] {
+            let lines = if expected.starts_with("KATANA_REPO") {
+                workflow
+            } else {
+                test_job
+            };
+            if !lines.iter().any(|line| line.trim() == expected) {
+                return Err(format!(
+                    "test-and-build workflow must keep fixed KatanA outside the KLE scan root: missing `{expected}`"
+                ));
+            }
+        }
+
+        let kle_checkout = Self::step_section(test_job, "Checkout KLE")?;
+        if !kle_checkout
+            .iter()
+            .any(|line| line.trim() == "path: katana-language-editor")
+        {
+            return Err(
+                "test-and-build KLE checkout must use the isolated `katana-language-editor` path"
+                    .to_string(),
+            );
+        }
+
+        let katana_checkout = Self::step_section(test_job, "Checkout fixed KatanA reference")?;
+        if !katana_checkout
+            .iter()
+            .any(|line| line.trim() == "path: katana")
+        {
+            return Err(
+                "test-and-build fixed KatanA checkout must remain a KLE sibling checkout"
+                    .to_string(),
+            );
+        }
+        Self::validate_fixed_source_closure_katana_checkout(test_job)
     }
 
     fn validate_mandatory_coverage_step(coverage: &[&str]) -> Result<(), String> {

@@ -69,8 +69,14 @@ jobs:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: katana-language-editor
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Checkout KLE
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          path: katana-language-editor
 
       - name: Checkout fixed KatanA reference
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
