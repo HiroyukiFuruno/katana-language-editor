@@ -1,6 +1,7 @@
 import importlib.util
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 from unittest import mock
 
@@ -11,6 +12,10 @@ SPEC = importlib.util.spec_from_file_location(
     "cursor_call_hierarchy_probe", DIRECTORY / "cursor_call_hierarchy_probe.py")
 probe = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(probe)
+
+
+def _fixture_path(name):
+    return (Path(tempfile.gettempdir()) / name).resolve()
 
 
 class FakeClient:
@@ -35,12 +40,12 @@ def _root(text, name):
     identifier = probe._symbol_range(text, name)
     line_start = text.rfind("\n", 0, text.index(f"fn {name}(")) + 1
     line_end = text.index("\n", text.index(f"fn {name}("))
-    return {"name": name, "kind": 12, "uri": "file:///tmp/cursor_range.rs",
+    return {"name": name, "kind": 12, "uri": _fixture_path("cursor_range.rs").as_uri(),
             "range": probe._range(text, line_start, line_end), "selectionRange": identifier}
 
 
 def _edges(text):
-    uri = "file:///tmp/cursor_range.rs"
+    uri = _fixture_path("cursor_range.rs").as_uri()
     return [
         {"name": "cursor_range.on_event", "result": [{"uri": uri, "range": probe._symbol_range(text, "on_event")} ]},
         {"name": "on_key_press", "result": [{"uri": uri, "range": probe._symbol_range(text, "on_key_press")} ]},
@@ -68,12 +73,12 @@ class CursorCallHierarchyTests(unittest.TestCase):
         roots = [_root(text, name) for name in probe.ROOTS]
         from_range = probe._range(text, text.index("self.on_key_press"),
                                   text.index("self.on_key_press") + len("self.on_key_press"))
-        external = {"name": "String", "kind": 23, "uri": "file:///rustc/std/string.rs",
+        external = {"name": "String", "kind": 23, "uri": _fixture_path("rustc/std/string.rs").as_uri(),
                     "range": {"start": {"line": 0, "character": 0}, "end": {"line": 2, "character": 0}},
                     "selectionRange": {"start": {"line": 1, "character": 0}, "end": {"line": 1, "character": 6}}}
         responses = [[roots[0]], [{"to": external, "fromRanges": [from_range]}], [roots[1]], [], [roots[2]], None]
         client = FakeClient(responses)
-        with mock.patch.object(probe, "_authenticated_source", return_value=(Path("/tmp/cursor_range.rs"), text.encode())), \
+        with mock.patch.object(probe, "_authenticated_source", return_value=(_fixture_path("cursor_range.rs"), text.encode())), \
              mock.patch.object(probe, "authenticated_epaint_member", return_value=None):
             report = probe.follow_cursor_call_hierarchy(client, _edges(text))
         self.assertFalse(report["semantic_complete"])
@@ -90,7 +95,7 @@ class CursorCallHierarchyTests(unittest.TestCase):
         text = _text()
         for result, message in ((None, "returned null"), ([], "returned empty"), ({}, "malformed")):
             with self.subTest(result=result), \
-                 mock.patch.object(probe, "_authenticated_source", return_value=(Path("/tmp/cursor_range.rs"), text.encode())), \
+                 mock.patch.object(probe, "_authenticated_source", return_value=(_fixture_path("cursor_range.rs"), text.encode())), \
                  self.assertRaisesRegex(ValueError, message):
                 probe.follow_cursor_call_hierarchy(FakeClient([result]), _edges(text))
 
@@ -103,10 +108,10 @@ class CursorCallHierarchyTests(unittest.TestCase):
         root = _root(text, "on_event")
         outside = probe._range(text, text.index("move_single_cursor();"),
                                text.index("move_single_cursor();") + len("move_single_cursor"))
-        target = {"name": "target", "uri": "file:///tmp/unknown.rs", "range": {
+        target = {"name": "target", "uri": _fixture_path("unknown.rs").as_uri(), "range": {
             "start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 6}},
             "selectionRange": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 6}}}
-        with mock.patch.object(probe, "_authenticated_source", return_value=(Path("/tmp/cursor_range.rs"), text.encode())), \
+        with mock.patch.object(probe, "_authenticated_source", return_value=(_fixture_path("cursor_range.rs"), text.encode())), \
              mock.patch.object(probe, "authenticated_epaint_member", return_value=None), \
              self.assertRaisesRegex(ValueError, "fromRange.*outside"):
             probe.follow_cursor_call_hierarchy(FakeClient([
@@ -114,14 +119,14 @@ class CursorCallHierarchyTests(unittest.TestCase):
             ]), _edges(text))
 
     def test_rejects_inconsistent_target_ranges_and_modified_authenticated_member(self):
-        malformed_target = {"name": "x", "uri": "file:///tmp/unknown.rs", "range": {
+        malformed_target = {"name": "x", "uri": _fixture_path("unknown.rs").as_uri(), "range": {
             "start": {"line": 1, "character": 0}, "end": {"line": 1, "character": 1}},
             "selectionRange": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 1}}}
         with self.assertRaisesRegex(ValueError, "outgoing target range is outside"):
             probe._target(malformed_target)
         with mock.patch.object(probe, "authenticated_epaint_member", side_effect=ValueError("source differs from the archive")), \
              self.assertRaisesRegex(ValueError, "differs from the archive"):
-            probe._target({"name": "x", "uri": "file:///tmp/egui.rs", "range": {
+            probe._target({"name": "x", "uri": _fixture_path("egui.rs").as_uri(), "range": {
                 "start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 1}},
                 "selectionRange": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 1}}})
 
@@ -129,13 +134,13 @@ class CursorCallHierarchyTests(unittest.TestCase):
         text = _text()
         bad_root = _root(text, "on_event")
         bad_root["kind"] = 1
-        with mock.patch.object(probe, "_authenticated_source", return_value=(Path("/tmp/cursor_range.rs"), text.encode())), \
+        with mock.patch.object(probe, "_authenticated_source", return_value=(_fixture_path("cursor_range.rs"), text.encode())), \
              self.assertRaisesRegex(ValueError, "Function or Method"):
             probe.follow_cursor_call_hierarchy(FakeClient([[bad_root]]), _edges(text))
-        target = {"name": "target", "uri": "file:///tmp/unknown.rs", "range": {
+        target = {"name": "target", "uri": _fixture_path("unknown.rs").as_uri(), "range": {
             "start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 6}},
             "selectionRange": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 6}}}
-        with mock.patch.object(probe, "_authenticated_source", return_value=(Path("/tmp/cursor_range.rs"), text.encode())), \
+        with mock.patch.object(probe, "_authenticated_source", return_value=(_fixture_path("cursor_range.rs"), text.encode())), \
              self.assertRaisesRegex(ValueError, "no fromRanges evidence"):
             probe.follow_cursor_call_hierarchy(FakeClient([[_root(text, "on_event")], [{"to": target, "fromRanges": []}]]),
                                                _edges(text))
@@ -144,25 +149,25 @@ class CursorCallHierarchyTests(unittest.TestCase):
         text = _text()
         floating_kind = _root(text, "on_event")
         floating_kind["kind"] = 6.0
-        with mock.patch.object(probe, "_authenticated_source", return_value=(Path("/tmp/cursor_range.rs"), text.encode())), \
+        with mock.patch.object(probe, "_authenticated_source", return_value=(_fixture_path("cursor_range.rs"), text.encode())), \
              self.assertRaisesRegex(ValueError, "Function or Method"):
             probe.follow_cursor_call_hierarchy(FakeClient([[floating_kind]]), _edges(text))
-        for target in ({"name": "", "uri": "file:///tmp/a.rs"}, {"name": "x", "uri": ""}):
+        for target in ({"name": "", "uri": _fixture_path("a.rs").as_uri()}, {"name": "x", "uri": ""}):
             with self.subTest(target=target), self.assertRaisesRegex(ValueError, "outgoing target is malformed"):
                 probe._target(target)
 
     def test_preserves_egui_and_adds_epaint_source_classification(self):
-        target = {"name": "LayoutJob", "uri": "file:///tmp/target.rs", "range": {
+        target = {"name": "LayoutJob", "uri": _fixture_path("target.rs").as_uri(), "range": {
             "start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 6}},
             "selectionRange": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 6}}}
-        with mock.patch.object(probe, "authenticated_egui_member", return_value=(Path("/tmp/target.rs"), b"target")), \
+        with mock.patch.object(probe, "authenticated_egui_member", return_value=(_fixture_path("target.rs"), b"target")), \
              mock.patch.object(probe, "authenticated_epaint_member") as epaint:
             authenticated = probe._target(target)
         epaint.assert_not_called()
         self.assertEqual(authenticated["resolution_kind"], "authenticated_egui_member_source_identity_only")
         self.assertFalse(authenticated["target_name_verified"])
         with mock.patch.object(probe, "authenticated_egui_member", return_value=None), \
-             mock.patch.object(probe, "authenticated_epaint_member", return_value=(Path("/tmp/target.rs"), b"target")):
+             mock.patch.object(probe, "authenticated_epaint_member", return_value=(_fixture_path("target.rs"), b"target")):
             authenticated = probe._target(target)
         with mock.patch.object(probe, "authenticated_egui_member", return_value=None), \
              mock.patch.object(probe, "authenticated_epaint_member", return_value=None):
@@ -180,7 +185,7 @@ class CursorCallHierarchyTests(unittest.TestCase):
         first = probe._range(text, text.index("日本"), text.index("日本") + len("日本"))
         second = probe._range(text, text.index("self.on_key_press"),
                               text.index("self.on_key_press") + len("self.on_key_press"))
-        target = {"name": "target", "uri": "file:///tmp/unknown.rs", "range": {
+        target = {"name": "target", "uri": _fixture_path("unknown.rs").as_uri(), "range": {
             "start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 6}},
             "selectionRange": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 6}}}
         with mock.patch.object(probe, "authenticated_epaint_member", return_value=None):

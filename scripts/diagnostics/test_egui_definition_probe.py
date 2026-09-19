@@ -13,6 +13,10 @@ probe = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(probe)
 
 
+def _fixture_path(name):
+    return (Path(tempfile.gettempdir()) / name).resolve()
+
+
 class FakeClient:
     def __init__(self, results):
         self.results = iter(results)
@@ -102,7 +106,8 @@ class AnchorTests(unittest.TestCase):
                 "} => check_for_mutating_key_press(\n"
                 "fn events() {}\n"
                 "fn check_for_mutating_key_press() {}\n")
-        uri = Path("/tmp/egui-builder.rs").as_uri()
+        fixture_path = _fixture_path("egui-builder.rs")
+        uri = fixture_path.as_uri()
         show_start = text.index("fn show") + 3
         events_start = text.index("fn events") + 3
         check_start = text.index("fn check_for_mutating_key_press") + 3
@@ -112,7 +117,7 @@ class AnchorTests(unittest.TestCase):
                 text, check_start, check_start + len("check_for_mutating_key_press"))}],
         ])
         with mock.patch.object(probe, "_authenticated_builder",
-                               return_value=(Path("/tmp/egui-builder.rs"), text.encode())):
+                               return_value=(fixture_path, text.encode())):
             edges = probe.follow_edges(
                 good, [{"uri": uri, "range": probe._range(text, show_start, show_start + 4)}])
         self.assertEqual([edge["name"] for edge in edges],
@@ -124,7 +129,7 @@ class AnchorTests(unittest.TestCase):
                                                    text.index("events", text.index("=") ) + 6)}],
         ])
         with mock.patch.object(probe, "_authenticated_builder",
-                               return_value=(Path("/tmp/egui-builder.rs"), text.encode())), \
+                               return_value=(fixture_path, text.encode())), \
              self.assertRaises(ValueError):
             probe.follow_edges(callsite,
                                [{"uri": uri, "range": probe._range(text, show_start, show_start + 4)}])
@@ -135,7 +140,7 @@ class AnchorTests(unittest.TestCase):
                 "} => check_for_mutating_key_press(\n"
                 "fn events() {}\n"
                 "fn check_for_mutating_key_press() {}\n")
-        path = Path("/tmp/egui-builder.rs")
+        path = _fixture_path("egui-builder.rs")
         uri = path.as_uri()
         show_start = text.index("fn show") + 3
         show_range = probe._range(text, show_start, show_start + 4)

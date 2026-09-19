@@ -22,7 +22,7 @@ pub(super) fn publish(
 ) -> Result<PathBuf, String> {
     super::operational_staging::validate_validation_receipt(staging, input_path)?;
     let revision = &verified.input().root.katana_revision;
-    let parent = artifact_dir.join("artifacts/v0-1-0/source-closure-input");
+    let parent = artifact_dir.join("v0-1-0/source-closure-input");
     fs::create_dir_all(&parent)
         .map_err(|error| format!("failed to create publication parent: {error}"))?;
     let destination = parent.join(revision);

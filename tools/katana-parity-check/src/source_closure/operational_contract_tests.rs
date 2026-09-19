@@ -222,6 +222,13 @@ fn atomic_publish_and_existing_mismatch_are_rejected() -> Result<(), Box<dyn std
     validate_validation_receipt(&fixture.staging, &fixture.input)?;
     let canonical_root = unique_root("atomic")?;
     let published = publish(&fixture.staging, &fixture.input, &verified, &canonical_root)?;
+    assert_eq!(
+        published,
+        canonical_root.join(format!(
+            "v0-1-0/source-closure-input/{}",
+            crate::source_closure::operational_input::FIXED_KATANA_REVISION
+        ))
+    );
     assert!(published.join("source-closure-input.json").is_file());
     assert!(published.join("artifacts/source-closure.json").is_file());
     assert!(!published.join(".tmp").exists());

@@ -6,7 +6,7 @@ from pathlib import Path
 import tarfile
 from urllib.parse import unquote, urlparse
 
-from egui_definition_probe import _authenticated_source, _path_from_uri
+from egui_definition_probe import _authenticated_source, _local_file_uri_path, _path_from_uri
 
 
 VERSION = "0.36.1"
@@ -18,7 +18,7 @@ CARGO_REGISTRY_SRC = Path.home() / ".cargo" / "registry" / "src"
 def _member_from_uri(uri):
     parsed = urlparse(uri)
     decoded_path = unquote(parsed.path)
-    raw_path = Path(decoded_path)
+    raw_path = Path(_local_file_uri_path(decoded_path))
     if (parsed.scheme != "file" or parsed.netloc not in ("", "localhost")
             or any(part in (".", "..") for part in decoded_path.split("/"))):
         return None

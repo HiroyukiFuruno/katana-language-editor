@@ -43,6 +43,13 @@ jobs:
         with:
           path: katana-language-editor
 
+      - name: Checkout fixed KatanA reference
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: HiroyukiFuruno/KatanA
+          ref: 4f6a6287c650a38633c7baeb544a92e739c68567
+          path: katana
+
       - name: Checkout katana-ui-core
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:

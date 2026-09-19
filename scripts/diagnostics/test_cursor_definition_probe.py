@@ -131,7 +131,7 @@ class CursorDefinitionTests(unittest.TestCase):
             builder_path, cursor_path, digest = self._fixture(root, builder, cursor)
             show = [{"uri": builder_path.as_uri(), "range": probe._symbol_range(builder, "show")}]
             cases = [
-                [{"uri": Path("/wrong.rs").as_uri(), "range": probe._symbol_range(cursor, "on_event")}],
+                [{"uri": (root / "wrong.rs").as_uri(), "range": probe._symbol_range(cursor, "on_event")}],
                 [{"uri": cursor_path.as_uri(), "range": {} }],
                 [{"uri": cursor_path.as_uri(), "range": probe._symbol_range(cursor, "on_event")}] * 2,
             ]
