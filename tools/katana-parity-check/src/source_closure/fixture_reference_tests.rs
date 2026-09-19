@@ -127,7 +127,7 @@ fn fixture_cleanup_does_not_modify_fixed_reference_cache() -> TestResult {
 
 #[test]
 fn actual_ast_records_resolved_call_edge() -> TestResult {
-    let root = Path::new(ACTUAL_KATANA_ROOT);
+    let root = string_result(fixed_reference_root())?;
     let relative = "crates/katana-ui/src/shell_ui/shell_ui_frame/main_panels.rs";
     let source_path = root.join(relative);
     let source = fs::read_to_string(&source_path)?;

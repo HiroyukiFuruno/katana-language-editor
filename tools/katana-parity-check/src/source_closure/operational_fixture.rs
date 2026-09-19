@@ -8,7 +8,6 @@ use super::super::operational_input::{EvidenceRef, InactiveCfgEdge, ProfileProbe
 use super::operational_fixture_root::{fixed_reference_root, make_root};
 use super::operational_test_support::{TestResult, option_result, string_result};
 
-pub(super) const ACTUAL_KATANA_ROOT: &str = "/Users/hiroyuki_furuno/works/private/katana";
 pub(super) const DEFAULT_SEED_PATH: &str = "crates/katana-ui/src/widgets/toggle/mod.rs";
 pub(super) const DEFAULT_TREE_PATHS: &[&str] = &[
     DEFAULT_SEED_PATH,

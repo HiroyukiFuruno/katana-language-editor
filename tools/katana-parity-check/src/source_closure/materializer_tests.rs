@@ -9,7 +9,7 @@ use super::super::SourceClosureMaterializer;
 use super::super::fingerprint::sha256_hex;
 use super::super::operational_input::FIXED_KATANA_REVISION;
 use super::super::operational_loader::SourceClosureInputLoaderVerifier;
-use super::operational_fixture::{ACTUAL_KATANA_ROOT, DEFAULT_TREE_PATHS, fixture};
+use super::operational_fixture::{DEFAULT_TREE_PATHS, fixture};
 use super::operational_fixture_root::fixed_reference_root;
 use super::operational_test_support::{
     TestResult, cleanup_dir, mutate_input, option_result, reject, string_result, test_error,
