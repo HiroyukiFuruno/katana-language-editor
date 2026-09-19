@@ -1,43 +1,51 @@
 ## ADDED Requirements
 
-### Requirement: 全色表現は Theme 経由で必ず受け取らなければならない
+### Requirement: 全色表現はhost presentationとKUC theme契約を通さなければならない
 
-`katana-language-editor` および `katana-language-editor-egui` / `katana-language-editor-floem` は、editor 内で使う全ての色（前景・背景・選択・キャレット・ガター・行ハイライト・diagnostics underline・decoration overlay 等）を `Theme` から取得しなければならない（MUST）。色のハードコードを行ってはならない（MUST NOT）。
+editor内の全色（前景・背景・選択・キャレット・ガター・行ハイライト・diagnostics underline・decoration overlay等）はhostが供給するpresentationとKUCのgeneric theme契約を通さなければならない（MUST）。KLEはopaque projectionを中継し、色の解決、palette変換、hardcode、fallbackを持ってはならない（MUST NOT）。
 
-#### Scenario: host が Theme を渡して描画する
+#### Scenario: hostがthemeを供給して描画する
 
-- **WHEN** host が `Theme` を `EditorConfig::theme` に渡して editor を構築する
-- **THEN** editor の全描画は `Theme::colors` のいずれかから色を引く
+- **WHEN** hostが公開KUC契約へthemeを含むpresentationを供給する
+- **THEN** KUC rootの全描画はそのsemantic colorを使い、同一frameの証跡で確認する
 - **THEN** `egui::Color32::WHITE` や `Color::rgb(...)` 直書きが impl crate に存在しない
 
-#### Scenario: Theme は Option ではない
+#### Scenario: KLE configにthemeを再導入しない
 
-- **WHEN** host が `EditorConfig` を構築する
-- **THEN** `theme` フィールドは `Theme`（non-nullable）である
-- **THEN** `Option<Theme>` や default fallback は提供されない
+- **WHEN** consumerがEditorConfig/Inputのtheme fieldに依存する
+- **THEN** 独立compile-failとAST検査で拒否し、Optionやdefaultによる互換shimを作らない
+- **THEN** 必要な色の完全性はhost/KUC契約で検査し、field除去だけで合格としない
 
-### Requirement: テーマ preset は host (KDV) が提供し KLE 内に default を持たない
+### Requirement: KLEにdefault themeやKDV固有preset依存を持たない
 
-`katana-language-editor` crate は default テーマ（dark/light preset）を持ってはならない（MUST NOT）。default preset は `kdv-presets` 側で実装され、host が必須引数として KLE に渡す。
+KLEはdefaultテーマ（dark/light preset）を持ってはならない（MUST NOT）。preset選択はhost、generic themeの処理はKUCが所有する。KDV固有presetの提供・採用をKLE公開の前提としてはならない。
 
-#### Scenario: KDV preset を渡す
+#### Scenario: KDV固有presetなしで利用する
 
-- **WHEN** host が `kdv-presets::theme::dark()` などを呼んで `Theme` を取得し `EditorConfig::theme` に渡す
-- **THEN** editor は KDV preset の色で描画する
+- **WHEN** hostが公開KUC契約を使ってthemeを供給する
+- **THEN** KDV固有crateへの依存なしに指定色をKUC rootが描画する
 - **THEN** KLE crate 内で `Theme::default()` 相当の関数を grep しても見つからない
 
 #### Scenario: ダーク/ライト切替は host が制御する
 
 - **WHEN** host が UI 操作で dark/light を切り替える
-- **THEN** host は新しい `Theme` を生成して editor に `apply_theme(theme)` で渡す
-- **THEN** editor は theme 切替の意思決定を内部で行わない
+- **THEN** hostは更新presentationをKUCへ供給し、KLEはopaque leaseの同期だけを行う
+- **THEN** KLEはtheme切替の意思決定やapply_theme storeを持たない
 
 ### Requirement: 色トークンは意味付き alias を含まなければならない
 
-`ColorTokens` は raw な palette だけでなく、editor 用途のセマンティック alias（`text_primary` / `text_muted` / `selection_bg` / `caret` / `gutter_fg` / `current_line_bg` / `diagnostic_error` / `diagnostic_warn` / `diagnostic_info` / `decoration_accent` 等）を必ず公開しなければならない（MUST）。
+色契約はraw paletteだけでなく、本文・補助文字・選択背景・caret・gutter・現在行・diagnostic severity・decoration等のsemantic roleを網羅しなければならない（MUST）。所有者はKUC/hostであり、KLEに同じtoken DTOを複製しない。旧型の除去だけで機能検証を完了としてはならない。
+
+#### Scenario: 旧KLE theme型の再導入を拒否する
+
+- **WHEN** consumerがRgba/ColorTokens/ColorTokensInput/Theme/EditorThemeをKLEのroot又はtypesからimportする
+- **THEN** 各型・各パスの10独立compile-failで拒否する
+- **AND** neutral内で同名struct/enum/type aliasを定義してもAST検査で拒否する
+- **AND** literal color検査は削除したKLE Themeの再導入を修正案として勧めない
+- **AND** この検査をsemantic color/切替/表示の動作証明にしない
 
 #### Scenario: 実装は alias を使って描画する
 
 - **WHEN** editor 実装が diagnostics underline を描画する
-- **THEN** `theme.colors.diagnostic_error` のような alias 経由で色を取る
+- **THEN** KUCが対応するseverityのsemantic roleを使って描画する
 - **THEN** raw palette index への直接アクセスは禁止される

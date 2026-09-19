@@ -11,9 +11,9 @@ on:
         required: false
         type: string
       publish_crates:
-        description: "Publish workspace crates to crates.io after GitHub Release is created"
+        description: "Publish workspace crates to crates.io and run completion audits. Manual releases with false are rejected before mutation."
         required: false
-        default: false
+        default: true
         type: boolean
 
 concurrency:
@@ -36,12 +36,30 @@ jobs:
         startsWith(github.event.pull_request.head.ref, 'release/v')
       )
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: katana-language-editor
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          path: katana-language-editor
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref }}
           fetch-depth: 0
+
+      - name: Checkout katana-ui-core
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: HiroyukiFuruno/katana-ui-core
+          ref: v0.3.11
+          path: katana-ui-core
+
+      - name: Checkout fixed KatanA reference
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: HiroyukiFuruno/KatanA
+          ref: 4f6a6287c650a38633c7baeb544a92e739c68567
+          path: katana
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
@@ -68,6 +86,12 @@ jobs:
             "${{ inputs.version }}" \
             "${{ github.event.pull_request.head.ref }}"
 
+      - name: Reject partial manual release
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_crates != true
+        run: |
+          echo "workflow_dispatch releases must publish crates and run completion audits. Use release-preflight for dry runs." >&2
+          exit 1
+
       - name: Release check
         env:
           GH_TOKEN: ${{ github.token }}
@@ -79,7 +103,15 @@ jobs:
         run: |
           git fetch --force origin "refs/tags/${TAG}:refs/tags/${TAG}" || true
           if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
-            echo "Tag ${TAG} already exists."
+            tag_commit="$(git rev-list -n 1 "refs/tags/${TAG}")"
+            head_commit="$(git rev-parse HEAD)"
+            if [[ "${tag_commit}" != "${head_commit}" ]]; then
+              echo "Tag ${TAG} already exists but does not point to current HEAD." >&2
+              echo "tag_commit=${tag_commit}" >&2
+              echo "head_commit=${head_commit}" >&2
+              exit 1
+            fi
+            echo "Tag ${TAG} already exists and points to current HEAD."
             exit 0
           fi
           git config user.name "github-actions[bot]"
@@ -101,3 +133,8 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: bash scripts/release/publish-crates.sh "${{ steps.version.outputs.version }}"
+      - name: Verify public release completion
+        if: github.event_name == 'pull_request' || inputs.publish_crates == true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: just VERSION="${{ steps.version.outputs.version }}" release-completion-audit

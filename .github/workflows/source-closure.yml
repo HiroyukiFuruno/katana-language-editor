@@ -1,0 +1,242 @@
+name: source-closure
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '**.rs'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'Justfile'
+      - 'docs/v0-1-0-**'
+      - 'docs/v0-1-0-parity-manifest-schema.md'
+      - 'docs/v0-1-0-user-mandated-leaves.json'
+      - 'openspec/changes/v0-1-0-language-editor-extraction/tasks.md'
+      - '.github/workflows/source-closure.yml'
+  pull_request:
+    branches: [master]
+    paths:
+      - '**.rs'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'Justfile'
+      - 'docs/v0-1-0-**'
+      - 'docs/v0-1-0-parity-manifest-schema.md'
+      - 'docs/v0-1-0-user-mandated-leaves.json'
+      - 'openspec/changes/v0-1-0-language-editor-extraction/tasks.md'
+      - '.github/workflows/source-closure.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_TERM_COLOR: always
+  SOURCE_CLOSURE_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+
+jobs:
+  capture-profile:
+    name: Capture ${{ matrix.profile }} raw evidence
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [macos-latest, windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.profile }}
+    steps:
+      - name: Disable Git line-ending conversion
+        run: git config --global core.autocrlf false
+
+      - name: Checkout KLE
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          path: katana-language-editor
+
+      - name: Checkout fixed KatanA reference
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: HiroyukiFuruno/KatanA
+          ref: 4f6a6287c650a38633c7baeb544a92e739c68567
+          path: katana
+
+      - name: Checkout KUC dependency source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: HiroyukiFuruno/katana-ui-core
+          ref: v0.3.11
+          path: katana-ui-core
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: stable
+
+      - name: Fetch fixed KatanA dependencies
+        working-directory: katana-language-editor
+        run: cargo fetch --locked --manifest-path ../katana/Cargo.toml
+
+      - name: Capture native profile
+        working-directory: katana-language-editor
+        run: >-
+          cargo run --locked -p katana-parity-check -- source-closure capture-profile
+          --profile-id "${{ matrix.profile }}"
+          --output-dir target/source-closure
+          --katana-repo ../katana
+          --run-id "${{ env.SOURCE_CLOSURE_RUN_ID }}"
+
+      - name: Upload profile artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-closure-profile-${{ matrix.profile }}
+          path: katana-language-editor/target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}/profiles/${{ matrix.profile }}
+          if-no-files-found: error
+          retention-days: 14
+
+  assemble-validate-materialize:
+    name: Assemble and validate source closure input
+    needs: capture-profile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout KLE
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          path: katana-language-editor
+
+      - name: Checkout fixed KatanA reference
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: HiroyukiFuruno/KatanA
+          ref: 4f6a6287c650a38633c7baeb544a92e739c68567
+          path: katana
+
+      - name: Checkout KUC dependency source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: HiroyukiFuruno/katana-ui-core
+          ref: v0.3.11
+          path: katana-ui-core
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: stable
+
+      - name: Download macOS native profile artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: source-closure-profile-macos-latest
+          path: katana-language-editor/target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}/profiles/macos-latest
+
+      - name: Download Windows native profile artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: source-closure-profile-windows-latest
+          path: katana-language-editor/target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}/profiles/windows-latest
+
+      - name: Download Linux native profile artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: source-closure-profile-ubuntu-latest
+          path: katana-language-editor/target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}/profiles/ubuntu-latest
+
+      - name: Capture same-run read-only provenance
+        working-directory: katana-language-editor
+        run: >-
+          cargo run --locked -p katana-parity-check -- source-closure capture-provenance
+          --output-dir target/source-closure
+          --katana-repo ../katana
+          --kle-repo .
+          --kuc-repo ../katana-ui-core
+          --user-input docs/v0-1-0-user-mandated-leaves.json
+          --generator-schema docs/v0-1-0-parity-manifest-schema.md
+          --source-universe docs/v0-1-0-katana-editor-source-universe.md
+          --requirement-source-aliases docs/v0-1-0-editor-requirement-source-aliases.json
+          --run-id "${{ env.SOURCE_CLOSURE_RUN_ID }}"
+
+      - name: Assemble canonical input
+        working-directory: katana-language-editor
+        run: >-
+          SOURCE_CLOSURE_RUN_ID="${{ env.SOURCE_CLOSURE_RUN_ID }}"
+          cargo run --locked -p katana-parity-check -- source-closure assemble-input
+          --output-dir target/source-closure
+          --seed-manifest docs/v0-1-0-source-closure-roots.json
+          --source-universe docs/v0-1-0-katana-editor-source-universe.md
+          --katana-repo ../katana
+
+      - name: Validate canonical input
+        working-directory: katana-language-editor
+        run: >-
+          cargo run --locked -p katana-parity-check -- source-closure validate-input
+          --input target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}/assembled/source-closure-input.json
+
+      - name: Materialize source closure
+        working-directory: katana-language-editor
+        run: >-
+          cargo run --locked -p katana-parity-check -- source-closure materialize-closure
+          --input target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}/assembled/source-closure-input.json
+          --katana-repo ../katana
+          --canonical-root artifacts
+
+      - name: Validate KLE release parity
+        working-directory: katana-language-editor
+        env:
+          KATANA_PARITY_SOURCE_CLOSURE_ARTIFACT_DIR: artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts
+        run: cargo run --locked -p katana-parity-check -- --mode kle-release
+
+      - name: Upload assembled source-closure evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-closure-assembled-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            katana-language-editor/target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}
+            katana-language-editor/artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567
+          if-no-files-found: error
+          retention-days: 14
+
+  native-host-e2e:
+    name: Run protected native host E2E
+    needs: assemble-validate-materialize
+    if: github.event_name == 'workflow_dispatch' && github.ref_protected
+    runs-on: [self-hosted, macOS, katana-native-e2e]
+    steps:
+      - name: Checkout KLE
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          path: katana-language-editor
+
+      - name: Checkout fixed KatanA reference
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: HiroyukiFuruno/KatanA
+          ref: 4f6a6287c650a38633c7baeb544a92e739c68567
+          path: katana
+
+      - name: Checkout KUC dependency source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: HiroyukiFuruno/katana-ui-core
+          ref: v0.3.11
+          path: katana-ui-core
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: stable
+
+      - name: Download assembled source-closure evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: source-closure-assembled-${{ github.run_id }}-${{ github.run_attempt }}
+          path: katana-language-editor
+
+      - name: Run physical native host E2E
+        working-directory: katana-language-editor
+        run: >-
+          cargo test --manifest-path tools/katana-host-e2e/Cargo.toml --locked
+          --test physical_open_workspace -- --test-threads=1
+
+      - name: Run full KatanA editor parity gate
+        working-directory: katana-language-editor
+        run: >-
+          KATANA_PARITY_SOURCE_CLOSURE_ARTIFACT_DIR=artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts
+          KATANA_REPO=../katana just full-parity-check

@@ -34,9 +34,31 @@ env:
 jobs:
   preflight:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: katana-language-editor
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          path: katana-language-editor
+
+      - name: Checkout fixed KatanA reference
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: HiroyukiFuruno/KatanA
+          ref: 4f6a6287c650a38633c7baeb544a92e739c68567
+          path: katana
+
+      - name: Checkout katana-ui-core
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: HiroyukiFuruno/katana-ui-core
+          ref: v0.3.11
+          path: katana-ui-core
+
+      - name: Install Linux native dependencies
+        run: sudo apt-get update && sudo apt-get install --yes libgtk-3-dev libxkbcommon-dev
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
@@ -62,8 +84,8 @@ jobs:
         run: bash scripts/release/resolve-release-version.sh "${{ github.event_name }}" "" "${{ github.head_ref }}"
 
       - name: Quality gate
-        run: just check
+        run: just pre-push-check
 
-      - name: Release check
+      - name: Release preflight
         if: github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'release/v')
-        run: just VERSION="${{ steps.version.outputs.version }}" release-check
+        run: just VERSION="${{ steps.version.outputs.version }}" release-preflight-check
