@@ -35,9 +35,12 @@ fn build_fixed_reference_root() -> Result<PathBuf, String> {
 }
 
 fn create_fixed_reference_checkout(destination: &Path) -> Result<(), String> {
+    let source = std::env::var_os("KATANA_REPO")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from(KATANA_REFERENCE_REPOSITORY));
     let clone = ProcessService::create_command("git")
         .args(["clone", "--quiet", "--no-checkout", "--no-local"])
-        .arg(KATANA_REFERENCE_REPOSITORY)
+        .arg(source)
         .arg(destination)
         .output()
         .map_err(|error| format!("fixed reference clone failed to start: {error}"))?;
