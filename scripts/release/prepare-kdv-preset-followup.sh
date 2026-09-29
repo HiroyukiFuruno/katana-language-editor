@@ -70,17 +70,25 @@ has_reference_in_file() {
   grep -n --fixed-strings -- "${marker}" "${target}" >/dev/null 2>&1
 }
 
-has_marker_in_scope() {
-  local marker="$1"
-  if has_reference_in_file "${marker}" "${manifest_file}"; then
-    return 0
-  fi
-  if [[ -d "${kdv_repo}/crates" ]] && grep -R -n "${grep_args[@]}" -- "${marker}" "${kdv_repo}/crates" >/dev/null 2>&1; then
-    return 0
-  fi
-  if [[ -d "${kdv_repo}/tools" ]] && grep -R -n "${grep_args[@]}" -- "${marker}" "${kdv_repo}/tools" >/dev/null 2>&1; then
-    return 0
-  fi
+has_public_api_declaration() {
+  local module="$1"
+  local function="$2"
+  local scope
+  local source_file
+  local declaration_pattern
+
+  declaration_pattern="^[[:space:]]*pub(\\([^)]*\\))?[[:space:]]+fn[[:space:]]+${function}[[:space:]]*\\("
+  for scope in "${kdv_repo}/crates" "${kdv_repo}/tools"; do
+    [[ -d "${scope}" ]] || continue
+    while IFS= read -r source_file; do
+      if grep -E -q -- "${declaration_pattern}" "${source_file}"; then
+        return 0
+      fi
+    done < <(
+      rg --files "${scope}" -g '*.rs' |
+        rg "/${module}(/mod)?\\.rs$"
+    )
+  done
   return 1
 }
 
@@ -115,8 +123,11 @@ for marker in "${kdv_reference_markers[@]}"; do
 done
 
 missing_markers=()
-for marker in "${required_markers[@]}"; do
-  if ! has_marker_in_scope "${marker}"; then
+required_modules=(strings locale settings)
+required_functions=(en en_ltr default_editor)
+for index in "${!required_markers[@]}"; do
+  marker="${required_markers[index]}"
+  if ! has_public_api_declaration "${required_modules[index]}" "${required_functions[index]}"; then
     missing_markers+=("${marker}")
   fi
 done
@@ -138,20 +149,20 @@ if [[ "${followup_status}" == "follow-up not required" ]]; then
   cat > "${output_path}" <<EOF
 # KDV preset follow-up for ${version}
 
-All required KDV preset markers are present in this KDV version.
+All required KDV preset public declarations are present in this KDV version.
 
 - version: ${version}
 - version_bare: ${version_bare}
 - KDV repository: ${kdv_repo}
 - status: follow-up not required
-- required markers: ${required_markers[*]}
+- required public APIs: ${required_markers[*]}
 - KDV reference markers found: ${has_kdv_reference}
 - KDV reference locations: ${reference_locations_text}
 
 ## completion audit
 EOF
   for marker in "${required_markers[@]}"; do
-    printf -- '- `%s`: found\n' "${marker}" >> "${output_path}"
+    printf -- '- `%s`: public declaration found\n' "${marker}" >> "${output_path}"
   done
 
   cat >> "${output_path}" <<'EOF'
@@ -166,7 +177,7 @@ title: ${title}
 
 ## 背景
 Katana Language Editor のリリース ${version}（${version_bare}）で KDV 側の preset 連携で不足 API を確認したため、必要な follow-up の起点として出力します。
-KDV 参照有無（文字列ベース）: ${has_kdv_reference}
+KDV 参照有無: ${has_kdv_reference}
 KDV 参照箇所: ${reference_locations_text}
 status: follow-up required
 

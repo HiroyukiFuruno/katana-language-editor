@@ -9,7 +9,12 @@ use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const KUC_ACTION_TARGET: &str = "kuc.rich.inline-strong";
-const REQUIRED_STAR_SCALARS: &str = "[11088,65039]";
+#[path = "unicode_evidence.rs"]
+mod unicode_evidence;
+
+#[cfg(test)]
+use unicode_evidence::REQUIRED_STAR_SCALARS;
+use unicode_evidence::UnicodeEvidenceValidator;
 
 pub(crate) struct ConsumerArtifactRunner;
 
@@ -66,7 +71,7 @@ impl ConsumerArtifactRunner {
         let context = egui::Context::default();
         for _ in 0..expected_stage_count {
             let evidence = plan.execute_next(&context, output_dir)?;
-            validate_unicode_evidence(evidence.unicode_evidence_json())?;
+            UnicodeEvidenceValidator::validate(evidence.unicode_evidence_json())?;
         }
         if plan.remaining_stage_count() != 0 {
             return Err(format!(
@@ -87,26 +92,9 @@ impl ConsumerArtifactRunner {
     }
 }
 
-fn validate_unicode_evidence(bytes: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
-    let json = std::str::from_utf8(bytes)?;
-    for required in [
-        "\"graphemes\"",
-        "\"ime\"",
-        "\"caret\"",
-        "\"hit_tests\"",
-        "\"star\"",
-        REQUIRED_STAR_SCALARS,
-    ] {
-        if !json.contains(required) {
-            return Err(format!("KUC Unicode evidence is missing `{required}`").into());
-        }
-    }
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{ConsumerArtifactRunner, REQUIRED_STAR_SCALARS, validate_unicode_evidence};
+    use super::{ConsumerArtifactRunner, REQUIRED_STAR_SCALARS, UnicodeEvidenceValidator};
     use std::path::Path;
 
     #[test]
@@ -117,9 +105,28 @@ mod tests {
 
     #[test]
     fn kuc_evidence_validator_requires_the_full_unicode_evidence_shape() {
-        let evidence = br#"{"graphemes":[{"scalar_sequence":[11088,65039]}],"ime":{},"caret":{},"hit_tests":[],"star":{}}"#;
-        assert!(validate_unicode_evidence(evidence).is_ok());
-        assert!(validate_unicode_evidence(br#"{"graphemes":[]}"#).is_err());
+        let evidence = br#"{
+            "schema":"kuc.unicode-color-glyph-evidence",
+            "schema_version":1,
+            "graphemes":[{"scalar_sequence":[11088,65039]}],
+            "ime":{"preedit_event_seen":true,"commit_event_seen":true,"preedit_scalar_sequence":[12363],"commit_scalar_sequence":[26085]},
+            "caret":{"bounds":{"width":1,"height":26}},
+            "hit_tests":[{"target":"star"}],
+            "star":{"bounds":{"width":19,"height":26},"chromatic_pixel_count":1}
+        }"#;
+        assert!(UnicodeEvidenceValidator::validate(evidence).is_ok());
+        assert!(UnicodeEvidenceValidator::validate(br#"{"graphemes":[]}"#).is_err());
+    }
+
+    #[test]
+    fn kuc_evidence_validator_rejects_empty_unicode_evidence_sections() {
+        let evidence = br#"{
+            "schema":"kuc.unicode-color-glyph-evidence",
+            "schema_version":1,
+            "graphemes":[{"scalar_sequence":[11088,65039]}],
+            "ime":{},"caret":{},"hit_tests":[],"star":{}
+        }"#;
+        assert!(UnicodeEvidenceValidator::validate(evidence).is_err());
     }
 
     #[test]

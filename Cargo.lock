@@ -3288,6 +3288,7 @@ dependencies = [
  "katana-language-editor",
  "katana-language-editor-egui",
  "katana-ui-core",
+ "serde_json",
 ]
 
 [[package]]
