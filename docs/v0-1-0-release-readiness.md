@@ -16,6 +16,27 @@ KatanA downstream adapter are rejected as release evidence. They describe an
 older partial/fallback path and do not satisfy the current full KatanA editor
 parity, KUC-ownership, same-surface emoji, or actual-host-E2E requirements.
 
+## 2026-09-30 Current Update
+
+`katana-ui-core@0.3.17` is the exact registry dependency in the current KLE
+lockfile. `just check-types` and the macOS `just kuc-contract-check` consumer
+contract pass without KLE-owned platform policy, font hash, raw input, or
+renderer injection. This accepts only the generic KUC consumer contract.
+
+KUC #66's Linux color-emoji expected-hash correction was published in `0.3.13`.
+KUC #65 is closed: source-leaf inventory, fixture generation, and host E2E are
+KLE responsibilities. The public `ConsumerArtifactPlanV1` in `0.3.17` remains
+an exact ten-stage generic sequence, so it cannot issue distinct stages for the
+larger fixed-KatanA source-leaf set. KLE rejects that mismatch; no local UI,
+synthetic stage reuse, or unpublished KUC dependency is permitted.
+The required generic multi-stage API is tracked in
+[KUC Issue #79](https://github.com/HiroyukiFuruno/katana-ui-core/issues/79).
+
+The canonical source-closure artifact still lacks leaf-correlated
+`execution-record.json` and media records. Three-OS real-input evidence and
+Floem Issue #15's future-incompatibility fix also remain outstanding. Therefore
+KLE v0.1.0 is not release-ready.
+
 ## Current Verified Facts
 
 | Area | Current result | Evidence interpretation |
@@ -26,14 +47,14 @@ parity, KUC-ownership, same-surface emoji, or actual-host-E2E requirements.
 | KatanA runtime adoption | on 2026-09-04, fixed-source `just katana-host-e2e-context-menu` passed 5 source-inventory tests and failed its host bridge test with `UnavailableBridge`: fixed `KatanaApp` exposes neither document bootstrap nor editor-target input, while editor/context-menu routing remains internal. | This is the expected pre-adoption state. KatanA #336 is a downstream task after final v0.1.0 publication. KLE must not fabricate a bridge or alter the read-only source. |
 | source closure / parity checker | `cargo test -p katana-parity-check --locked -- --test-threads=1` passes 230 tests after RC/final mode separation. | `katana-parity-check --mode kle-release` requires source-derived KLE/KUC evidence and keeps every host result `downstream_required`; `--mode downstream-full` rejects that state until KatanA #336 records same-leaf host execution after publication. |
 | AST lint | `just ast-lint` passes after splitting the KLE artifact relay and restoring strict Storybook contract boundaries | the rule still rejects KLE-owned text surfaces, presentation, selection fields and fallback codecs; test-only negative fixtures are excluded from production source scanning rather than accepted as production code |
-| KUC generic quality gates | `katana-ui-core@0.3.5` is public as a single registry crate. Its Release workflow run `33804772291` completed successfully. | KLE resolves that public crate with the `egui` and `text-raster` features. KUC's cross-platform Unicode contract is dependency evidence, not KLE release evidence. |
+| KUC generic quality gates | `katana-ui-core@0.3.17` is the current exact registry dependency. | KLE resolves it with the `egui` and `text-raster` features. KUC's generic contract is dependency evidence, not KLE release evidence. |
 | Storybook unit/contract suite | `just check` on 2026-09-04 ran the KUC v0.3.5 46-frame motion test to completion: 1 passed, 31 filtered, 461.55s. Its workspace suite also passed 361 tests. | KLE must not replace the required one continuous full-plan video with segmented clips or a KLE-local compositor. This is KUC-consumer evidence only; it is not full-editor Storybook coverage. |
-| KUC root contract | partial: public variable-viewport writer consumed and verified; source-closure full-editor coverage pending | KUC owns the retained text-command root, raster/artifact writer and physical selection continuation. The public v0.3.5 writer created one continuous variable-viewport artifact with 46 source frames, 46 decoded frames, the `900x520` resize stage, `⭐️` scalar sequence `[U+2B50, U+FE0F]`, IME preedit/commit, hit test, and AccessKit evidence. This does not establish KLE full-editor parity. |
-| KUC Unicode retained-root artifact | the public v0.3.5 contract covers exact `⭐️` / `☆` distinction, color pixels, IME preedit/commit, hit testing, and `MultilineTextInput` accessibility on macOS, Windows, and Linux CI. | this proves KUC generic-root behavior. KLE still needs current-version consumption evidence and all KLE gates before publication. |
+| KUC root contract | partial: `0.3.17` generic consumer passes on macOS; source-closure full-editor coverage is absent. | KUC owns the retained text-command root, raster/artifact writer, and physical selection continuation. The ten-stage plan does not establish a leaf-correlated KLE full-editor artifact. |
+| KUC Unicode retained-root artifact | KUC #66's Linux expected-hash correction is published in `0.3.13`; KLE's current local acceptance is macOS only. | KLE still requires independently recorded Windows/Linux real-input, exact `⭐️` VS16 color-glyph, measurement, and hit-test evidence before publication. |
 | KLE platform text / emoji | invalid as parity evidence | the current KLE checks only code-point retention, an identifier string containing `⭐️`, `egui::FullOutput.shapes`, and aggregate paint plans. None asserts the final opaque KUC-root pixel glyph, shared catalog identity, or KatanA-host effect for Japanese IME, exact color `⭐️` VS16, or ZWJ behavior |
 | actual KatanA host E2E | fixed KatanA cannot execute KLE before it adopts the published final crate. | KatanA #336 must run physical host E2E against the exact final registry dependency after publication. KLE/KUC must not create a fake bridge or edit the read-only reference. |
 | source analysis | incomplete | direct editor, preview, document-tab, diagnostics, and editor-frame breadcrumb/source-address seeds are documented, but the required `syn`-derived closure/branch catalog has not been generated |
-| current fail-closed parity gate | `just check` keeps the advisory `katana-parity-check --mode rc`; `release-check` invokes `kle-release-parity-check`. Both reject missing canonical source-closure artifacts; `kle-release` requires source-derived three-OS leaf binding and a published KUC multi-leaf producer. KUC #65 tracks that producer contract and KUC #66 tracks the current Linux color-emoji registry failure. `full-parity-check` remains a post-publication downstream host gate. | Local KUC/KLE test success cannot be promoted to release readiness until the three OS closure and leaf-correlated KUC evidence exist. |
+| current fail-closed parity gate | `just check` keeps the advisory `katana-parity-check --mode rc`; `release-check` invokes `kle-release-parity-check`. Both reject missing canonical source-closure artifacts; `kle-release` requires source-derived three-OS leaf binding and distinct KUC stages. KUC #65 assigns source-leaf/fixture/host-E2E work to KLE, while the public v1 plan remains fixed to ten stages; [KUC #79](https://github.com/HiroyukiFuruno/katana-ui-core/issues/79) tracks the generic multi-stage API. `full-parity-check` remains a post-publication downstream host gate. | Local KUC/KLE test success cannot be promoted to release readiness until the three OS closure and leaf-correlated KUC evidence exist. |
 
 ## Historical Baseline Evidence
 
@@ -80,9 +101,8 @@ same source/KLE/KUC/generator fingerprint set:
 1. The KUC release that supplies every KLE-resolved direct and transitive
    `katana-ui-core*` dependency is published first, each required crate version
    is visible on crates.io, and a clean external KLE package resolution selects
-   exactly that KUC release set. `katana-ui-core@0.3.5` satisfies the registry
-   availability condition and exposes the KUC #34 variable-viewport artifact
-   API. KLE must not tag, create a GitHub Release, or publish either KLE crate
+   exactly that KUC release set. `katana-ui-core@0.3.17` satisfies the current
+   registry-availability condition. KLE must not tag, create a GitHub Release, or publish either KLE crate
    before it verifies that exact resolved version.
 2. KUC publishes and strictly tests the generic opaque TextSurface/CommandChrome/
    ContextMenu/TabStrip/BreadcrumbNavigator/SourceAddressBar/StatusStrip/

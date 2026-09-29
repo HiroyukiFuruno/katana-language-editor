@@ -14,17 +14,16 @@ before the final release gate passes.
 
 ## Current Gap
 
-`katana-ui-core@0.3.11` publishes `ConsumerArtifactPlanIssuer` and the opaque
+`katana-ui-core@0.3.17` publishes `ConsumerArtifactPlanIssuer` and the opaque
 consumer-artifact execution path. Its ten-stage
 `GenericInteractionClass::FULL_EDITOR_SEQUENCE` is KUC-owned and emits physical
 PNG, Unicode/IME/measurement/hit-test evidence, and one-shot receipts. KLE must
 use that published registry API; it must not reproduce a renderer, raw-input
 builder, glyph fallback, or stage writer.
 
-The published `0.3.11` consumer fails closed on the Ubuntu runner because its
-KUC-owned Linux `NotoColorEmoji.ttf` expected hash is absent. This is tracked
-as [KUC Issue #66](https://github.com/HiroyukiFuruno/katana-ui-core/issues/66).
-KLE must not inject a font path, hash, or fallback to conceal it.
+KUC Issue #66's Linux color-emoji expected-hash correction was published in
+`0.3.13`; the `0.3.17` registry consumer is the current KLE dependency. KLE
+must not inject a font path, hash, or fallback to conceal a platform failure.
 
 KLE's current consumer uses synthetic identifiers
 `kle-full-editor-stage-<index>` and the fixed generic action target
@@ -40,10 +39,12 @@ observable leaves (including 17 code-block kinds, 12 toolbar commands, search,
 replace, diagnostics, gutter, context-menu, scroll, and IME branches). The v1
 issuer accepts the ten generic classes exactly once and therefore cannot bind
 every source-derived leaf without reusing an unrelated stage. KLE must reject
-that mismatch and raise a KUC Issue for a generic plan version that supports a
-distinct KUC stage per leaf while retaining KUC ownership of interaction,
-rendering, and opaque transport. That requirement is tracked in
-[KUC Issue #65](https://github.com/HiroyukiFuruno/katana-ui-core/issues/65).
+that mismatch. KUC Issue #65 is closed with source-leaf inventory, fixture
+generation, and host E2E ownership assigned to KLE; it does not make the fixed
+ten-stage v1 plan a multi-leaf artifact API. The required generic capability is
+tracked in [KUC Issue #79](https://github.com/HiroyukiFuruno/katana-ui-core/issues/79).
+KLE must not work around it with a local renderer, synthetic stage reuse, or an
+unpublished KUC dependency.
 
 ## Required KUC Consumer Contract
 
