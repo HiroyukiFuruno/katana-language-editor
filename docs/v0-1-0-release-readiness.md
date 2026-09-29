@@ -37,6 +37,11 @@ The canonical source-closure artifact still lacks leaf-correlated
 Floem Issue #15's future-incompatibility fix also remain outstanding. Therefore
 KLE v0.1.0 is not release-ready.
 
+The Release workflow invokes the reusable three-OS `source-closure` workflow
+within its own run, downloads only that run's assembled artifact, and sets the
+canonical artifact directory before `release-check`. This handoff is audited
+statically; it is not evidence until the source-closure artifact itself passes.
+
 ## Current Verified Facts
 
 | Area | Current result | Evidence interpretation |

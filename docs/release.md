@@ -47,14 +47,15 @@ GitHub のブランチ保護（branch protection）では、KML と同じ形で�
 順序は次の通り。
 
 1. KUC 側で `katana-ui-core@0.3.17` を公開し、KLE 外部 package resolution が同 crate の `egui` / `text-raster` / `storybook-artifacts` feature を選ぶことを確認する。この KUC release は KLE tag / GitHub Release / KLE crate publish より先でなければならない。
-2. `just VERSION=vX.Y.Z release-check`。KLE の公開前 evidence を fail-closed で検証する
-3. リリースタグ（release tag）作成。既存 tag がある場合は current HEAD と一致する場合だけ続行
-4. GitHub リリース（GitHub Release）作成
-5. `katana-language-editor` を crates.io に公開
-6. crates.io で `katana-language-editor` が見えるまで待機
-7. `katana-language-editor-egui` を crates.io に公開
-8. crates.io で `katana-language-editor-egui` が見えるまで待機
-9. `just VERSION=vX.Y.Z release-completion-audit` で tag / GitHub Release / crates.io を read-only 監査する。tag は存在だけでなく、既定では audit 実行時の `HEAD`、必要なら `EXPECTED_RELEASE_COMMIT` で指定した release 対象 commit と一致しなければならない
+2. 同一の Release run から reusable `source-closure` を三 OS で実行し、assemble 済み artifact を Release job へ download する。release job はこの run の artifact 以外を参照しない
+3. `just VERSION=vX.Y.Z release-check`。KLE の公開前 evidence を fail-closed で検証する
+4. リリースタグ（release tag）作成。既存 tag がある場合は current HEAD と一致する場合だけ続行
+5. GitHub リリース（GitHub Release）作成
+6. `katana-language-editor` を crates.io に公開
+7. crates.io で `katana-language-editor` が見えるまで待機
+8. `katana-language-editor-egui` を crates.io に公開
+9. crates.io で `katana-language-editor-egui` が見えるまで待機
+10. `just VERSION=vX.Y.Z release-completion-audit` で tag / GitHub Release / crates.io を read-only 監査する。tag は存在だけでなく、既定では audit 実行時の `HEAD`、必要なら `EXPECTED_RELEASE_COMMIT` で指定した release 対象 commit と一致しなければならない
 
 KatanA #336 の採用は final `v0.1.0` 公開後の下流作業である。公開済みの exact registry version を採用して行う physical host E2E は `full-parity-check` で別に検証し、KLE の公開前 gate には含めない。KDV follow-up は final 公開後に Issue 経由で行う。
 

@@ -5,6 +5,7 @@ impl ReleaseGateAudit {
     pub(crate) fn validate_release_workflow_ordering() -> Result<(), String> {
         let lines: Vec<&str> = RELEASE_WORKFLOW.lines().collect();
         Self::validate_release_workflow_manual_guard_from_lines(&lines)?;
+        Self::validate_release_source_closure_handoff_from_lines(&lines)?;
         let names = [
             "Reject partial manual release",
             "Release check",
@@ -23,6 +24,44 @@ impl ReleaseGateAudit {
         if !indices.windows(2).all(|pair| pair[0] < pair[1]) {
             return Err(
                 "Release workflow must run release gates and public completion audits in order"
+                    .to_string(),
+            );
+        }
+        Ok(())
+    }
+
+    pub(crate) fn validate_release_source_closure_handoff_from_lines(
+        lines: &[&str],
+    ) -> Result<(), String> {
+        let required = [
+            "  source-closure:",
+            "    uses: ./.github/workflows/source-closure.yml",
+            "    needs: source-closure",
+            "      - name: Download validated source-closure evidence",
+            "          name: source-closure-assembled-${{ github.run_id }}-${{ github.run_attempt }}",
+            "          path: katana-language-editor",
+            "          KATANA_PARITY_SOURCE_CLOSURE_ARTIFACT_DIR: artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts",
+        ];
+        for needle in required {
+            if !lines.contains(&needle) {
+                return Err(format!(
+                    "Release workflow is missing same-run source-closure handoff evidence: {needle}"
+                ));
+            }
+        }
+
+        let download = Self::line_index(
+            lines,
+            "      - name: Download validated source-closure evidence",
+        )
+        .ok_or_else(|| {
+            "Release workflow is missing source-closure artifact download".to_string()
+        })?;
+        let release_check = Self::line_index(lines, "      - name: Release check")
+            .ok_or_else(|| "Release workflow is missing release check".to_string())?;
+        if download >= release_check {
+            return Err(
+                "Release workflow must download same-run source-closure evidence before release-check"
                     .to_string(),
             );
         }

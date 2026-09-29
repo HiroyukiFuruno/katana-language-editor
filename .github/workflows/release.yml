@@ -28,7 +28,13 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  source-closure:
+    uses: ./.github/workflows/source-closure.yml
+    permissions:
+      contents: read
+
   release:
+    needs: source-closure
     if: >
       github.event_name == 'workflow_dispatch' || (
         github.event.pull_request.merged == true &&
@@ -92,9 +98,16 @@ jobs:
           echo "workflow_dispatch releases must publish crates and run completion audits. Use release-preflight for dry runs." >&2
           exit 1
 
+      - name: Download validated source-closure evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: source-closure-assembled-${{ github.run_id }}-${{ github.run_attempt }}
+          path: katana-language-editor
+
       - name: Release check
         env:
           GH_TOKEN: ${{ github.token }}
+          KATANA_PARITY_SOURCE_CLOSURE_ARTIFACT_DIR: artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts
         run: just VERSION="${{ steps.version.outputs.version }}" release-check
 
       - name: Create release tag

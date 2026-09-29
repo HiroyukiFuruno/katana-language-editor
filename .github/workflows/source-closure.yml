@@ -1,6 +1,7 @@
 name: source-closure
 
 on:
+  workflow_call:
   push:
     branches: [master]
     paths:
