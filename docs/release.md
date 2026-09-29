@@ -58,6 +58,7 @@ GitHub のブランチ保護（branch protection）では、KML と同じ形で�
 10. `just VERSION=vX.Y.Z release-completion-audit` で tag / GitHub Release / crates.io を read-only 監査する。tag は存在だけでなく、既定では audit 実行時の `HEAD`、必要なら `EXPECTED_RELEASE_COMMIT` で指定した release 対象 commit と一致しなければならない
 
 KatanA #336 の採用は final `v0.1.0` 公開後の下流作業である。公開済みの exact registry version を採用して行う physical host E2E は `full-parity-check` で別に検証し、KLE の公開前 gate には含めない。KDV follow-up は final 公開後に Issue 経由で行う。
+`source-closure` の native host E2E は protected `workflow_dispatch` で `run_native_host_e2e=true` を明示した場合だけ実行する。Release からの reusable 呼び出しは常にこの input の既定値 `false` を使う。
 
 `release-completion-audit` は最終完了 gate として最初の未達で失敗する。
 複数の未達を同時に確認したい場合は `release-blocker-audit` を使い、remote tag、tag commit、GitHub Release、crates.io 2 crate、KUC registry dependency、dependency compatibility を一度に列挙する。

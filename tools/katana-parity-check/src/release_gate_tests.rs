@@ -123,7 +123,7 @@ fn source_closure_materialize_recipe_rejects_unsupported_option() -> Result<(), 
 #[test]
 fn source_closure_native_host_contract_rejects_push_execution() -> Result<(), String> {
     let lines = source_closure_workflow_fixture().replace(
-        "if: github.event_name == 'workflow_dispatch' && github.ref_protected",
+        "if: github.event_name == 'workflow_dispatch' && github.ref_protected && inputs.run_native_host_e2e == true",
         "if: github.event_name == 'push'",
     );
     let lines = lines.lines().collect::<Vec<_>>();

@@ -2,6 +2,11 @@ name: source-closure
 
 on:
   workflow_call:
+    inputs:
+      run_native_host_e2e:
+        required: false
+        default: false
+        type: boolean
   push:
     branches: [master]
     paths:
@@ -27,6 +32,12 @@ on:
       - 'openspec/changes/v0-1-0-language-editor-extraction/tasks.md'
       - '.github/workflows/source-closure.yml'
   workflow_dispatch:
+    inputs:
+      run_native_host_e2e:
+        description: "Run the protected post-publication native host E2E."
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -197,7 +208,7 @@ jobs:
   native-host-e2e:
     name: Run protected native host E2E
     needs: assemble-validate-materialize
-    if: github.event_name == 'workflow_dispatch' && github.ref_protected
+    if: github.event_name == 'workflow_dispatch' && github.ref_protected && inputs.run_native_host_e2e == true
     runs-on: [self-hosted, macOS, katana-native-e2e]
     steps:
       - name: Checkout KLE

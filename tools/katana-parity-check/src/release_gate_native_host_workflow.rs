@@ -16,10 +16,22 @@ impl ReleaseGateAudit {
     ) -> Result<(), String> {
         let assemble = Self::job_section(lines, "assemble-validate-materialize")?;
         let native = Self::job_section(lines, "native-host-e2e")?;
+        if !lines.contains(&"  workflow_call:")
+            || lines
+                .iter()
+                .filter(|line| line.trim() == "run_native_host_e2e:")
+                .count()
+                != 2
+        {
+            return Err(
+                "source-closure must expose explicit native host E2E inputs for reusable and manual runs"
+                    .to_string(),
+            );
+        }
         Self::exact_trimmed_line(native, "needs: assemble-validate-materialize")?;
         Self::exact_trimmed_line(
             native,
-            "if: github.event_name == 'workflow_dispatch' && github.ref_protected",
+            "if: github.event_name == 'workflow_dispatch' && github.ref_protected && inputs.run_native_host_e2e == true",
         )?;
         Self::exact_trimmed_line(native, "runs-on: [self-hosted, macOS, katana-native-e2e]")?;
 
@@ -173,7 +185,11 @@ fn validate_native_job_restrictions(lines: &[&str]) -> Result<(), String> {
         .filter(|line| line.trim_start().starts_with("if:"))
         .map(|line| line.trim())
         .collect::<Vec<_>>();
-    if if_lines != ["if: github.event_name == 'workflow_dispatch' && github.ref_protected"] {
+    if if_lines
+        != [
+            "if: github.event_name == 'workflow_dispatch' && github.ref_protected && inputs.run_native_host_e2e == true",
+        ]
+    {
         return Err(
             "source-closure native host E2E must have exactly one protected workflow_dispatch condition"
                 .to_string(),
