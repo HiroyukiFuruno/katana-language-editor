@@ -36,11 +36,13 @@ pub enum ChildLaunchError {
     Command(RequestValidationError),
     WorkspaceConfig(WorkspaceConfigError),
     Spawn(std::io::Error),
+    Build(std::process::ExitStatus),
     Wait(std::io::Error),
     Kill(std::io::Error),
 }
 
 pub struct KatanACommand {
+    pub(crate) build_command: Command,
     pub(crate) command: Command,
 }
 

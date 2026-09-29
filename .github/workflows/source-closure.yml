@@ -270,7 +270,7 @@ jobs:
       - name: Run physical native host E2E
         working-directory: katana-language-editor
         run: >-
-          cargo test --manifest-path tools/katana-host-e2e/Cargo.toml --locked
+          KATANA_REPO=../katana cargo test --manifest-path tools/katana-host-e2e/Cargo.toml --locked
           --test physical_open_workspace -- --test-threads=1
 
       - name: Run full KatanA editor parity gate

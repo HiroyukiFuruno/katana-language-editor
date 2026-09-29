@@ -60,6 +60,7 @@ GitHub のブランチ保護（branch protection）では、KML と同じ形で�
 KatanA #336 の採用は final `v0.1.0` 公開後の下流作業である。公開済みの exact registry version を採用して行う physical host E2E は `full-parity-check` で別に検証し、KLE の公開前 gate には含めない。KDV follow-up は final 公開後に Issue 経由で行う。
 `source-closure` の native host E2E は protected `workflow_dispatch` で `run_native_host_e2e=true` を明示した場合だけ実行する。Release からの reusable 呼び出しは常にこの input の既定値 `false` を使う。
 native host E2E は canonical source-closure artifact と同じ run が生成した専用 layout artifact を `target/source-closure` へ展開する。host test の source-derived target、context-menu manifest、macOS probe を別 run や任意の環境変数から受け取らない。
+physical test には checkout 済み固定 KatanA を `KATANA_REPO=../katana` として渡し、launcher は build 後の KatanA binary を直接起動する。Cargo wrapper PID を Accessibility または終了処理の対象にしない。
 
 `release-completion-audit` は最終完了 gate として最初の未達で失敗する。
 複数の未達を同時に確認したい場合は `release-blocker-audit` を使い、remote tag、tag commit、GitHub Release、crates.io 2 crate、KUC registry dependency、dependency compatibility を一度に列挙する。

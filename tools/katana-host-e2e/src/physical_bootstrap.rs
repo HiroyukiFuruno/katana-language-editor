@@ -19,6 +19,7 @@ impl fmt::Display for ChildLaunchError {
                 )
             }
             Self::Spawn(error) => write!(formatter, "KatanA child failed to start: {error}"),
+            Self::Build(status) => write!(formatter, "KatanA build failed: {status}"),
             Self::Wait(error) => write!(formatter, "KatanA child wait failed: {error}"),
             Self::Kill(error) => write!(formatter, "KatanA child termination failed: {error}"),
         }
@@ -33,22 +34,32 @@ impl KatanACommand {
             .prepare_workspace_config()
             .map_err(ChildLaunchError::WorkspaceConfig)?;
         let manifest_path = request.fixed_katana_root.join("Cargo.toml");
-        let mut command = ProcessService::create_command("cargo");
-        command
-            .arg("run")
+        let mut build_command = ProcessService::create_command("cargo");
+        build_command
+            .arg("build")
             .arg("--manifest-path")
-            .arg(manifest_path)
+            .arg(&manifest_path)
             .arg("-p")
             .arg("katana-ui")
             .arg("--bin")
             .arg("KatanA")
             .current_dir(request.fixed_katana_root())
-            .env("CARGO_TARGET_DIR", &request.target_dir)
+            .env("CARGO_TARGET_DIR", &request.target_dir);
+        let mut command = ProcessService::create_command(katana_binary_path(request));
+        command
+            .current_dir(request.fixed_katana_root())
             .env("KATANA_CONFIG_DIR", &request.config_dir);
-        Ok(Self { command })
+        Ok(Self {
+            build_command,
+            command,
+        })
     }
 
     pub fn spawn(mut self) -> Result<KatanAChild, ChildLaunchError> {
+        let build_status = self.build_command.status().map_err(ChildLaunchError::Spawn)?;
+        if !build_status.success() {
+            return Err(ChildLaunchError::Build(build_status));
+        }
         let child = self.command.spawn().map_err(ChildLaunchError::Spawn)?;
         Ok(KatanAChild { child })
     }
@@ -57,6 +68,16 @@ impl KatanACommand {
     fn command(&self) -> &Command {
         &self.command
     }
+
+    #[cfg(test)]
+    fn build_command(&self) -> &Command {
+        &self.build_command
+    }
+}
+
+fn katana_binary_path(request: &LaunchRequest) -> std::path::PathBuf {
+    let binary = if cfg!(windows) { "KatanA.exe" } else { "KatanA" };
+    request.target_dir.join("debug").join(binary)
 }
 
 impl KatanAChild {
@@ -122,26 +143,30 @@ mod tests {
     }
 
     #[test]
-    fn command_has_fixed_katana_args_and_sandboxed_environment() {
+    fn command_builds_then_launches_the_fixed_katana_binary() {
         let fixture = Fixture::new();
         let request = LaunchRequest::new(&fixture.fixed, &fixture.sandbox, &fixture.workspace)
             .expect("valid request");
         let command = KatanACommand::from_request(&request).expect("command");
         assert!(request.workspace_config_path().is_file());
-        let args: Vec<OsString> = command.command().get_args().map(OsString::from).collect();
-        assert_eq!(args[0], "run");
-        assert_eq!(args[1], "--manifest-path");
+        let build_args: Vec<OsString> = command
+            .build_command()
+            .get_args()
+            .map(OsString::from)
+            .collect();
+        assert_eq!(build_args[0], "build");
+        assert_eq!(build_args[1], "--manifest-path");
         assert_eq!(
-            args[2],
+            build_args[2],
             request.fixed_katana_root().join("Cargo.toml").as_os_str()
         );
-        assert_eq!(args[3], "-p");
-        assert_eq!(args[4], "katana-ui");
-        assert_eq!(args[5], "--bin");
-        assert_eq!(args[6], "KatanA");
+        assert_eq!(build_args[3], "-p");
+        assert_eq!(build_args[4], "katana-ui");
+        assert_eq!(build_args[5], "--bin");
+        assert_eq!(build_args[6], "KatanA");
         assert_eq!(
             command
-                .command()
+                .build_command()
                 .get_envs()
                 .find(|(key, _)| *key == "CARGO_TARGET_DIR")
                 .map(|(_, value)| value.unwrap()),
@@ -149,8 +174,16 @@ mod tests {
                 request
                     .execution_sandbox()
                     .join(TARGET_DIR_NAME)
-                    .as_os_str()
+                .as_os_str()
             )
+        );
+        assert_eq!(
+            command.command().get_program(),
+            request
+                .execution_sandbox()
+                .join(TARGET_DIR_NAME)
+                .join("debug")
+                .join(if cfg!(windows) { "KatanA.exe" } else { "KatanA" })
         );
         assert_eq!(
             command
@@ -162,7 +195,7 @@ mod tests {
                 request
                     .execution_sandbox()
                     .join(CONFIG_DIR_NAME)
-                    .as_os_str()
+                .as_os_str()
             )
         );
     }

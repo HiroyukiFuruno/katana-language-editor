@@ -87,6 +87,7 @@ impl NativeHostStepAudit {
             .collect::<Vec<_>>()
             .join(" ");
         for expected in [
+            "KATANA_REPO=../katana",
             "cargo test",
             "--manifest-path tools/katana-host-e2e/Cargo.toml",
             "--test physical_open_workspace",
