@@ -40,9 +40,13 @@ impl ReleaseGateAudit {
         Self::validate_fixed_source_closure_katana_checkout(native)?;
         Self::validate_source_closure_assemble_input_contract(lines)?;
         Self::validate_source_closure_provenance_capture_contract(lines)?;
-        validate_physical_test_step(native)?;
-        validate_full_editor_parity_gate_step(native)?;
-        validate_materialize_step(assemble)?;
+        crate::release_gate_native_host_steps::NativeHostStepAudit::validate_physical_test_step(
+            native,
+        )?;
+        crate::release_gate_native_host_steps::NativeHostStepAudit::validate_full_editor_parity_gate_step(native)?;
+        crate::release_gate_native_host_steps::NativeHostStepAudit::validate_materialize_step(
+            assemble,
+        )?;
         Self::validate_source_closure_input_recipes()?;
         Self::validate_source_closure_materialize_recipe()?;
 
@@ -62,72 +66,11 @@ impl ReleaseGateAudit {
                     .to_string(),
             );
         }
+        crate::release_gate_native_host_steps::NativeHostStepAudit::validate_native_host_layout_handoff(
+            assemble, native,
+        )?;
         Ok(())
     }
-}
-
-fn validate_materialize_step(lines: &[&str]) -> Result<(), String> {
-    let step = ReleaseGateAudit::step_section(lines, "Materialize source closure")?;
-    let command = step
-        .iter()
-        .map(|line| line.trim())
-        .collect::<Vec<_>>()
-        .join(" ");
-    for expected in [
-        "source-closure materialize-closure",
-        "--input target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}/assembled/source-closure-input.json",
-        "--katana-repo ../katana",
-        "--canonical-root artifacts",
-    ] {
-        if !command.contains(expected) {
-            return Err(format!(
-                "source-closure materialize step is missing `{expected}`"
-            ));
-        }
-    }
-    if command.contains("--artifact-dir") {
-        return Err(
-            "source-closure materialize step uses unsupported `--artifact-dir`".to_string(),
-        );
-    }
-    Ok(())
-}
-
-fn validate_physical_test_step(lines: &[&str]) -> Result<(), String> {
-    let step = ReleaseGateAudit::step_section(lines, "Run physical native host E2E")?;
-    let command = step
-        .iter()
-        .map(|line| line.trim())
-        .collect::<Vec<_>>()
-        .join(" ");
-    for expected in [
-        "cargo test",
-        "--manifest-path tools/katana-host-e2e/Cargo.toml",
-        "--test physical_open_workspace",
-    ] {
-        if !command.contains(expected) {
-            return Err(format!(
-                "physical native host E2E command is missing `{expected}`"
-            ));
-        }
-    }
-    Ok(())
-}
-
-fn validate_full_editor_parity_gate_step(lines: &[&str]) -> Result<(), String> {
-    let step = ReleaseGateAudit::step_section(lines, "Run full KatanA editor parity gate")?;
-    let command = step
-        .iter()
-        .map(|line| line.trim())
-        .collect::<Vec<_>>()
-        .join(" ");
-    let expected = "KATANA_REPO=../katana just full-parity-check";
-    if !command.contains(expected) {
-        return Err(format!(
-            "full KatanA editor parity gate is missing `{expected}`"
-        ));
-    }
-    Ok(())
 }
 
 fn validate_native_job_restrictions(lines: &[&str]) -> Result<(), String> {

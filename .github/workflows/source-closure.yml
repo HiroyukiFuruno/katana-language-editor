@@ -195,6 +195,16 @@ jobs:
           KATANA_PARITY_SOURCE_CLOSURE_ARTIFACT_DIR: artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts
         run: cargo run --locked -p katana-parity-check -- --mode kle-release
 
+      - name: Prepare native host E2E layout
+        working-directory: katana-language-editor
+        run: |
+          native_root="target/source-closure/native-host-e2e"
+          test ! -e "${native_root}"
+          mkdir -p "${native_root}/artifacts" "${native_root}/profiles/macos-latest"
+          install -m 0644 artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts/source-derived-native-target.json "${native_root}/artifacts/source-derived-native-target.json"
+          install -m 0644 artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts/context-menu-target-manifest.json "${native_root}/artifacts/context-menu-target-manifest.json"
+          install -m 0644 "target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}/profiles/macos-latest/probe.json" "${native_root}/profiles/macos-latest/probe.json"
+
       - name: Upload assembled source-closure evidence
         uses: actions/upload-artifact@v4
         with:
@@ -202,6 +212,16 @@ jobs:
           path: |
             katana-language-editor/target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}
             katana-language-editor/artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload native host E2E layout
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-closure-native-host-e2e-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            katana-language-editor/target/source-closure/native-host-e2e/artifacts
+            katana-language-editor/target/source-closure/native-host-e2e/profiles/macos-latest/probe.json
           if-no-files-found: error
           retention-days: 14
 
@@ -240,6 +260,12 @@ jobs:
         with:
           name: source-closure-assembled-${{ github.run_id }}-${{ github.run_attempt }}
           path: katana-language-editor
+
+      - name: Download native host E2E layout
+        uses: actions/download-artifact@v4
+        with:
+          name: source-closure-native-host-e2e-${{ github.run_id }}-${{ github.run_attempt }}
+          path: katana-language-editor/target/source-closure
 
       - name: Run physical native host E2E
         working-directory: katana-language-editor
