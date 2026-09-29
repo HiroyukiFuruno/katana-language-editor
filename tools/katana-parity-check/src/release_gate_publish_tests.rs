@@ -35,12 +35,12 @@ fn publish_crates_rejects_omitted_kuc_target() -> Result<(), String> {
 
 #[test]
 fn publish_crates_rejects_omitted_kuc_version() -> Result<(), String> {
-    let source =
-        crate::release_gate_sources::PUBLISH_CRATES.replace("${package}@${version}", "${package}");
+    let source = crate::release_gate_sources::PUBLISH_CRATES
+        .replace("${package}@${registry_version}", "${package}");
     let lines = source.lines().collect::<Vec<_>>();
     assert_error_contains(
         ReleaseGateAudit::validate_kuc_release_set_gate_from_lines(&lines),
-        "${package}@${version}",
+        "${package}@${registry_version}",
     )
 }
 
@@ -73,9 +73,10 @@ fn publish_crates_ordering_fails_without_egui_visibility_wait() -> Result<(), St
         "katana-ui-core",
         "dependency_name",
         "version",
+        "registry_version",
         "egui",
         "text-raster",
-        "cargo info \"${package}@${version}\" --registry crates-io",
+        "cargo info \"${package}@${registry_version}\" --registry crates-io",
         "publish_if_needed katana-language-editor \"${CARGO_REGISTRY_TOKEN}\"",
         "wait_for_crate katana-language-editor",
         "publish_if_needed katana-language-editor-egui \"${CARGO_REGISTRY_TOKEN}\"",

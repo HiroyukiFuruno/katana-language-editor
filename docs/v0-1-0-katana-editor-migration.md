@@ -75,7 +75,7 @@ Host-owned means KatanA remains responsible for executing file, Markdown, previe
 - `just katana-downstream-check`
 - `just storybook-window-smoke`
 - `just storybook-interaction-check`
-- `just storybook-emoji-check`
+- `just storybook-emoji-check` (KUC artifact と VS16 Unicode evidence)
 - `just storybook-contract-check`
 - `just storybook-motion-artifact` (partial KLE/KUC motion only; not full-editor release evidence)
 

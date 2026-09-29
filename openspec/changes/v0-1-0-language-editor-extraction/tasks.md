@@ -204,7 +204,7 @@ tinyvec `1.13.2` は実コンパイルに成功したため非互換の旧断定
 
 - [x] 10.1 `tools/kle-storybook/` を workspace member として追加する
 - [x] 10.2 `just storybook` を interactive window 起動コマンドとして追加し、smoke test alias にしない
-- [x] 10.3 `just storybook-window-smoke` / `just storybook-interaction-check` / `just storybook-emoji-check` / `just storybook-contract-check` を追加する
+- [x] 10.3 `just storybook-window-smoke` / `just storybook-interaction-check` / `just storybook-emoji-check` / `just storybook-contract-check` を追加する。2026-09-30に、0件で成功する `emoji_roundtrip` filter と mode を無視する `--emoji-check` を削除し、KUC artifact の実生成と exact `U+2B50 U+FE0F` evidence validator の実在テストへ置換した。
 - [/] 10.4 Storybook は `EguiLanguageEditor` 実体と document state を host し、`--interactive` 起動時に実際の `eframe` + `show(ui)` パスを開く。`--smoke`/`--motion-artifact` は同一 public `show` call の KUC TextSurface/CommandChrome artifact と actual root bounds を KUC public compositor へ渡す。`minifb`/fallback renderer/shape count/fixture glyph は release evidence から完全に除去する。KUC task 3.1g-12 と KLE 11.0f2/f3a が未完了のため現状は未完了である。
 - [/] 10.5 props / state / event / action / callback の roundtrip を Storybook crate tests で検証する。2026-08-14 の full `kle-storybook` 再実行は 22 件中 12 件成功・10 件失敗で、diagnostic gutter が actual `show` frame を生成しないため roundtrip と artifact が失敗した。全 stage が current KUC record/AccessKit/host effect を通過するまで完了扱いにしない。
 - [ ] 10.5a current Storybook gutter failure を KLE local fixture で修繕しない。`StorybookGutterContract` は `set_content` / `set_cursor` / diagnostics / hovered-row 更新後に `latest_kuc_frame` を読むため stale frame を検査している。Spark は KUC opaque-root RawInput scenario に置換し、same-frame root record/AccessKit の gutter target と actual event/effect を検証する。local post-mutation `show`、assertion 緩和、callback counter、fixture artifact はすべて不合格とする。

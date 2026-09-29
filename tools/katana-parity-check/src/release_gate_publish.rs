@@ -67,9 +67,10 @@ impl ReleaseGateAudit {
             "katana-ui-core",
             "dependency_name",
             "version",
+            "registry_version",
             "egui",
             "text-raster",
-            "${package}@${version}",
+            "${package}@${registry_version}",
             "cargo info",
         ] {
             if !lines.iter().any(|line| line.contains(required)) {

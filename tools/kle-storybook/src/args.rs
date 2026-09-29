@@ -9,7 +9,6 @@ pub enum StorybookMode {
     Interactive,
     Smoke,
     InteractionCheck,
-    EmojiCheck,
     ContractCheck,
     MotionArtifact,
 }
@@ -54,7 +53,6 @@ impl StorybookArgs {
             "--interactive" => StorybookMode::Interactive,
             "--smoke" => StorybookMode::Smoke,
             "--interaction-check" => StorybookMode::InteractionCheck,
-            "--emoji-check" => StorybookMode::EmojiCheck,
             "--contract-check" => StorybookMode::ContractCheck,
             "--motion-artifact" => StorybookMode::MotionArtifact,
             _ => return false,
@@ -131,6 +129,15 @@ mod tests {
                 .into_iter()
                 .map(str::to_string),
         );
+        assert!(matches!(
+            result.as_ref(),
+            Err(error) if error.contains("unknown KLE Storybook argument")
+        ));
+    }
+
+    #[test]
+    fn rejects_the_removed_emoji_check_alias() {
+        let result = StorybookArgs::parse(["--emoji-check"].into_iter().map(str::to_string));
         assert!(matches!(
             result.as_ref(),
             Err(error) if error.contains("unknown KLE Storybook argument")

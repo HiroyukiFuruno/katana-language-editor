@@ -757,7 +757,7 @@ editor call path or a three-OS release result.
 - `just storybook` は interactive window を起動する。
 - `just storybook-window-smoke` は headless/smoke で起動と描画を検査する。
 - `just storybook-interaction-check` は KUC current root/AccessKit/typed transport/class-appropriate host effect の同一 `step_id` join を検査する。
-- `just storybook-emoji-check` は emoji/IME/text area contract を検査する。
+- `just storybook-emoji-check` は KUC が生成する emoji/IME/text area artifact と、exact VS16 Unicode evidence を検査する。
 - `just storybook-contract-check` は manual hit-test reconstruction、string parse action synthesis、static-only mock を禁止する。
 - release readiness では Storybook の live acceptance artifact を生成できる。artifact は interactive window と同じ editor surface/render path 由来である。
 - full-spec scenario は日本語、exact `⭐️` VS16、text/IME、toolbar/context menu、find/replace、gutter/diagnostics、tabs/groups、breadcrumb/source address、preview/split を一つの source-derived manifest に持つ。motion media は KUC opaque root final frame 由来であり、host effect を代替しない。

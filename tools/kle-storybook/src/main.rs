@@ -32,9 +32,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         StorybookMode::Interactive => StorybookWindow::new(args.resolved_frames())
             .run(host, args.interactive_frame_limit())?,
         StorybookMode::Smoke => StorybookWindow::new(args.resolved_frames()).run_smoke(host)?,
-        StorybookMode::InteractionCheck
-        | StorybookMode::EmojiCheck
-        | StorybookMode::ContractCheck => {
+        StorybookMode::InteractionCheck | StorybookMode::ContractCheck => {
             if args.mode == StorybookMode::ContractCheck {
                 let artifact_dir = ConsumerArtifactRunner::write_full_editor_artifact_for_run(
                     std::path::Path::new("target/acceptance/kle-storybook-consumer-artifact"),

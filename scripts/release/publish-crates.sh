@@ -50,7 +50,8 @@ if version != "=0.3.17":
     raise SystemExit("KLE v0.1.0 requires katana-ui-core v0.3.17 exactly.")
 if not {"egui", "text-raster"}.issubset(features):
     raise SystemExit("katana-ui-core must enable egui and text-raster features.")
-print(f"{dependency_name}\t{version}")
+registry_version = version.removeprefix("=")
+print(f"{dependency_name}\t{registry_version}")
 PY
 )"
 
@@ -59,13 +60,13 @@ PY
     exit 1
   }
 
-  while IFS=$'\t' read -r package version; do
-    [[ -n "${package}" && -n "${version}" ]] || {
+  while IFS=$'\t' read -r package registry_version; do
+    [[ -n "${package}" && -n "${registry_version}" ]] || {
       echo "KUC release set contains an incomplete package/version entry." >&2
       exit 1
     }
-    if ! cargo info "${package}@${version}" --registry crates-io >/dev/null 2>&1; then
-      echo "${package} ${version} is not visible on crates.io; refusing to publish KLE." >&2
+    if ! cargo info "${package}@${registry_version}" --registry crates-io >/dev/null 2>&1; then
+      echo "${package} ${registry_version} is not visible on crates.io; refusing to publish KLE." >&2
       exit 1
     fi
   done <<< "${kuc_release_set}"

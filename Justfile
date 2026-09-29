@@ -72,10 +72,11 @@ storybook-window-smoke:
 storybook-interaction-check:
     {{CARGO}} test -p kle-storybook --locked -- --test-threads=1
 
-# Verify Storybook emoji text editing fixture
+# Verify KUC-owned emoji, IME, measurement, and hit-test evidence.
 storybook-emoji-check:
-    {{CARGO}} run --locked -p kle-storybook -- --emoji-check
-    {{CARGO}} test -p kle-storybook --locked emoji_roundtrip -- --test-threads=1
+    {{CARGO}} run --locked -p kle-storybook -- --contract-check
+    {{CARGO}} test -p kle-storybook --locked exact_star_evidence_requires_scalar_and_variation_selector -- --test-threads=1
+    {{CARGO}} test -p kle-storybook --locked kuc_evidence_validator_requires_the_full_unicode_evidence_shape -- --test-threads=1
 
 # Verify Storybook contract behavior and unsupported paths
 storybook-contract-check:
