@@ -1,5 +1,6 @@
 import importlib.util
 import os
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -112,19 +113,23 @@ class KdvPresetFollowupTests(unittest.TestCase):
         self, repository: Path, output: Path, *, without_rg: bool = False
     ) -> str:
         environment = os.environ.copy()
+        command = ["bash", str(SCRIPT), "v0.1.0", str(repository), str(output)]
         if without_rg:
-            environment["PATH"] = os.pathsep.join(
-                directory
-                for directory in environment["PATH"].split(os.pathsep)
-                if not (Path(directory) / "rg").exists()
+            with tempfile.TemporaryDirectory() as isolated_path:
+                for executable in ("awk", "bash", "cat", "dirname", "find", "grep", "mkdir", "python3", "sed", "sort", "tr", "cargo"):
+                    resolved = shutil.which(executable)
+                    if resolved is None:
+                        self.fail(f"required test executable is unavailable: {executable}")
+                    os.symlink(resolved, Path(isolated_path) / executable)
+                environment["PATH"] = isolated_path
+                command[0] = str(Path(isolated_path) / "bash")
+                result = subprocess.run(
+                    command, cwd=REPOSITORY_ROOT, text=True, capture_output=True, env=environment
+                )
+        else:
+            result = subprocess.run(
+                command, cwd=REPOSITORY_ROOT, text=True, capture_output=True, env=environment
             )
-        result = subprocess.run(
-            ["bash", str(SCRIPT), "v0.1.0", str(repository), str(output)],
-            cwd=REPOSITORY_ROOT,
-            text=True,
-            capture_output=True,
-            env=environment,
-        )
         if result.returncode != 0:
             self.fail(f"follow-up script failed:\n{result.stdout}\n{result.stderr}")
         artifact = output.read_text(encoding="utf-8")
