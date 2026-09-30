@@ -24,7 +24,7 @@ fn inherent_self_static_method_is_an_exact_local_call_edge() -> TestResult {
 }
 
 #[test]
-fn trait_impl_self_static_method_remains_unresolved() -> TestResult {
+fn trait_impl_self_static_method_uses_local_inherent_definition() -> TestResult {
     let (state, _discovered, root) = scan_source_fixture(
         "trait-impl-self-static-method",
         &[(
@@ -34,13 +34,53 @@ fn trait_impl_self_static_method_remains_unresolved() -> TestResult {
         "src/lib.rs",
     )?;
 
-    assert!(state.unresolved_edges.iter().any(|edge| {
+    assert!(state.edges.iter().any(|edge| {
         edge.kind == "call"
-            && edge.to_symbol.as_deref().is_some_and(|symbol| {
-                symbol.contains("Self::apply")
-                    && symbol.contains("not an exact inherent member in the current impl")
-            })
-            && edge.lexical_resolution == Some(LexicalResolutionStatus::Unresolved)
+            && edge.to_symbol.as_deref() == Some("Self::apply")
+            && edge.to_path.as_deref() == Some("src/lib.rs")
+            && edge.lexical_resolution == Some(LexicalResolutionStatus::Local)
+    }));
+    cleanup_dir(root)?;
+    Ok(())
+}
+
+#[test]
+fn enum_variant_self_path_uses_local_definition() -> TestResult {
+    let (state, _discovered, root) = scan_source_fixture(
+        "enum-variant-self-path",
+        &[(
+            "src/lib.rs",
+            "enum Mode { Plain } impl Mode { fn all() { let _ = Self::Plain; } }",
+        )],
+        "src/lib.rs",
+    )?;
+
+    assert!(state.edges.iter().any(|edge| {
+        edge.kind == "call"
+            && edge.to_symbol.as_deref() == Some("Self::Plain")
+            && edge.to_path.as_deref() == Some("src/lib.rs")
+            && edge.lexical_resolution == Some(LexicalResolutionStatus::Local)
+    }));
+    cleanup_dir(root)?;
+    Ok(())
+}
+
+#[test]
+fn separate_inherent_impl_self_method_uses_local_definition() -> TestResult {
+    let (state, _discovered, root) = scan_source_fixture(
+        "separate-inherent-impl-self-method",
+        &[(
+            "src/lib.rs",
+            "struct Editor; impl Editor { fn run() { Self::apply(); } } impl Editor { fn apply() {} }",
+        )],
+        "src/lib.rs",
+    )?;
+
+    assert!(state.edges.iter().any(|edge| {
+        edge.kind == "call"
+            && edge.to_symbol.as_deref() == Some("Self::apply")
+            && edge.to_path.as_deref() == Some("src/lib.rs")
+            && edge.lexical_resolution == Some(LexicalResolutionStatus::Local)
     }));
     cleanup_dir(root)?;
     Ok(())

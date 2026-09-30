@@ -1,4 +1,3 @@
-use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
 use proc_macro2::Span;
@@ -7,7 +6,9 @@ use syn::{File, Item};
 use super::path_resolution::resolve_rust_name_path_candidates;
 
 mod scope;
+mod self_index;
 use scope::{Scope, scope_from_items};
+use self_index::SelfIndex;
 
 #[derive(Clone, Debug)]
 pub(super) enum LexicalResolution {
@@ -20,12 +21,14 @@ pub(super) enum LexicalResolution {
 #[derive(Clone, Debug)]
 pub(super) struct LexicalPathResolver {
     scopes: Vec<Scope>,
+    self_index: SelfIndex,
 }
 
 impl LexicalPathResolver {
     pub(super) fn from_file(file: &File) -> Self {
         Self {
             scopes: vec![scope_from_items(&file.items)],
+            self_index: SelfIndex::from_items(&file.items),
         }
     }
 
@@ -57,7 +60,7 @@ impl LexicalPathResolver {
             };
         }
 
-        self.resolve_expanded(root, current, segments, None, false, None)
+        self.resolve_expanded(root, current, segments, None)
     }
 
     pub(super) fn resolve_with_impl(
@@ -66,8 +69,8 @@ impl LexicalPathResolver {
         current: &Path,
         segments: &[String],
         impl_type: Option<&str>,
-        inherent_impl: bool,
-        inherent_members: Option<&BTreeSet<String>>,
+        _inherent_impl: bool,
+        _inherent_members: Option<&std::collections::BTreeSet<String>>,
     ) -> LexicalResolution {
         if segments.is_empty() {
             return LexicalResolution::Unresolved {
@@ -75,14 +78,7 @@ impl LexicalPathResolver {
             };
         }
 
-        self.resolve_expanded(
-            root,
-            current,
-            segments,
-            impl_type,
-            inherent_impl,
-            inherent_members,
-        )
+        self.resolve_expanded(root, current, segments, impl_type)
     }
 
     fn resolve_expanded(
@@ -91,17 +87,9 @@ impl LexicalPathResolver {
         current: &Path,
         segments: &[String],
         impl_type: Option<&str>,
-        inherent_impl: bool,
-        inherent_members: Option<&BTreeSet<String>>,
     ) -> LexicalResolution {
         if segments.first().is_some_and(|segment| segment == "Self") {
-            return self.resolve_inherent_self(
-                current,
-                segments,
-                impl_type,
-                inherent_impl,
-                inherent_members,
-            );
+            return self.resolve_inherent_self(current, segments, impl_type);
         }
 
         let (expanded, alias_span, alias_ambiguous) = self.expand_alias(segments);
@@ -134,20 +122,13 @@ impl LexicalPathResolver {
         current: &Path,
         segments: &[String],
         impl_type: Option<&str>,
-        inherent_impl: bool,
-        inherent_members: Option<&BTreeSet<String>>,
     ) -> LexicalResolution {
-        let method = segments.get(1);
-        let defined = impl_type
-            .filter(|_| inherent_impl && segments.len() == 2)
-            .and(inherent_members)
-            .is_some_and(|members| method.is_some_and(|method| members.contains(method)));
-        if defined {
+        if impl_type.is_some_and(|type_name| self.self_index.contains(type_name, segments)) {
             return LexicalResolution::Local(current.to_path_buf());
         }
         LexicalResolution::Unresolved {
             reason: format!(
-                "path `{}` is not an exact inherent member in the current impl",
+                "path `{}` has no exact local type member",
                 segments.join("::")
             ),
         }
