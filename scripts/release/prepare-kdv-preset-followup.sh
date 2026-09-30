@@ -75,13 +75,12 @@ has_reference_in_file() {
   grep -n --fixed-strings -- "${marker}" "${target}" >/dev/null 2>&1
 }
 
-has_public_api_declaration() {
-  local module="$1"
-  local function="$2"
+has_public_preset_surface() {
   python3 "${PUBLIC_API_CHECKER}" \
     --manifest "${manifest_file}" \
-    --module "${module}" \
-    --function "${function}"
+    --required-api strings:en \
+    --required-api locale:en_ltr \
+    --required-api settings:default_editor
 }
 
 for marker in "${kdv_reference_markers[@]}"; do
@@ -115,14 +114,9 @@ for marker in "${kdv_reference_markers[@]}"; do
 done
 
 missing_markers=()
-required_modules=(strings locale settings)
-required_functions=(en en_ltr default_editor)
-for index in "${!required_markers[@]}"; do
-  marker="${required_markers[index]}"
-  if ! has_public_api_declaration "${required_modules[index]}" "${required_functions[index]}"; then
-    missing_markers+=("${marker}")
-  fi
-done
+if ! has_public_preset_surface; then
+  missing_markers=("${required_markers[@]}")
+fi
 
 if [[ "${#missing_markers[@]}" -eq 0 ]]; then
   followup_status="follow-up not required"

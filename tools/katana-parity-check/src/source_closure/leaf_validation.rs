@@ -7,6 +7,10 @@ use super::validator_helpers::{
     duplicates, is_canonical_profile_set_list, is_placeholder, is_terminal_status,
     kle_mounted_in_katana,
 };
+#[path = "leaf_validation/profile_partition.rs"]
+mod profile_partition;
+
+use profile_partition::has_complete_profile_partition;
 
 pub(super) fn validate(
     actions: &ActionOriginsArtifact,
@@ -143,9 +147,18 @@ fn validate_branches(
                 branch.branch_id
             ));
         }
-        if !is_canonical_profile_set_list(&branch.active_profile_ids) {
+        if !has_complete_profile_partition(
+            &branch.active_profile_ids,
+            &branch.inactive_profile_predicates,
+        ) {
             errors.push(format!(
-                "branch-catalog branch {} has invalid/missing active profiles",
+                "branch-catalog branch {} has invalid active/inactive profile partition",
+                branch.branch_id
+            ));
+        }
+        if branch.kind != "cfg" && !branch.inactive_profile_predicates.is_empty() {
+            errors.push(format!(
+                "branch-catalog non-cfg branch {} has inactive profile predicates",
                 branch.branch_id
             ));
         }

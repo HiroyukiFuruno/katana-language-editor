@@ -39,15 +39,11 @@ pub(super) fn materialize_branch_catalog(
     profiles: &[ProfileRecord],
     katana_root: &std::path::Path,
 ) -> Result<BranchCatalogArtifact, String> {
-    let profile_ids = profiles
-        .iter()
-        .map(|profile| profile.id.clone())
-        .collect::<Vec<_>>();
     let mut branches = state
         .edges
         .iter()
         .filter(|edge| is_branch_kind(&edge.kind))
-        .map(|edge| record::from_edge(edge, profiles, &profile_ids, katana_root))
+        .map(|edge| record::from_edge(edge, profiles, katana_root))
         .collect::<Result<Vec<_>, _>>()?;
 
     branches.sort_by(|left, right| left.branch_id.cmp(&right.branch_id));

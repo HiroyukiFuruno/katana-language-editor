@@ -146,6 +146,28 @@ class KdvPresetFollowupTests(unittest.TestCase):
             text=True,
         )
 
+    def split_preset_surface_across_workspace_packages(self, repository: Path) -> None:
+        workspace = repository / "Cargo.toml"
+        workspace.write_text(
+            workspace.read_text(encoding="utf-8").replace(
+                '"crates/kle-types"]', '"crates/kle-types", "crates/strings-only"]'
+            ),
+            encoding="utf-8",
+        )
+        source = repository / "crates/strings-only/src"
+        source.mkdir(parents=True)
+        (source.parent / "Cargo.toml").write_text(
+            '[package]\nname = "strings-only"\nversion = "0.1.0"\nedition = "2024"\n'
+            '[dependencies]\nkatana-language-editor = { path = "../kle-types" }\n',
+            encoding="utf-8",
+        )
+        (source / "lib.rs").write_text(
+            "pub mod strings { pub fn en() -> katana_language_editor::Strings { "
+            "katana_language_editor::Strings } }\n",
+            encoding="utf-8",
+        )
+        self.generate_lockfile(repository)
+
     def write_module(
         self,
         source: Path,
@@ -246,6 +268,13 @@ class KdvPresetFollowupTests(unittest.TestCase):
                 "status: follow-up not required",
                 self.run_followup(renamed_repository, renamed_output),
             )
+
+            split_output = root / "split.md"
+            split_repository = self.create_kdv_repository(root / "split", "pub(crate)")
+            self.split_preset_surface_across_workspace_packages(split_repository)
+            split_result = self.run_followup(split_repository, split_output)
+            self.assertIn("status: follow-up required", split_result)
+            self.assertIn("- `strings::en()`", split_result)
 
             restricted_output = root / "restricted.md"
             restricted_repository = self.create_kdv_repository(root / "restricted", "pub(crate)")

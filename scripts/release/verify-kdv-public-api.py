@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 import argparse
 import json
 import subprocess
@@ -65,8 +67,7 @@ def write_consumer(
     root: Path,
     package: dict[str, object],
     editor_types: dict[str, object],
-    module: str,
-    function: str,
+    required_apis: list[tuple[str, str]],
 ) -> Path:
     manifest = Path(package["manifest_path"])
     package_name = json.dumps(package["name"])
@@ -82,14 +83,17 @@ def write_consumer(
     )
     source = root / "src"
     source.mkdir()
-    expected_type = {
+    expected_types = {
         "strings": "kle_preset_types::Strings",
         "locale": "kle_preset_types::Locale",
         "settings": "kdv_audit_target::ViewerSettingsState",
-    }[module]
+    }
+    assertions = "\n".join(
+        f"let _: {expected_types[module]} = kdv_audit_target::{module}::{function}();"
+        for module, function in required_apis
+    )
     (source / "main.rs").write_text(
-        f"fn main() {{ let _: {expected_type} = "
-        f"kdv_audit_target::{module}::{function}(); }}\n",
+        f"fn main() {{ {assertions} }}\n",
         encoding="utf-8",
     )
     return root / "Cargo.toml"
@@ -105,13 +109,31 @@ def editor_types_dependency_spec(editor_types: dict[str, object]) -> str:
     raise ValueError("KLE package source is neither a local path nor a registry package")
 
 
+def parse_required_api(value: str) -> tuple[str, str]:
+    module, separator, function = value.partition(":")
+    supported_modules = {"strings", "locale", "settings"}
+    if separator != ":" or not module or not function or module not in supported_modules:
+        raise argparse.ArgumentTypeError(
+            "required API must be one of strings:<function>, locale:<function>, settings:<function>"
+        )
+    return module, function
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", required=True, type=Path)
     parser.add_argument("--source", type=Path)
-    parser.add_argument("--module", required=True)
-    parser.add_argument("--function", required=True)
+    parser.add_argument("--module", choices=("strings", "locale", "settings"))
+    parser.add_argument("--function")
+    parser.add_argument("--required-api", action="append", type=parse_required_api, default=[])
     args = parser.parse_args()
+    if bool(args.module) != bool(args.function):
+        parser.error("--module and --function must be specified together")
+    if args.required_api and args.module:
+        parser.error("--required-api cannot be combined with --module/--function")
+    if not args.required_api and not args.module:
+        parser.error("one or more --required-api values or --module/--function is required")
+    required_apis = args.required_api or [(args.module, args.function)]
 
     metadata = subprocess.run(
         [
@@ -145,7 +167,7 @@ def main() -> int:
             root = Path(directory)
             try:
                 consumer_manifest = write_consumer(
-                    root, package, editor_types, args.module, args.function
+                    root, package, editor_types, required_apis
                 )
             except ValueError:
                 continue
