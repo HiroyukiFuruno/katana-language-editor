@@ -77,7 +77,7 @@ has_public_api_declaration() {
   local source_file
   local declaration_pattern
 
-  declaration_pattern="^[[:space:]]*pub(\\([^)]*\\))?[[:space:]]+fn[[:space:]]+${function}[[:space:]]*\\("
+  declaration_pattern="^[[:space:]]*pub[[:space:]]+fn[[:space:]]+${function}[[:space:]]*\\("
   for scope in "${kdv_repo}/crates" "${kdv_repo}/tools"; do
     [[ -d "${scope}" ]] || continue
     while IFS= read -r source_file; do
