@@ -29,6 +29,12 @@ env:
 
 jobs:
   source-closure:
+    if: >
+      github.event_name == 'workflow_dispatch' || (
+        github.event.pull_request.merged == true &&
+        github.event.pull_request.head.repo.full_name == github.repository &&
+        startsWith(github.event.pull_request.head.ref, 'release/v')
+      )
     uses: ./.github/workflows/source-closure.yml
     permissions:
       contents: read

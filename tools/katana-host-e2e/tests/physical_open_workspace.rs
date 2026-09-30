@@ -61,7 +61,7 @@ fn observe_open_workspace(child: &KatanAChild, locator: &AxTargetLocator) -> Res
         .map_err(|error| format!("launched KatanA AX application binding failed: {error}"))?;
     AxWindowCreatedObserver::register(&application, child)
         .map_err(|error| format!("AX KatanA window observer registration failed: {error}"))?
-        .wait_for_notification()
+        .wait_for_existing_window_or_notification(&application)
         .map_err(|error| format!("KatanA main window AX notification was not observed: {error}"))?;
     let observer = AxWindowCreatedObserver::register(&application, child)
         .map_err(|error| format!("AX native-dialog observer registration failed: {error}"))?;
@@ -89,7 +89,7 @@ fn observe_workspace_restoration(
         .map_err(|error| format!("launched KatanA AX application binding failed: {error}"))?;
     AxWindowCreatedObserver::register(&application, child)
         .map_err(|error| format!("AX KatanA window observer registration failed: {error}"))?
-        .wait_for_notification()
+        .wait_for_existing_window_or_notification(&application)
         .map_err(|error| format!("KatanA main window AX notification was not observed: {error}"))?;
     application
         .observe_workspace_frame(contract, workspace_basename)

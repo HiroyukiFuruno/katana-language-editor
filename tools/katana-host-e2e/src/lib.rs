@@ -10,6 +10,7 @@ mod host_target_locator;
 mod native_ax_observation;
 mod physical_ax_click;
 mod physical_ax_observer;
+mod physical_ax_window;
 mod physical_bootstrap;
 mod physical_bootstrap_ax;
 mod physical_bootstrap_request;

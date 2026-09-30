@@ -9,6 +9,7 @@ pub enum AxObserverError {
     CreateFailed,
     RegisterFailed,
     RunLoopUnavailable,
+    ExistingWindowQueryFailed,
     NotificationNotObserved,
 }
 
@@ -19,6 +20,9 @@ impl fmt::Display for AxObserverError {
             Self::CreateFailed => "AX window observer could not be created",
             Self::RegisterFailed => "AX window-created notification could not be registered",
             Self::RunLoopUnavailable => "AX observer run loop is unavailable",
+            Self::ExistingWindowQueryFailed => {
+                "AX observer could not query existing application windows"
+            }
             Self::NotificationNotObserved => "AX window-created notification was not observed",
         })
     }
@@ -112,6 +116,19 @@ impl AxWindowCreatedObserver {
             Err(AxObserverError::NotificationNotObserved)
         }
     }
+
+    pub fn wait_for_existing_window_or_notification(
+        self,
+        application: &AxApplicationElement,
+    ) -> Result<(), AxObserverError> {
+        if application
+            .has_existing_window()
+            .map_err(|_| AxObserverError::ExistingWindowQueryFailed)?
+        {
+            return Ok(());
+        }
+        self.wait_for_notification()
+    }
 }
 
 #[cfg(target_os = "macos")]
@@ -158,6 +175,13 @@ impl AxWindowCreatedObserver {
     }
 
     pub fn wait_for_notification(self) -> Result<(), AxObserverError> {
+        Err(AxObserverError::UnsupportedPlatform)
+    }
+
+    pub fn wait_for_existing_window_or_notification(
+        self,
+        _application: &AxApplicationElement,
+    ) -> Result<(), AxObserverError> {
         Err(AxObserverError::UnsupportedPlatform)
     }
 }

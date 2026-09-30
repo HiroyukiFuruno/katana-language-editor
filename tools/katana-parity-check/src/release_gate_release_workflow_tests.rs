@@ -18,6 +18,20 @@ fn release_workflow_requires_same_run_source_closure_handoff() -> Result<(), Str
 }
 
 #[test]
+fn release_workflow_requires_release_predicate_for_source_closure() -> Result<(), String> {
+    let workflow = RELEASE_WORKFLOW.replace(
+        "  source-closure:\n    if: >\n      github.event_name == 'workflow_dispatch' || (\n        github.event.pull_request.merged == true &&\n        github.event.pull_request.head.repo.full_name == github.repository &&\n        startsWith(github.event.pull_request.head.ref, 'release/v')\n      )\n    uses: ./.github/workflows/source-closure.yml\n",
+        "  source-closure:\n    uses: ./.github/workflows/source-closure.yml\n",
+    );
+    let lines = workflow.lines().collect::<Vec<_>>();
+    let result = ReleaseGateAudit::validate_release_source_closure_handoff_from_lines(&lines);
+    assert_error_contains(
+        result,
+        "Release source-closure must use the release predicate",
+    )
+}
+
+#[test]
 fn release_workflow_rejects_source_closure_artifact_from_another_run() -> Result<(), String> {
     let workflow = RELEASE_WORKFLOW.replace(
         "source-closure-assembled-${{ github.run_id }}-${{ github.run_attempt }}",

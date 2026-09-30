@@ -27,7 +27,7 @@ fn native_ax_workspace_observation_is_real_or_typed_failure() -> Result<(), Stri
             .map_err(|error| format!("typed AX application failure: {error}"))?;
         AxWindowCreatedObserver::register(&application, &child)
             .map_err(|error| format!("typed AX observer registration failure: {error}"))?
-            .wait_for_notification()
+            .wait_for_existing_window_or_notification(&application)
             .map_err(|error| format!("typed AX current-frame availability failure: {error}"))?;
         application
             .observe_workspace_frame(&source, layout.workspace_basename())

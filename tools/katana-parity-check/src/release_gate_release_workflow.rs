@@ -33,6 +33,22 @@ impl ReleaseGateAudit {
     pub(crate) fn validate_release_source_closure_handoff_from_lines(
         lines: &[&str],
     ) -> Result<(), String> {
+        let source_closure = Self::job_section(lines, "source-closure")?;
+        for expected in [
+            "if: >",
+            "github.event_name == 'workflow_dispatch' || (",
+            "github.event.pull_request.merged == true &&",
+            "github.event.pull_request.head.repo.full_name == github.repository &&",
+            "startsWith(github.event.pull_request.head.ref, 'release/v')",
+            ")",
+        ] {
+            if !source_closure.iter().any(|line| line.trim() == expected) {
+                return Err(format!(
+                    "Release source-closure must use the release predicate: missing {expected}"
+                ));
+            }
+        }
+
         let required = [
             "  source-closure:",
             "    uses: ./.github/workflows/source-closure.yml",
