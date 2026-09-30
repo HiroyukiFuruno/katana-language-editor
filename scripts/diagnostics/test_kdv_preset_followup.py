@@ -113,13 +113,13 @@ class KdvPresetFollowupTests(unittest.TestCase):
     ) -> str:
         environment = os.environ.copy()
         if without_rg:
-            environment["PATH"] = ":".join(
+            environment["PATH"] = os.pathsep.join(
                 directory
-                for directory in environment["PATH"].split(":")
+                for directory in environment["PATH"].split(os.pathsep)
                 if not (Path(directory) / "rg").exists()
             )
         result = subprocess.run(
-            [str(SCRIPT), "v0.1.0", str(repository), str(output)],
+            ["bash", str(SCRIPT), "v0.1.0", str(repository), str(output)],
             cwd=REPOSITORY_ROOT,
             text=True,
             capture_output=True,
