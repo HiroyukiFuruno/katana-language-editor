@@ -1,20 +1,24 @@
 const NATIVE_DIALOG_ROLES: [&str; 2] = ["AXSheet", "AXDialog"];
+const NATIVE_DIALOG_SUBROLE: &str = "AXDialog";
 
 #[cfg(target_os = "macos")]
 pub(super) fn is_native_dialog(
     element: std::ptr::NonNull<objc2_application_services::AXUIElement>,
 ) -> bool {
-    native_dialog_role(element).as_deref().is_some_and(has_native_dialog_role)
+    let role = native_attribute(element, "AXRole");
+    let subrole = native_attribute(element, "AXSubrole");
+    has_native_dialog_attributes(role.as_deref(), subrole.as_deref())
 }
 
 #[cfg(target_os = "macos")]
-fn native_dialog_role(
+fn native_attribute(
     element: std::ptr::NonNull<objc2_application_services::AXUIElement>,
+    name: &str,
 ) -> Option<String> {
     use objc2_application_services::AXError;
     use objc2_core_foundation::{CFRetained, CFString, CFType};
 
-    let attribute = CFString::from_str("AXRole");
+    let attribute = CFString::from_str(name);
     let mut raw = std::ptr::null();
     let status = unsafe {
         element
@@ -30,19 +34,21 @@ fn native_dialog_role(
     Some(role.to_string())
 }
 
-fn has_native_dialog_role(role: &str) -> bool {
-    NATIVE_DIALOG_ROLES.contains(&role)
+fn has_native_dialog_attributes(role: Option<&str>, subrole: Option<&str>) -> bool {
+    role.is_some_and(|value| NATIVE_DIALOG_ROLES.contains(&value))
+        || (role == Some("AXWindow") && subrole == Some(NATIVE_DIALOG_SUBROLE))
 }
 
 #[cfg(test)]
 mod tests {
-    use super::has_native_dialog_role;
+    use super::has_native_dialog_attributes;
 
     #[test]
-    fn native_dialog_roles_exclude_unrelated_windows() {
-        assert!(has_native_dialog_role("AXSheet"));
-        assert!(has_native_dialog_role("AXDialog"));
-        assert!(!has_native_dialog_role("AXWindow"));
-        assert!(!has_native_dialog_role("AXPopover"));
+    fn native_dialog_attributes_require_a_dialog_role_or_subrole() {
+        assert!(has_native_dialog_attributes(Some("AXSheet"), None));
+        assert!(has_native_dialog_attributes(Some("AXDialog"), None));
+        assert!(has_native_dialog_attributes(Some("AXWindow"), Some("AXDialog")));
+        assert!(!has_native_dialog_attributes(Some("AXWindow"), None));
+        assert!(!has_native_dialog_attributes(Some("AXPopover"), Some("AXDialog")));
     }
 }

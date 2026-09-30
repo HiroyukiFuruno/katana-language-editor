@@ -30,31 +30,40 @@ def write_consumer(
     function: str,
 ) -> Path:
     manifest = Path(package["manifest_path"])
-    editor_types_manifest = Path(editor_types["manifest_path"])
     package_name = json.dumps(package["name"])
     dependency_path = json.dumps(str(manifest.parent))
-    editor_types_path = json.dumps(str(editor_types_manifest.parent))
+    editor_types_dependency = editor_types_dependency_spec(editor_types)
     (root / "Cargo.toml").write_text(
         "[package]\nname = \"kle-kdv-api-audit\"\nversion = \"0.0.0\"\nedition = \"2024\"\n"
         "\n[dependencies]\nkdv_audit_target = { package = "
         f"{package_name}, path = {dependency_path} }}\n"
-        "kle_preset_types = { package = \"katana-language-editor\", path = "
-        f"{editor_types_path} }}\n",
+        "kle_preset_types = { package = \"katana-language-editor\", "
+        f"{editor_types_dependency} }}\n",
         encoding="utf-8",
     )
     source = root / "src"
     source.mkdir()
     expected_type = {
-        "strings": "Strings",
-        "locale": "Locale",
-        "settings": "EditorSettings",
+        "strings": "kle_preset_types::Strings",
+        "locale": "kle_preset_types::Locale",
+        "settings": "kdv_audit_target::ViewerSettingsState",
     }[module]
     (source / "main.rs").write_text(
-        f"fn main() {{ let _: kle_preset_types::{expected_type} = "
+        f"fn main() {{ let _: {expected_type} = "
         f"kdv_audit_target::{module}::{function}(); }}\n",
         encoding="utf-8",
     )
     return root / "Cargo.toml"
+
+
+def editor_types_dependency_spec(editor_types: dict[str, object]) -> str:
+    source = editor_types.get("source")
+    if source is None:
+        manifest = Path(editor_types["manifest_path"])
+        return f"path = {json.dumps(str(manifest.parent))}"
+    if source == "registry+https://github.com/rust-lang/crates.io-index":
+        return f'version = {json.dumps("=" + editor_types["version"])}'
+    raise ValueError("KLE package source is neither a local path nor a registry package")
 
 
 def main() -> int:
@@ -88,9 +97,12 @@ def main() -> int:
 
     with tempfile.TemporaryDirectory(prefix="kle-kdv-api-audit-") as directory:
         root = Path(directory)
-        consumer_manifest = write_consumer(
-            root, package, editor_types, args.module, args.function
-        )
+        try:
+            consumer_manifest = write_consumer(
+                root, package, editor_types, args.module, args.function
+            )
+        except ValueError:
+            return 1
         environment = os.environ | {"CARGO_TARGET_DIR": str(root / "target")}
         return subprocess.run(
             ["cargo", "check", "--quiet", "--manifest-path", str(consumer_manifest)],

@@ -1,3 +1,4 @@
+import importlib.util
 import subprocess
 import tempfile
 import unittest
@@ -6,6 +7,16 @@ from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = REPOSITORY_ROOT / "scripts/release/prepare-kdv-preset-followup.sh"
+API_CHECKER = REPOSITORY_ROOT / "scripts/release/verify-kdv-public-api.py"
+
+
+def load_api_checker():
+    specification = importlib.util.spec_from_file_location("verify_kdv_public_api", API_CHECKER)
+    if specification is None or specification.loader is None:
+        raise RuntimeError("unable to load KDV public API checker")
+    module = importlib.util.module_from_spec(specification)
+    specification.loader.exec_module(module)
+    return module
 
 
 class KdvPresetFollowupTests(unittest.TestCase):
@@ -16,6 +27,7 @@ class KdvPresetFollowupTests(unittest.TestCase):
         strings_export: str = "pub",
         viewer_is_workspace_member: bool = True,
         strings_is_impl_method: bool = False,
+        settings_returns_viewer_state: bool = True,
     ) -> Path:
         repository = root / "katana-document-viewer"
         source = repository / "crates/viewer/src"
@@ -40,7 +52,7 @@ class KdvPresetFollowupTests(unittest.TestCase):
             encoding="utf-8",
         )
         (editor_types / "lib.rs").write_text(
-            'pub struct Strings;\npub struct Locale;\npub struct EditorSettings;\n',
+            'pub struct Strings;\npub struct Locale;\n',
             encoding="utf-8",
         )
         (source / "lib.rs").write_text(
@@ -49,7 +61,17 @@ class KdvPresetFollowupTests(unittest.TestCase):
         )
         self.write_module(source, "strings", strings_visibility, "en", "Strings", strings_is_impl_method)
         self.write_module(source, "locale", "pub", "en_ltr", "Locale")
-        self.write_module(source, "settings", "pub", "default_editor", "EditorSettings")
+        if settings_returns_viewer_state:
+            self.write_module(
+                source,
+                "settings",
+                "pub",
+                "default_editor",
+                "ViewerSettingsState",
+                return_from_kdv=True,
+            )
+        else:
+            self.write_module(source, "settings", "pub", "default_editor", "Strings")
         return repository
 
     def write_module(
@@ -60,10 +82,14 @@ class KdvPresetFollowupTests(unittest.TestCase):
         function: str,
         return_type: str,
         is_impl_method: bool = False,
+        return_from_kdv: bool = False,
     ) -> None:
+        return_path = (
+            f"crate::{return_type}" if return_from_kdv else f"katana_language_editor::{return_type}"
+        )
         contents = (
-            f"{visibility} fn {function}() -> katana_language_editor::{return_type} "
-            f"{{ katana_language_editor::{return_type} }}\n"
+            f"{visibility} fn {function}() -> {return_path} "
+            f"{{ {return_path} }}\n"
         )
         if is_impl_method:
             contents = (
@@ -74,6 +100,12 @@ class KdvPresetFollowupTests(unittest.TestCase):
         (source / f"{module}.rs").write_text(
             contents, encoding="utf-8"
         )
+        if return_from_kdv:
+            (source / "lib.rs").write_text(
+                (source / "lib.rs").read_text(encoding="utf-8")
+                + f"pub struct {return_type};\n",
+                encoding="utf-8",
+            )
 
     def run_followup(self, repository: Path, output: Path) -> str:
         subprocess.run(
@@ -124,6 +156,36 @@ class KdvPresetFollowupTests(unittest.TestCase):
             method_result = self.run_followup(method_repository, method_output)
             self.assertIn("status: follow-up required", method_result)
             self.assertIn("- `strings::en()`", method_result)
+
+            wrong_settings_output = root / "wrong-settings.md"
+            wrong_settings_repository = self.create_kdv_repository(
+                root / "wrong-settings", "pub", settings_returns_viewer_state=False
+            )
+            wrong_settings_result = self.run_followup(
+                wrong_settings_repository, wrong_settings_output
+            )
+            self.assertIn("status: follow-up required", wrong_settings_result)
+            self.assertIn("- `settings::default_editor()`", wrong_settings_result)
+
+    def test_registry_kle_dependency_uses_the_resolved_package_identity(self) -> None:
+        api_checker = load_api_checker()
+        dependency = api_checker.editor_types_dependency_spec(
+            {
+                "manifest_path": "/registry/cache/katana-language-editor-0.1.0/Cargo.toml",
+                "source": "registry+https://github.com/rust-lang/crates.io-index",
+                "version": "0.1.0",
+            }
+        )
+        self.assertEqual(dependency, 'version = "=0.1.0"')
+
+        with self.assertRaises(ValueError):
+            api_checker.editor_types_dependency_spec(
+                {
+                    "manifest_path": "/registry/cache/katana-language-editor-0.1.0/Cargo.toml",
+                    "source": "registry+https://example.invalid/index",
+                    "version": "0.1.0",
+                }
+            )
 
 
 if __name__ == "__main__":
