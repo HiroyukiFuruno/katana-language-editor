@@ -55,6 +55,21 @@ fn detects_nested_and_extended_visible_strings() -> Result<(), syn::Error> {
 }
 
 #[test]
+fn ignores_non_display_literal_arguments() -> Result<(), syn::Error> {
+    let violations = lint(
+        r#"
+        fn sample(ui: &mut egui::Ui, strings: &Strings) {
+            ui.hyperlink_to(strings.open, "https://example.invalid");
+            ui.colored_label(egui::Color32::RED, strings.error);
+            ui.checkbox(&mut false, strings.enabled);
+        }
+        "#,
+    )?;
+    assert!(violations.is_empty());
+    Ok(())
+}
+
+#[test]
 fn ignores_internal_error_strings() -> Result<(), syn::Error> {
     let violations = lint(
         r#"

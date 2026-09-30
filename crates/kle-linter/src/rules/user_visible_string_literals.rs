@@ -67,7 +67,14 @@ impl UserVisibleStringVisitor {
 
     fn check_method_call(&mut self, call: &syn::ExprMethodCall) {
         let name = call.method.to_string();
-        if !Self::is_visible_method(&name) || !call.args.iter().any(contains_string_literal) {
+        let Some(text_arguments) = Self::visible_text_arguments(&name) else {
+            return;
+        };
+        if !text_arguments
+            .iter()
+            .filter_map(|index| call.args.iter().nth(*index))
+            .any(contains_string_literal)
+        {
             return;
         }
         self.push_violation(call.method.span());
@@ -99,29 +106,26 @@ impl UserVisibleStringVisitor {
         ));
     }
 
-    fn is_visible_method(name: &str) -> bool {
-        matches!(
-            name,
+    fn visible_text_arguments(name: &str) -> Option<&'static [usize]> {
+        match name {
+            "checkbox" | "radio" | "selectable_label" | "colored_label" => Some(&[1]),
+            "hyperlink_to" => Some(&[0]),
             "label"
-                | "button"
-                | "checkbox"
-                | "radio"
-                | "heading"
-                | "strong"
-                | "colored_label"
-                | "code"
-                | "monospace"
-                | "link"
-                | "hyperlink"
-                | "hyperlink_to"
-                | "menu_button"
-                | "selectable_label"
-                | "collapsing"
-                | "hint_text"
-                | "on_hover_text"
-                | "on_hover_text_at_pointer"
-                | "on_disabled_hover_text"
-        )
+            | "button"
+            | "heading"
+            | "strong"
+            | "code"
+            | "monospace"
+            | "link"
+            | "hyperlink"
+            | "menu_button"
+            | "collapsing"
+            | "hint_text"
+            | "on_hover_text"
+            | "on_hover_text_at_pointer"
+            | "on_disabled_hover_text" => Some(&[0]),
+            _ => None,
+        }
     }
 
     fn is_visible_constructor(path: &syn::Path) -> bool {
