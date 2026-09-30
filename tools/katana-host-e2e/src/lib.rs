@@ -9,7 +9,11 @@ mod fixed_source_harness;
 mod host_target_locator;
 mod native_ax_observation;
 mod physical_ax_click;
+mod physical_ax_dialog;
 mod physical_ax_observer;
+#[cfg(not(target_os = "macos"))]
+mod physical_ax_observer_nonmac;
+mod physical_ax_observer_types;
 mod physical_ax_window;
 mod physical_bootstrap;
 mod physical_bootstrap_ax;
@@ -47,7 +51,11 @@ pub use native_ax_observation::{
     NativeAxEditorCandidate, NativeAxObservationError, NativeAxRole, NativeAxSourceContract,
     NativeAxWorkspaceObservation,
 };
-pub use physical_ax_observer::{AxObserverError, AxWindowCreatedObserver};
+pub use physical_ax_observer_types::AxObserverError;
+#[cfg(target_os = "macos")]
+pub use physical_ax_observer::AxWindowCreatedObserver;
+#[cfg(not(target_os = "macos"))]
+pub use physical_ax_observer_nonmac::AxWindowCreatedObserver;
 pub use physical_bootstrap_types::{
     AxClickError, AxPreflight, AxPreflightError, ChildLaunchError, KatanAChild, KatanACommand,
     LaunchRequest, RequestValidationError,

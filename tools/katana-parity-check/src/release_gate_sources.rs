@@ -20,7 +20,7 @@ pub(crate) const RELEASE_GATE_EVIDENCE: &[&str] = &[
     "release-check: release-target-check release-check-clean-generated-artifacts",
     "    just release-verify",
     "    just kle-release-parity-check",
-    "    bash scripts/release/assert-crates-not-published.sh \"{{VERSION}}\"",
+    "    RELEASE_REPO=\"{{RELEASE_REPO}}\" bash scripts/release/assert-release-publication-state.sh \"{{VERSION}}\"",
     "{{CARGO}} test -p kle-storybook --locked storybook_motion_artifact_uses_the_exact_kuc_plan_without_idle_frames -- --test-threads=1",
     "{{CARGO}} test -j {{JOBS}} -p kle-linter ast_linter -- --nocapture",
     "{{CARGO}} test -j {{JOBS}} -p kle-linter --test ast_linter ast_linter_workspace_rules -- --nocapture",

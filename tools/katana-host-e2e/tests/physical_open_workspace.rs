@@ -63,7 +63,7 @@ fn observe_open_workspace(child: &KatanAChild, locator: &AxTargetLocator) -> Res
         .map_err(|error| format!("AX KatanA window observer registration failed: {error}"))?
         .wait_for_existing_window_or_notification(&application)
         .map_err(|error| format!("KatanA main window AX notification was not observed: {error}"))?;
-    let observer = AxWindowCreatedObserver::register(&application, child)
+    let observer = AxWindowCreatedObserver::register_native_dialog(&application, child)
         .map_err(|error| format!("AX native-dialog observer registration failed: {error}"))?;
     application.locate(locator).map_err(|error| {
         format!("source-derived Open Workspace target resolution failed: {error}")

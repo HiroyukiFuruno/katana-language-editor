@@ -289,7 +289,7 @@ release-check-clean-generated-artifacts:
 release-check: release-target-check release-check-clean-generated-artifacts
     just release-verify
     just kle-release-parity-check
-    bash scripts/release/assert-crates-not-published.sh "{{VERSION}}"
+    RELEASE_REPO="{{RELEASE_REPO}}" bash scripts/release/assert-release-publication-state.sh "{{VERSION}}"
 
 # Show recent Release workflow runs
 release-status:

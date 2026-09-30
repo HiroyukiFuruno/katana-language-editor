@@ -22,6 +22,30 @@ fn release_preflight_keeps_local_release_gates_without_source_closure_artifacts(
 }
 
 #[test]
+fn release_check_allows_only_same_commit_tag_resumption() -> Result<(), String> {
+    let justfile = crate::release_gate_sources::JUSTFILE;
+    if !justfile.contains(
+        "RELEASE_REPO=\"{{RELEASE_REPO}}\" bash scripts/release/assert-release-publication-state.sh \"{{VERSION}}\"",
+    ) {
+        return Err("release-check must use the idempotent publication-state gate".into());
+    }
+    let gate = include_str!("../../../scripts/release/assert-release-publication-state.sh");
+    for required in [
+        "git ls-remote --tags origin \"refs/tags/${version}^{}\"",
+        "bash \"${script_dir}/assert-crates-not-published.sh\" \"${version}\"",
+        "Tag ${version} does not point to the current release commit.",
+        "allowing idempotent release resume",
+    ] {
+        if !gate.contains(required) {
+            return Err(format!(
+                "release publication-state gate is missing `{required}`"
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn release_workflows_checkout_the_fixed_katana_reference_for_source_bound_tests()
 -> Result<(), String> {
     for (name, workflow) in [

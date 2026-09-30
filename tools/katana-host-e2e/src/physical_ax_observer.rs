@@ -1,34 +1,7 @@
-use crate::physical_bootstrap_types::{AxApplicationElement, KatanAChild};
-use std::fmt;
+#[cfg(target_os = "macos")]
+use crate::{AxObserverError, physical_bootstrap_types::{AxApplicationElement, KatanAChild}};
 
 const NOTIFICATION_WAIT_SECONDS: f64 = 30.0;
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum AxObserverError {
-    UnsupportedPlatform,
-    CreateFailed,
-    RegisterFailed,
-    RunLoopUnavailable,
-    ExistingWindowQueryFailed,
-    NotificationNotObserved,
-}
-
-impl fmt::Display for AxObserverError {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str(match self {
-            Self::UnsupportedPlatform => "AX window observer is unsupported on this platform",
-            Self::CreateFailed => "AX window observer could not be created",
-            Self::RegisterFailed => "AX window-created notification could not be registered",
-            Self::RunLoopUnavailable => "AX observer run loop is unavailable",
-            Self::ExistingWindowQueryFailed => {
-                "AX observer could not query existing application windows"
-            }
-            Self::NotificationNotObserved => "AX window-created notification was not observed",
-        })
-    }
-}
-
-impl std::error::Error for AxObserverError {}
 
 #[cfg(target_os = "macos")]
 pub struct AxWindowCreatedObserver {
@@ -45,6 +18,21 @@ impl AxWindowCreatedObserver {
         application: &AxApplicationElement,
         child: &KatanAChild,
     ) -> Result<Self, AxObserverError> {
+        Self::register_with_expectation(application, child, AxWindowExpectation::AnyWindow)
+    }
+
+    pub fn register_native_dialog(
+        application: &AxApplicationElement,
+        child: &KatanAChild,
+    ) -> Result<Self, AxObserverError> {
+        Self::register_with_expectation(application, child, AxWindowExpectation::NativeDialog)
+    }
+
+    fn register_with_expectation(
+        application: &AxApplicationElement,
+        child: &KatanAChild,
+        expectation: AxWindowExpectation,
+    ) -> Result<Self, AxObserverError> {
         use objc2_application_services::{AXError, AXObserver};
         use objc2_core_foundation::{CFRunLoop, CFString};
         use std::ffi::c_void;
@@ -53,6 +41,7 @@ impl AxWindowCreatedObserver {
         let observed = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
         let callback_state = Box::new(CallbackState {
             observed: observed.clone(),
+            expectation,
         });
         let callback_state = Box::into_raw(callback_state);
         let mut raw = null_mut();
@@ -144,16 +133,27 @@ impl Drop for AxWindowCreatedObserver {
 #[cfg(target_os = "macos")]
 struct CallbackState {
     observed: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    expectation: AxWindowExpectation,
+}
+
+#[cfg(target_os = "macos")]
+#[derive(Clone, Copy)]
+enum AxWindowExpectation {
+    AnyWindow,
+    NativeDialog,
 }
 
 #[cfg(target_os = "macos")]
 unsafe extern "C-unwind" fn window_created_callback(
     _observer: std::ptr::NonNull<objc2_application_services::AXObserver>,
-    _element: std::ptr::NonNull<objc2_application_services::AXUIElement>,
+    element: std::ptr::NonNull<objc2_application_services::AXUIElement>,
     _notification: std::ptr::NonNull<objc2_core_foundation::CFString>,
     refcon: *mut std::ffi::c_void,
 ) {
     let state = unsafe { &*(refcon.cast::<CallbackState>()) };
+    if !notification_matches_expectation(element, state.expectation) {
+        return;
+    }
     state
         .observed
         .store(true, std::sync::atomic::Ordering::Release);
@@ -162,26 +162,13 @@ unsafe extern "C-unwind" fn window_created_callback(
     }
 }
 
-#[cfg(not(target_os = "macos"))]
-pub struct AxWindowCreatedObserver;
-
-#[cfg(not(target_os = "macos"))]
-impl AxWindowCreatedObserver {
-    pub fn register(
-        _application: &AxApplicationElement,
-        _child: &KatanAChild,
-    ) -> Result<Self, AxObserverError> {
-        Err(AxObserverError::UnsupportedPlatform)
-    }
-
-    pub fn wait_for_notification(self) -> Result<(), AxObserverError> {
-        Err(AxObserverError::UnsupportedPlatform)
-    }
-
-    pub fn wait_for_existing_window_or_notification(
-        self,
-        _application: &AxApplicationElement,
-    ) -> Result<(), AxObserverError> {
-        Err(AxObserverError::UnsupportedPlatform)
+#[cfg(target_os = "macos")]
+fn notification_matches_expectation(
+    element: std::ptr::NonNull<objc2_application_services::AXUIElement>,
+    expectation: AxWindowExpectation,
+) -> bool {
+    match expectation {
+        AxWindowExpectation::AnyWindow => true,
+        AxWindowExpectation::NativeDialog => crate::physical_ax_dialog::is_native_dialog(element),
     }
 }

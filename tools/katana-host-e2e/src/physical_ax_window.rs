@@ -32,7 +32,7 @@ mod platform {
             .downcast()
             .map_err(|_| AxApplicationElementError::SystemFailure)?;
         let windows: CFRetained<CFArray<AXUIElement>> = unsafe { CFRetained::cast_unchecked(windows) };
-        Ok(windows.len() > 0)
+        Ok(!windows.is_empty())
     }
 }
 
@@ -49,6 +49,7 @@ mod platform {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(not(target_os = "macos"))]
     use super::*;
 
     #[test]
