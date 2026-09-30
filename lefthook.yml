@@ -13,4 +13,4 @@ pre-commit:
 pre-push:
   commands:
     check-strict:
-      run: just JOBS=2 check
+      run: just JOBS=2 pre-push-check

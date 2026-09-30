@@ -1,0 +1,10 @@
+[package]
+name = "katana-repo-adapter-check"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "Read-only release blocker for verifying the actual KatanA repo wires the KLE downstream adapter."
+publish = false

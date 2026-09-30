@@ -1,0 +1,15 @@
+[package]
+name = "katana-downstream-check"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "Diagnostic-only compile/runtime check for the public KLE editor boundary."
+publish = false
+
+[dependencies]
+katana-language-editor = { path = "../../crates/katana-language-editor", version = "0.1.0" }
+katana-language-editor-egui = { path = "../../crates/katana-language-editor-egui", version = "0.1.0" }
+katana-ui-core = { workspace = true }

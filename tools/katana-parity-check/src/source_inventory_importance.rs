@@ -1,0 +1,87 @@
+pub(crate) const INVENTORY_IMPORTANCE: &[(&str, &[&str])] = &[
+    (
+        "crates/katana-ui/src/app/action/clipboard_image.rs",
+        &["has_image_payload", "read_image_payload"],
+    ),
+    (
+        "crates/katana-ui/src/app/action/clipboard_file_url.rs",
+        &["read_image_payload"],
+    ),
+    (
+        "crates/katana-ui/src/app/action/clipboard_image_macos.rs",
+        &["macos_pasteboard_has_image", "read_macos_pasteboard_image"],
+    ),
+    (
+        "crates/katana-ui/src/app/action/process_markdown_formatting.rs",
+        &["handle_action_format_markdown_file", "refresh_after_format"],
+    ),
+    (
+        "crates/katana-ui/src/app/action/refresh_content.rs",
+        &["apply_refreshed_content", "handle_action_refresh_document"],
+    ),
+    (
+        "crates/katana-ui/src/state/command_inventory/edit_commands.rs",
+        &["get"],
+    ),
+    (
+        "crates/katana-ui/src/state/shortcut_context.rs",
+        &["resolve", "context_allows"],
+    ),
+    (
+        "crates/katana-ui/src/shell_ui/shell_ui_shortcuts.rs",
+        &["handle_shortcuts", "command_shortcut_consumed"],
+    ),
+    (
+        "crates/katana-ui/tests/integration/editor/layout_persistence.rs",
+        &[
+            "test_regression_preview_content_visible_in_preview_only_mode",
+            "test_regression_preview_content_visible_in_split_mode",
+            "test_split_direction_setting_toggles_correctly",
+        ],
+    ),
+    (
+        "crates/katana-ui/tests/integration/editor/lint_fix_review_button.rs",
+        &[
+            "editor_diagnostic_fix_button_opens_lint_fix_review_tab",
+            "lint_fix_review_tab_shows_cancel_all_button",
+            "problems_fix_all_detected_opens_review_for_every_open_tab",
+            "problems_fix_all_keeps_unloaded_open_tab_in_review",
+            "problems_status_count_follows_scope_only_while_panel_open",
+        ],
+    ),
+    (
+        "crates/katana-ui/tests/integration/editor/navigation.rs",
+        &[
+            "test_integration_workspace_and_tabs_navigation",
+            "test_integration_open_multiple_documents_and_switch",
+        ],
+    ),
+    (
+        "crates/katana-ui/tests/integration/editor/rendering.rs",
+        &[
+            "test_integration_editor_line_numbers_and_highlight",
+            "test_integration_update_buffer",
+            "test_integration_save_document",
+            "test_integration_text_edit_triggers_update_buffer",
+        ],
+    ),
+    (
+        "crates/katana-ui/tests/integration/editor/toggle_view_modes.rs",
+        &["test_integration_toggle_view_modes"],
+    ),
+    (
+        "crates/katana-ui/tests/integration/editor/ui.rs",
+        &[
+            "test_integration_view_modes",
+            "clipboard_image_file_url_paste_queues_image_ingest_action",
+            "code_block_kind_menu_closes_when_editor_is_clicked",
+            "live_clipboard_image_shortcut_inserts_markdown_from_current_os_clipboard",
+            "test_integration_editor_line_numbers_visibility",
+            "test_integration_update_buffer",
+        ],
+    ),
+    (
+        "crates/katana-ui/tests/integration/editor/view_modes.rs",
+        &["test_integration_split_mode_with_document"],
+    ),
+];

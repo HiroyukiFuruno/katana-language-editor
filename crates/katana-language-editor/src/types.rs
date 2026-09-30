@@ -1,66 +1,69 @@
-use serde::{Deserialize, Serialize};
-use thiserror::Error;
+//! Public type reexports for the neutral editor interface.
+//!
+//! ```compile_fail
+//! use katana_language_editor::types::Typography;
+//! ```
+//!
+//! ```compile_fail
+//! use katana_language_editor::types::Spacing;
+//! ```
+//!
+//! ```compile_fail
+//! use katana_language_editor::types::EditorSettings;
+//! ```
+//!
+//! ```compile_fail
+//! use katana_language_editor::types::AutosavePolicy;
+//! ```
+//!
+//! ```compile_fail
+//! use katana_language_editor::types::ShortcutMap;
+//! ```
+//!
+//! ```compile_fail
+//! use katana_language_editor::types::ShortcutBinding;
+//! ```
+//!
+//! ```compile_fail
+//! use katana_language_editor::types::KeyBinding;
+//! ```
+//!
+//! ```compile_fail
+//! use katana_language_editor::types::KeyModifier;
+//! ```
+//!
+//! ```compile_fail
+//! use katana_language_editor::types::SemanticAction;
+//! ```
+//!
+//! ```compile_fail
+//! use katana_language_editor::types::Rgba;
+//! ```
+//!
+//! ```compile_fail
+//! use katana_language_editor::types::ColorTokens;
+//! ```
+//!
+//! ```compile_fail
+//! use katana_language_editor::types::ColorTokensInput;
+//! ```
+//!
+//! ```compile_fail
+//! use katana_language_editor::types::Theme;
+//! ```
+//!
+//! ```compile_fail
+//! use katana_language_editor::types::EditorTheme;
+//! ```
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct TextContent {
-    pub text: String,
-    pub language: Option<String>,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct CursorPosition {
-    pub line: usize,
-    pub column: usize,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct Selection {
-    pub start: CursorPosition,
-    pub end: CursorPosition,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct EditorConfig {
-    pub font_size: Option<f32>,
-    pub line_numbers: bool,
-    pub word_wrap: bool,
-    pub tab_size: u8,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum EditorEvent {
-    ContentChanged(TextContent),
-    CursorMoved(CursorPosition),
-    SelectionChanged(Selection),
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct EditorDiagnostics {
-    pub warnings: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EditorOutput {
-    pub cursor: CursorPosition,
-    pub selection: Option<Selection>,
-    pub diagnostics: EditorDiagnostics,
-}
-
-#[derive(Debug, Error)]
-pub enum EditorError {
-    #[error("not implemented")]
-    NotImplemented,
-    #[error("editor error: {0}")]
-    Internal(String),
-}
-
-/// Vendor-neutral language editor trait.
-///
-/// KatanA depends on this trait. egui and future custom UI implementations
-/// satisfy it without leaking framework types into KatanA.
-pub trait LanguageEditor {
-    fn content(&self) -> &TextContent;
-    fn set_content(&mut self, content: TextContent);
-    fn cursor(&self) -> CursorPosition;
-    fn poll_events(&mut self) -> Vec<EditorEvent>;
-}
+pub use crate::{
+    AccessibilityConfig, ClipboardBackend, CursorPosition, EditorAccessibility,
+    EditorClipboardControl, EditorConfig, EditorConfigInput, EditorCursorRestoreControl,
+    EditorDocumentIdentity, EditorDocumentState, EditorDocumentStateControl, EditorDocumentUpdate,
+    EditorDocumentUpdateOrigin, EditorDocumentUpdateReport, EditorError, EditorEvent,
+    EditorExternalUndoRecord, EditorHistoryControl, EditorOutput, EditorResult,
+    EditorSelectionControl, EditorStrings, EditorStringsInput, EditorWriteAccess, HighlightedSpan,
+    HighlightedText, LanguageEditor, Locale, MotionPreference, NoopSyntaxHighlighter, Selection,
+    Strings, StringsInput, SyntaxHighlighter, TextContent, TextDirection, TextOffset, TextRange,
+    TokenKind, VisibleRange, WriteHandle,
+};

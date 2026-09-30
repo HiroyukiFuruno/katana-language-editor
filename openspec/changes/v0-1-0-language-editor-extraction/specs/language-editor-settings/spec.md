@@ -1,59 +1,48 @@
 ## ADDED Requirements
 
-### Requirement: 外部から設定を受け取れる EditorSettings IF を提供しなければならない
+### Requirement: 設定更新の責務はKUCとhostに分離しなければならない
 
-`katana-language-editor` neutral crate は `EditorSettings` 構造体と、それを `EditorConfig::settings` に **non-nullable** で含める契約を提供しなければならない（MUST）。最低限 `autosave: AutosavePolicy` / `shortcuts: ShortcutMap` / `word_wrap: bool` / `tab_size: u8` / `line_numbers: bool` / `font_scale: f32` を含む。
+KLE MUST NOT 公開traitに `apply_settings` 又は同等の設定更新storeを提供する。
+generic presentation/input policy はKUC、autosave/file lifecycleとアプリ固有の
+shortcut arbitrationはhostが所有する。KLEは既存opaque root接続で渡される
+revisioned projectionと一度だけ消費するeventを扱い、設定値を解釈・保持しない。
 
-#### Scenario: host が EditorSettings を渡して editor を構築する
+#### Scenario: neutral trait実装が旧設定メソッドを追加する
 
-- **WHEN** host が `EditorSettings { autosave: AutosavePolicy::Off, shortcuts: kdv_default_shortcuts(), .. }` を `EditorConfig::settings` に渡す
-- **THEN** editor は対応する挙動で初期化される
-- **THEN** `Option<EditorSettings>` ではなく必須引数として扱われる
+- **WHEN** consumer が `LanguageEditor` のtrait実装に `apply_settings` を定義する
+- **THEN** コンパイラはtraitに存在しないメソッドとして拒否する
+- **THEN** 設定を無視して成功を返す互換shimを追加しない
 
-#### Scenario: runtime での settings 反映
+#### Scenario: hostが設定を変更する
 
-- **WHEN** host が `editor.apply_settings(new_settings)` を呼ぶ
-- **THEN** editor は内部状態（autosave timer、shortcut bindings、word wrap モード等）を新設定で再構成する
-- **THEN** 反映できない設定変更は `Result<_, EditorError::Unsupported>` を返す
+- **WHEN** hostがgeneric UI policy又はhost document policyを変更する
+- **THEN** 各所有者の既存routeで変更を処理し、KLEにautosave timerやshortcut mapを作らない
+- **THEN** source-derived設定leafとKUC実入力の証跡が不足する場合は未検証として公開を拒否する
 
-### Requirement: AutosavePolicy は enabled と interval を分離して扱わなければならない
+### Requirement: 設定DTOの除去と設定動作の互換性を別々に証明しなければならない
 
-`AutosavePolicy { enabled: bool, interval: Option<Duration> }` 形を取り、`enabled = false` の時は autosave を実行せず、`enabled = true` の時は `interval` が指定されていればそれを尊重し、未指定なら editor 既定値で動作する（MUST）。
+KLE MUST NOT `EditorSettings`、`AutosavePolicy`、`ShortcutMap`、`ShortcutBinding`、
+`KeyBinding`、`KeyModifier`、`SemanticAction`、typography/spacingの
+所有を公開APIに残す。autosaveの有効/無効と間隔、shortcutの上書き/競合、word-wrap、
+tab、line-number、font policyの動作要件は削除せず、固定KatanA sourceの各分岐と
+所有者の実行証跡へ結び付ける。旧DTOの既定値や仮の30秒fixtureをKatanAの実仕様の
+代わりにしてはならない。config fieldや型が消えたことだけでは設定動作の完成ではない。
 
-#### Scenario: 自動保存 OFF
+#### Scenario: 旧設定型の公開を拒否する
 
-- **WHEN** host が `AutosavePolicy { enabled: false, interval: None }` を渡す
-- **THEN** editor は内部 timer を停止する
-- **THEN** save は host からの明示的トリガでのみ行う
+- **WHEN** consumerが旧設定7型をroot又はtypes moduleからimportする
+- **THEN** 各型・各公開パスの独立compile-fail検査で拒否する
+- **AND** neutral内で同名struct/enum/type aliasを再定義した場合もASTゲートで拒否する
+- **AND** apply_settings拒否検査は削除した型のimport失敗ではなくtrait非所属を検査する
 
-#### Scenario: 自動保存 ON + 30 秒間隔
+#### Scenario: sourceで定義された設定動作を検証する
 
-- **WHEN** host が `AutosavePolicy { enabled: true, interval: Some(Duration::from_secs(30)) }` を渡す
-- **THEN** editor は最後の編集から 30 秒経過時に save イベントを発火する
-- **THEN** save 完了通知は `EditorEvent::AutosavedAt(timestamp)` 等で host が受け取る
+- **WHEN** source-derived leafにautosave又はshortcut又はgeneric表示設定の分岐がある
+- **THEN** host policyとKUC policyの所有者を明示し、設定前後の効果とno-opを検査する
+- **THEN** KLEの設定型やメソッドが消えたことだけを動作互換の証明にしない
 
-### Requirement: ショートカット上書きを ShortcutMap で受け取らなければならない
+#### Scenario: KDV固有presetなしでKLEを検証する
 
-`ShortcutMap` は semantic action key（`SemanticAction::Save` / `Find` / `Replace` / `Undo` / `Redo` / `ToggleComment` / `ToggleReadOnly` / `Focus` 等）と key binding（modifier + key code）の対応を保持する（MUST）。host が `EditorConfig::settings.shortcuts` で上書きできる（MUST）。
-
-#### Scenario: host が Cmd+S を上書きする
-
-- **WHEN** host が `ShortcutMap` に `SemanticAction::Save -> Cmd+Shift+S` を渡す
-- **THEN** editor は Cmd+Shift+S で save action を発火する
-- **THEN** デフォルトの Cmd+S binding は上書きされる
-
-#### Scenario: 競合検知
-
-- **WHEN** ShortcutMap に同じ key binding が複数 action に割り当てられる
-- **THEN** editor は `Err(EditorError::ConflictingShortcut { binding, actions })` を返す
-- **THEN** host が解決するまで editor は構築されない
-
-### Requirement: settings の default は KDV 側 preset とし、KLE crate は default を持たない
-
-`katana-language-editor` crate は `EditorSettings::default()` 相当の preset を持ってはならない（MUST NOT）。host (KDV) は `kdv-presets::settings::default()` を提供し、host が必須引数として渡す。
-
-#### Scenario: KDV preset を渡す
-
-- **WHEN** host が `kdv-presets::settings::default()` を取得し editor に渡す
-- **THEN** editor は KDV 由来の設定で初期化される
-- **THEN** KLE crate 内で `EditorSettings::default()` を grep しても見つからない
+- **WHEN** hostが既存KUC公開契約へ必要なprojection/policyを供給する
+- **THEN** KLEはKDV固有presetを要求せず、一度だけのopaque relayとして動作する
+- **THEN** KLEにdefault timer、shortcut arbitration、font fallbackを作らない

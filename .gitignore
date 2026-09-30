@@ -1,4 +1,6 @@
 /target
+/tools/kle-storybook/target/
+/tools/katana-host-e2e/target/
 /.DS_Store
 skill.md
 CLAUDE.md

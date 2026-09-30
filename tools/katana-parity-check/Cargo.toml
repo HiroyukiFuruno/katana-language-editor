@@ -1,0 +1,23 @@
+[package]
+name = "katana-parity-check"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "Release blocker check for KatanA editor parity verification coverage."
+publish = false
+
+[dependencies]
+flate2 = "1.1.10"
+serde.workspace = true
+serde_json = "1"
+proc-macro2.workspace = true
+sha2 = "0.11"
+syn.workspace = true
+tar = { version = "0.4.46", default-features = false }
+toml.workspace = true
+
+[dev-dependencies]
+egui.workspace = true
