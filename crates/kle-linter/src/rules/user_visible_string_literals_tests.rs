@@ -40,6 +40,21 @@ fn detects_tooltip_and_macro_wrapped_visible_strings() -> Result<(), syn::Error>
 }
 
 #[test]
+fn detects_nested_and_extended_visible_strings() -> Result<(), syn::Error> {
+    let violations = lint(
+        r#"
+        fn sample(ui: &mut egui::Ui, dirty: bool) {
+            ui.strong(if dirty { "Unsaved" } else { "Saved" });
+            ui.colored_label(egui::Color32::RED, match dirty { true => "Error", false => "Ready" });
+            ui.hyperlink_to("Open", "https://example.invalid");
+        }
+        "#,
+    )?;
+    assert_eq!(violations.len(), 3);
+    Ok(())
+}
+
+#[test]
 fn ignores_internal_error_strings() -> Result<(), syn::Error> {
     let violations = lint(
         r#"

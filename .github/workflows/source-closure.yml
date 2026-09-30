@@ -170,13 +170,14 @@ jobs:
 
       - name: Assemble canonical input
         working-directory: katana-language-editor
-        run: >-
-          SOURCE_CLOSURE_RUN_ID="${{ env.SOURCE_CLOSURE_RUN_ID }}"
-          cargo run --locked -p katana-parity-check -- source-closure assemble-input
-          --output-dir target/source-closure
-          --seed-manifest docs/v0-1-0-source-closure-roots.json
-          --source-universe docs/v0-1-0-katana-editor-source-universe.md
-          --katana-repo ../katana
+        run: |
+          cargo fetch --locked --manifest-path ../katana/Cargo.toml
+          SOURCE_CLOSURE_RUN_ID="${{ env.SOURCE_CLOSURE_RUN_ID }}" \
+            cargo run --locked -p katana-parity-check -- source-closure assemble-input \
+            --output-dir target/source-closure \
+            --seed-manifest docs/v0-1-0-source-closure-roots.json \
+            --source-universe docs/v0-1-0-katana-editor-source-universe.md \
+            --katana-repo ../katana
 
       - name: Validate canonical input
         working-directory: katana-language-editor

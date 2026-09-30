@@ -33,6 +33,26 @@ def load_api_checker():
 
 
 class KdvPresetFollowupTests(unittest.TestCase):
+    def test_active_library_packages_excludes_non_workspace_dependencies(self) -> None:
+        checker = load_api_checker()
+        metadata = {
+            "workspace_members": ["viewer 0.1.0 (path+file:///viewer)"],
+            "packages": [
+                {
+                    "id": "viewer 0.1.0 (path+file:///viewer)",
+                    "targets": [{"kind": ["lib"]}],
+                },
+                {
+                    "id": "unrelated 0.1.0 (registry+https://example.invalid)",
+                    "targets": [{"kind": ["lib"]}],
+                },
+            ],
+        }
+
+        packages = checker.active_library_packages(metadata)
+
+        self.assertEqual([package["id"] for package in packages], metadata["workspace_members"])
+
     def create_kdv_repository(
         self,
         root: Path,

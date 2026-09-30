@@ -16,9 +16,15 @@ def active_library_package(metadata: dict[str, object], source: Path) -> dict[st
 
 
 def active_library_packages(metadata: dict[str, object]) -> list[dict[str, object]]:
+    workspace_members = metadata.get("workspace_members")
+    if not isinstance(workspace_members, list):
+        return []
+    workspace_ids = {member for member in workspace_members if isinstance(member, str)}
     packages: list[dict[str, object]] = []
     for package in metadata["packages"]:
-        if any("lib" in target["kind"] for target in package["targets"]):
+        if package.get("id") in workspace_ids and any(
+            "lib" in target["kind"] for target in package["targets"]
+        ):
             packages.append(package)
     return packages
 

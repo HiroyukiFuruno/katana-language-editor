@@ -3,11 +3,13 @@ use crate::span::SpanOps;
 use crate::syntax::AttributeOps;
 use crate::workspace::{SourceFile, WorkspaceModel};
 use std::path::{Path, PathBuf};
-use syn::parse::Parser;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
 
 use super::architecture::{EGUI_CRATE, FLOEM_CRATE, LIB_CRATE};
+
+mod contains;
+use contains::contains_string_literal;
 
 pub struct UserVisibleStringLiteralRule;
 
@@ -65,7 +67,7 @@ impl UserVisibleStringVisitor {
 
     fn check_method_call(&mut self, call: &syn::ExprMethodCall) {
         let name = call.method.to_string();
-        if !Self::is_visible_method(&name) || !call.args.iter().any(Self::is_string_literal) {
+        if !Self::is_visible_method(&name) || !call.args.iter().any(contains_string_literal) {
             return;
         }
         self.push_violation(call.method.span());
@@ -76,7 +78,7 @@ impl UserVisibleStringVisitor {
             return;
         };
         if !Self::is_visible_constructor(&path.path)
-            || !call.args.iter().any(Self::is_string_literal)
+            || !call.args.iter().any(contains_string_literal)
         {
             return;
         }
@@ -105,8 +107,13 @@ impl UserVisibleStringVisitor {
                 | "checkbox"
                 | "radio"
                 | "heading"
+                | "strong"
+                | "colored_label"
+                | "code"
+                | "monospace"
                 | "link"
                 | "hyperlink"
+                | "hyperlink_to"
                 | "menu_button"
                 | "selectable_label"
                 | "collapsing"
@@ -133,32 +140,6 @@ impl UserVisibleStringVisitor {
                     "Button" | "Checkbox" | "Label" | "RichText" | "Window"
                 )
             })
-    }
-
-    fn is_string_literal(arg: &syn::Expr) -> bool {
-        match arg {
-            syn::Expr::Lit(lit) => matches!(lit.lit, syn::Lit::Str(_)),
-            syn::Expr::Group(group) => Self::is_string_literal(&group.expr),
-            syn::Expr::Paren(paren) => Self::is_string_literal(&paren.expr),
-            syn::Expr::Macro(expression) => Self::macro_contains_string_literal(&expression.mac),
-            _ => false,
-        }
-    }
-
-    fn macro_contains_string_literal(mac: &syn::Macro) -> bool {
-        let Some(segment) = mac.path.segments.last() else {
-            return false;
-        };
-        if !matches!(
-            segment.ident.to_string().as_str(),
-            "format" | "format_args" | "concat"
-        ) {
-            return false;
-        }
-        syn::punctuated::Punctuated::<syn::Expr, syn::Token![,]>::parse_terminated
-            .parse2(mac.tokens.clone())
-            .map(|arguments| arguments.iter().any(Self::is_string_literal))
-            .unwrap_or(false)
     }
 }
 
