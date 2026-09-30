@@ -3,6 +3,7 @@ use super::prohibited_color_literal_patterns::ColorLiteralPatterns;
 use crate::diagnostics::{KleLintError, Violation};
 use crate::syntax::AttributeOps;
 use crate::workspace::{SourceFile, WorkspaceModel};
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use syn::spanned::Spanned;
 use syn::visit::Visit;
@@ -41,6 +42,7 @@ struct ColorLiteralVisitor<'source> {
     source: ColorLiteralSource<'source>,
     test_depth: usize,
     violations: Vec<Violation>,
+    color_aliases: BTreeSet<String>,
     error: Option<KleLintError>,
 }
 
@@ -50,6 +52,7 @@ impl<'source> ColorLiteralVisitor<'source> {
             source: ColorLiteralSource::new(file, source),
             test_depth: 0,
             violations: Vec::new(),
+            color_aliases: BTreeSet::new(),
             error: None,
         }
     }
@@ -86,7 +89,7 @@ impl<'source> ColorLiteralVisitor<'source> {
         let Some(last) = names.last() else {
             return;
         };
-        if ColorLiteralPatterns::is_color_constant_path(&names, last) {
+        if ColorLiteralPatterns::is_color_constant_path(&names, last, &self.color_aliases) {
             self.push_violation(
                 path.span(),
                 "KUC owns host presentation color resolution; KLE must not own color constants.",
@@ -100,7 +103,7 @@ impl<'source> ColorLiteralVisitor<'source> {
             return;
         };
         let names = ColorLiteralPatterns::path_segments(&path.path);
-        if !ColorLiteralPatterns::is_color_constructor_path(&names)
+        if !ColorLiteralPatterns::is_color_constructor_path(&names, &self.color_aliases)
             || !call.args.iter().any(ColorLiteralPatterns::is_literal_arg)
         {
             return;
@@ -128,6 +131,10 @@ impl<'source> ColorLiteralVisitor<'source> {
 }
 
 impl<'ast> Visit<'ast> for ColorLiteralVisitor<'_> {
+    fn visit_item_use(&mut self, node: &'ast syn::ItemUse) {
+        collect_color_aliases(&node.tree, &mut self.color_aliases);
+        syn::visit::visit_item_use(self, node);
+    }
     fn visit_item_mod(&mut self, node: &'ast syn::ItemMod) {
         if AttributeOps::has_cfg_test_attr(&node.attrs) {
             self.test_depth += 1;
@@ -151,6 +158,23 @@ impl<'ast> Visit<'ast> for ColorLiteralVisitor<'_> {
     fn visit_lit(&mut self, node: &'ast syn::Lit) {
         self.check_lit(node);
         syn::visit::visit_lit(self, node);
+    }
+}
+
+fn collect_color_aliases(tree: &syn::UseTree, aliases: &mut BTreeSet<String>) {
+    match tree {
+        syn::UseTree::Rename(rename)
+            if matches!(rename.ident.to_string().as_str(), "Color32" | "Color") =>
+        {
+            aliases.insert(rename.rename.to_string());
+        }
+        syn::UseTree::Path(path) => collect_color_aliases(&path.tree, aliases),
+        syn::UseTree::Group(group) => {
+            for tree in &group.items {
+                collect_color_aliases(tree, aliases);
+            }
+        }
+        _ => {}
     }
 }
 

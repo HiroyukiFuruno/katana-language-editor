@@ -57,6 +57,22 @@ fn nonliteral_arguments_are_not_color_literals() -> Result<(), Box<dyn std::erro
 }
 
 #[test]
+fn detects_renamed_color_type_constructors() -> Result<(), Box<dyn std::error::Error>> {
+    let violations = lint(
+        r#"
+        use egui::Color32 as Paint;
+        fn sample() { let _ = Paint::from_rgb(1, 2, 3); }
+        "#,
+    )?;
+    assert_eq!(violations.len(), 1);
+    assert_eq!(
+        violations[0].literal.as_deref(),
+        Some("Paint::from_rgb(1, 2, 3)")
+    );
+    Ok(())
+}
+
+#[test]
 fn explicit_cfg_test_module_is_not_production() -> Result<(), Box<dyn std::error::Error>> {
     let violations =
         lint("#[cfg(test)] mod tests { fn sample() { let _ = egui::Color32::RED; } }")?;

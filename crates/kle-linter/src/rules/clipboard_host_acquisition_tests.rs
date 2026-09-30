@@ -28,7 +28,7 @@ fn assert_rejected(source: &str, path: &str, reason: &str) -> Result<(), syn::Er
 }
 
 #[test]
-fn selects_only_clipboard_transaction_sources() {
+fn selects_all_production_editor_sources() {
     for path in [
         CORE_CLIPBOARD,
         CORE_CONTROLS,
@@ -44,7 +44,12 @@ fn selects_only_clipboard_transaction_sources() {
         "crates/katana-language-editor-egui/src/host_controls.rs",
         "crates/katana-language-editor-egui/src/context-menu.rs",
         "crates/katana-language-editor-egui/src/platform_text_surface.rs",
+    ] {
+        assert!(is_target_file(Path::new(path)), "not selected: {path}");
+    }
+    for path in [
         "crates/katana-language-editor-egui/src/kuc_text_surface_mapping_tests.rs",
+        "crates/katana-language-editor-egui/tests/clipboard.rs",
     ] {
         assert!(
             !is_target_file(Path::new(path)),

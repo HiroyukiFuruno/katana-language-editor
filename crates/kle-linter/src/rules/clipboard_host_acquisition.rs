@@ -9,13 +9,6 @@ use syn::visit::Visit;
 
 const RULE: &str = "clipboard-host-acquisition";
 const BOUNDARY: &str = "KatanA host must own OS clipboard, image, and file-URL acquisition; KLE may pass neutral typed intents and opaque URLs.";
-const CORE_FILES: &[&str] = &["clipboard.rs", "controls.rs"];
-const EGUI_FILES: &[&str] = &[
-    "clipboard_paste_control.rs",
-    "kuc_text_surface_mapping.rs",
-    "kuc_text_surface_binding.rs",
-    "widget_output.rs",
-];
 
 pub(super) struct ClipboardHostAcquisitionRule;
 
@@ -36,17 +29,20 @@ impl ClipboardHostAcquisitionRule {
 }
 
 fn is_target_file(path: &Path) -> bool {
-    in_directory(path, "crates/katana-language-editor/src", CORE_FILES)
-        || in_directory(path, "crates/katana-language-editor-egui/src", EGUI_FILES)
+    is_production_source(path)
+        && (in_directory(path, "crates/katana-language-editor/src")
+            || in_directory(path, "crates/katana-language-editor-egui/src"))
 }
 
-fn in_directory(path: &Path, directory: &str, files: &[&str]) -> bool {
-    path.parent()
-        .is_some_and(|parent| parent.ends_with(directory))
-        && path
-            .file_name()
-            .and_then(|name| name.to_str())
-            .is_some_and(|name| files.contains(&name))
+fn is_production_source(path: &Path) -> bool {
+    path.file_name()
+        .and_then(|name| name.to_str())
+        .is_some_and(|name| !name.ends_with("_tests.rs"))
+}
+
+fn in_directory(path: &Path, directory: &str) -> bool {
+    path.ancestors()
+        .any(|ancestor| ancestor.ends_with(directory))
 }
 
 struct Visitor {

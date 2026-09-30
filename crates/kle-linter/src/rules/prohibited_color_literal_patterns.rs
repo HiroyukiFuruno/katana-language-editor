@@ -8,15 +8,22 @@ impl ColorLiteralPatterns {
             .collect()
     }
 
-    pub(super) fn is_color_constant_path(names: &[String], last: &str) -> bool {
-        Self::has_color_type(names) && Self::is_constant_name(last)
+    pub(super) fn is_color_constant_path(
+        names: &[String],
+        last: &str,
+        aliases: &std::collections::BTreeSet<String>,
+    ) -> bool {
+        Self::has_color_type(names, aliases) && Self::is_constant_name(last)
     }
 
-    pub(super) fn is_color_constructor_path(names: &[String]) -> bool {
+    pub(super) fn is_color_constructor_path(
+        names: &[String],
+        aliases: &std::collections::BTreeSet<String>,
+    ) -> bool {
         let Some(last) = names.last() else {
             return false;
         };
-        Self::has_color_type(names)
+        Self::has_color_type(names, aliases)
             && matches!(
                 last.as_str(),
                 "from_rgb"
@@ -39,8 +46,9 @@ impl ColorLiteralPatterns {
         Self::is_hex_color(trimmed) || Self::is_css_color_function(trimmed)
     }
 
-    fn has_color_type(names: &[String]) -> bool {
+    fn has_color_type(names: &[String], aliases: &std::collections::BTreeSet<String>) -> bool {
         names.iter().any(|it| it == "Color32" || it == "Color")
+            || names.first().is_some_and(|name| aliases.contains(name))
     }
 
     fn is_constant_name(name: &str) -> bool {
