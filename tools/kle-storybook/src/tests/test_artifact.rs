@@ -8,7 +8,7 @@ pub(super) fn test_artifact_dir(name: &str) -> PathBuf {
     let sequence = SEQUENCE.fetch_add(1, Ordering::Relaxed);
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map_or(Duration::ZERO, |duration| duration)
+        .unwrap_or(Duration::ZERO)
         .as_nanos();
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("target")
