@@ -45,6 +45,24 @@ fn archive(entries: &[(&str, &str)]) -> Result<Vec<u8>, String> {
         .map_err(|error| error.to_string())
 }
 
+fn archive_with_raw_path(path: &[u8], body: &str) -> Result<Vec<u8>, String> {
+    let mut tar = Builder::new(GzEncoder::new(Vec::new(), Compression::default()));
+    let mut header = Header::new_gnu();
+    header.set_size(body.len() as u64);
+    header.set_mode(REGULAR_FILE_MODE);
+    header.set_mtime(FIXTURE_MTIME);
+    let path_field = &mut header.as_mut_bytes()[..100];
+    path_field.fill(0);
+    path_field[..path.len()].copy_from_slice(path);
+    header.set_cksum();
+    tar.append(&header, Cursor::new(body.as_bytes()))
+        .map_err(|error| error.to_string())?;
+    tar.into_inner()
+        .map_err(|error| error.to_string())?
+        .finish()
+        .map_err(|error| error.to_string())
+}
+
 #[test]
 fn gnu_directory_entries_and_nonzero_timestamps_are_valid() -> Result<(), String> {
     let fixture = FixtureBuilder::root()?;
@@ -119,7 +137,6 @@ fn archive_path_and_duplicate_failures_are_rejected() -> Result<(), String> {
             "invalid package prefix",
         ),
         (vec![("egui-0.36.1/C:lib.rs", "x")], "invalid path"),
-        (vec![("egui-0.36.1/src\\lib.rs", "x")], "invalid path"),
         (
             vec![
                 ("egui-0.36.1/src/lib.rs", "x"),
@@ -135,7 +152,7 @@ fn archive_path_and_duplicate_failures_are_rejected() -> Result<(), String> {
 
 #[test]
 fn raw_backslash_header_is_not_normalized_into_success() -> Result<(), String> {
-    let bytes = archive(&[("egui-0.36.1/src\\lib.rs", "x")])?;
+    let bytes = archive_with_raw_path(b"egui-0.36.1/src\\lib.rs", "x")?;
     let mut tar = Archive::new(GzDecoder::new(bytes.as_slice()));
     let entry = tar
         .entries()

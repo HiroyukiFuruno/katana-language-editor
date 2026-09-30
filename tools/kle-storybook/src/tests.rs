@@ -5,11 +5,12 @@ use katana_ui_core::egui::text_command_surface::{
 };
 use std::fs;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicU64, Ordering};
+
+mod test_artifact;
+use test_artifact::test_artifact_dir;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 const FULL_EDITOR_SCENARIO_COUNT: usize = 8;
-static TEST_ARTIFACT_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 #[test]
 fn storybook_uses_kuc_scenario_factory_without_decoding_the_lease() -> TestResult {
@@ -169,14 +170,6 @@ fn scenario_ids() -> [FullTextCommandSurfaceScenarioId; FULL_EDITOR_SCENARIO_COU
         FullTextCommandSurfaceScenarioId::NavigationInput,
         FullTextCommandSurfaceScenarioId::WorkspaceTabs,
     ]
-}
-
-fn test_artifact_dir(name: &str) -> PathBuf {
-    let sequence = TEST_ARTIFACT_SEQUENCE.fetch_add(1, Ordering::Relaxed);
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("target")
-        .join("storybook-contract-tests")
-        .join(format!("{name}-{}-{sequence}", std::process::id()))
 }
 
 fn just_recipe_body(name: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
