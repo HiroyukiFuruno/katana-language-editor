@@ -25,6 +25,21 @@ fn detects_visible_strings() -> Result<(), syn::Error> {
 }
 
 #[test]
+fn detects_tooltip_and_macro_wrapped_visible_strings() -> Result<(), syn::Error> {
+    let violations = lint(
+        r#"
+        fn sample(ui: &mut egui::Ui, name: &str) {
+            ui.button(strings.save()).on_hover_text("Save the document");
+            ui.label(format!("Open {name}"));
+            let _ = egui::RichText::new(concat!("Close", " document"));
+        }
+        "#,
+    )?;
+    assert_eq!(violations.len(), 3);
+    Ok(())
+}
+
+#[test]
 fn ignores_internal_error_strings() -> Result<(), syn::Error> {
     let violations = lint(
         r#"

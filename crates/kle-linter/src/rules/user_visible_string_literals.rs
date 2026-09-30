@@ -3,6 +3,7 @@ use crate::span::SpanOps;
 use crate::syntax::AttributeOps;
 use crate::workspace::{SourceFile, WorkspaceModel};
 use std::path::{Path, PathBuf};
+use syn::parse::Parser;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
 
@@ -110,6 +111,9 @@ impl UserVisibleStringVisitor {
                 | "selectable_label"
                 | "collapsing"
                 | "hint_text"
+                | "on_hover_text"
+                | "on_hover_text_at_pointer"
+                | "on_disabled_hover_text"
         )
     }
 
@@ -132,7 +136,29 @@ impl UserVisibleStringVisitor {
     }
 
     fn is_string_literal(arg: &syn::Expr) -> bool {
-        matches!(arg, syn::Expr::Lit(lit) if matches!(lit.lit, syn::Lit::Str(_)))
+        match arg {
+            syn::Expr::Lit(lit) => matches!(lit.lit, syn::Lit::Str(_)),
+            syn::Expr::Group(group) => Self::is_string_literal(&group.expr),
+            syn::Expr::Paren(paren) => Self::is_string_literal(&paren.expr),
+            syn::Expr::Macro(expression) => Self::macro_contains_string_literal(&expression.mac),
+            _ => false,
+        }
+    }
+
+    fn macro_contains_string_literal(mac: &syn::Macro) -> bool {
+        let Some(segment) = mac.path.segments.last() else {
+            return false;
+        };
+        if !matches!(
+            segment.ident.to_string().as_str(),
+            "format" | "format_args" | "concat"
+        ) {
+            return false;
+        }
+        syn::punctuated::Punctuated::<syn::Expr, syn::Token![,]>::parse_terminated
+            .parse2(mac.tokens.clone())
+            .map(|arguments| arguments.iter().any(Self::is_string_literal))
+            .unwrap_or(false)
     }
 }
 

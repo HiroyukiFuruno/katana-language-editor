@@ -126,26 +126,22 @@ class KdvPresetFollowupTests(unittest.TestCase):
         environment = os.environ.copy()
         command = [shell_bash(), str(SCRIPT), "v0.1.0", str(repository), str(output)]
         if without_rg:
-            path_entries = environment.get("PATH", "").split(os.pathsep)
-            rg_entries = {
-                str(Path(candidate).resolve())
-                for candidate in path_entries
-                if candidate
-                and any(
-                    (Path(candidate) / f"rg{suffix}").is_file()
-                    for suffix in ("", ".exe", ".cmd", ".bat")
+            with tempfile.TemporaryDirectory() as guard_directory:
+                guard_log = Path(guard_directory) / "rg-invocations.log"
+                guard = Path(guard_directory) / "rg"
+                guard.write_text(
+                    "#!/usr/bin/env sh\nprintf 'rg invoked\\n' >> \"${KLE_RG_GUARD_LOG}\"\nexit 97\n",
+                    encoding="utf-8",
                 )
-            }
-            self.assertTrue(rg_entries, "the test environment must provide rg before hiding it")
-            environment["PATH"] = os.pathsep.join(
-                entry
-                for entry in path_entries
-                if entry and str(Path(entry).resolve()) not in rg_entries
-            )
-            self.assertIsNone(shutil.which("rg", path=environment["PATH"]))
-            result = subprocess.run(
-                command, cwd=REPOSITORY_ROOT, text=True, capture_output=True, env=environment
-            )
+                guard.chmod(0o755)
+                environment["KLE_RG_GUARD_LOG"] = str(guard_log)
+                environment["PATH"] = os.pathsep.join(
+                    [guard_directory, environment.get("PATH", "")]
+                )
+                result = subprocess.run(
+                    command, cwd=REPOSITORY_ROOT, text=True, capture_output=True, env=environment
+                )
+                self.assertFalse(guard_log.exists(), "the follow-up script must not invoke rg")
         else:
             result = subprocess.run(
                 command, cwd=REPOSITORY_ROOT, text=True, capture_output=True, env=environment
