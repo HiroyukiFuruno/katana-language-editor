@@ -17,10 +17,9 @@ pub(super) fn fixed_reference_root() -> Result<&'static Path, String> {
 }
 
 fn build_fixed_reference_root() -> Result<PathBuf, String> {
-    let destination = std::env::temp_dir().join(format!(
-        "kpc-fixed-katana-{}-{}-{}",
+    let destination = fixed_reference_temp_parent().join(format!(
+        "kpc-{}-{}",
         std::process::id(),
-        FIXED_KATANA_REVISION,
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map_err(|error| format!("fixed reference clock failed: {error}"))?
@@ -32,6 +31,12 @@ fn build_fixed_reference_root() -> Result<PathBuf, String> {
         .map_err(|error| format!("fixed reference root canonicalize failed: {error}"))?;
     seal_read_only(&canonical)?;
     Ok(canonical)
+}
+
+fn fixed_reference_temp_parent() -> PathBuf {
+    std::env::var_os("RUNNER_TEMP")
+        .map(PathBuf::from)
+        .unwrap_or_else(std::env::temp_dir)
 }
 
 fn create_fixed_reference_checkout(destination: &Path) -> Result<(), String> {
@@ -51,7 +56,7 @@ fn create_fixed_reference_checkout(destination: &Path) -> Result<(), String> {
         ));
     }
     let checkout = ProcessService::create_command("git")
-        .args(["-C"])
+        .args(["-c", "core.longpaths=true", "-C"])
         .arg(destination)
         .args(["checkout", "--quiet", "--detach", FIXED_KATANA_REVISION])
         .output()
