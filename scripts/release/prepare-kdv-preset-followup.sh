@@ -81,13 +81,17 @@ has_public_api_declaration() {
   for scope in "${kdv_repo}/crates" "${kdv_repo}/tools"; do
     [[ -d "${scope}" ]] || continue
     while IFS= read -r source_file; do
+      case "${source_file}" in
+        */"${module}.rs"|*/"${module}"/mod.rs)
+          ;;
+        *)
+          continue
+          ;;
+      esac
       if grep -E -q -- "${declaration_pattern}" "${source_file}"; then
         return 0
       fi
-    done < <(
-      rg --files "${scope}" -g '*.rs' |
-        rg "/${module}(/mod)?\\.rs$"
-    )
+    done < <(rg --files "${scope}" -g '*.rs')
   done
   return 1
 }
