@@ -108,13 +108,14 @@ class KdvPresetFollowupTests(unittest.TestCase):
             )
 
     def run_followup(self, repository: Path, output: Path) -> str:
-        subprocess.run(
+        result = subprocess.run(
             [str(SCRIPT), "v0.1.0", str(repository), str(output)],
-            check=True,
             cwd=REPOSITORY_ROOT,
             text=True,
             capture_output=True,
         )
+        if result.returncode != 0:
+            self.fail(f"follow-up script failed:\n{result.stdout}\n{result.stderr}")
         return output.read_text(encoding="utf-8")
 
     def test_accepts_only_unrestricted_public_preset_functions(self) -> None:

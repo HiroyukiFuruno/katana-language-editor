@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import argparse
 import json
-import os
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -103,12 +103,16 @@ def main() -> int:
             )
         except ValueError:
             return 1
-        environment = os.environ | {"CARGO_TARGET_DIR": str(root / "target")}
-        return subprocess.run(
+        result = subprocess.run(
             ["cargo", "check", "--quiet", "--manifest-path", str(consumer_manifest)],
-            env=environment,
+            capture_output=True,
+            text=True,
             check=False,
-        ).returncode
+        )
+        if result.returncode != 0:
+            print(result.stdout, end="")
+            print(result.stderr, end="", file=sys.stderr)
+        return result.returncode
 
 
 if __name__ == "__main__":

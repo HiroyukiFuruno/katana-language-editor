@@ -259,7 +259,7 @@ EOF
 
 ## Optional adapter helpers（必要に応じて）
 - KDV theme / typography / spacing を 'katana_language_editor::EditorConfig' に渡すための adapter helper
-- KDV settings state を `settings::default_editor()` の戻り値 `ViewerSettingsState` として公開する helper
+- KDV settings state を \`settings::default_editor()\` の戻り値 \`ViewerSettingsState\` として公開する helper
 - KDV Storybook から KLE preset を使った live harness / contract test を起動する helper
 
 ## 検証コマンド候補
