@@ -78,62 +78,10 @@ has_reference_in_file() {
 has_public_api_declaration() {
   local module="$1"
   local function="$2"
-  local scope
-  local source_file
-  local declaration_pattern
-  local root_module
-
-  declaration_pattern="^[[:space:]]*pub[[:space:]]+fn[[:space:]]+${function}[[:space:]]*\\("
-  for scope in "${kdv_repo}/crates" "${kdv_repo}/tools"; do
-    [[ -d "${scope}" ]] || continue
-    while IFS= read -r source_file; do
-      case "${source_file}" in
-        */"${module}.rs"|*/"${module}"/mod.rs)
-          ;;
-        *)
-          continue
-          ;;
-      esac
-      root_module="$(module_root_module "${source_file}" "${module}")" || continue
-      if has_public_module_export "${root_module}" "${module}" \
-        && grep -E -q -- "${declaration_pattern}" "${source_file}" \
-        && python3 "${PUBLIC_API_CHECKER}" \
-          --manifest "${manifest_file}" \
-          --source "${root_module}" \
-          --module "${module}" \
-          --function "${function}"; then
-        return 0
-      fi
-    done < <(find "${scope}" -type f -name '*.rs' -print)
-  done
-  return 1
-}
-
-has_public_module_export() {
-  local root_module="$1"
-  local module="$2"
-
-  [[ -f "${root_module}" ]] \
-    && grep -E -q -- "^[[:space:]]*pub[[:space:]]+mod[[:space:]]+${module}[[:space:];{]" "${root_module}"
-}
-
-module_root_module() {
-  local source_file="$1"
-  local module="$2"
-  local source_root
-
-  case "${source_file}" in
-    */"${module}.rs")
-      source_root="$(dirname "${source_file}")"
-      ;;
-    */"${module}"/mod.rs)
-      source_root="$(dirname "$(dirname "${source_file}")")"
-      ;;
-    *)
-      return 1
-      ;;
-  esac
-  printf '%s\n' "${source_root}/lib.rs"
+  python3 "${PUBLIC_API_CHECKER}" \
+    --manifest "${manifest_file}" \
+    --module "${module}" \
+    --function "${function}"
 }
 
 for marker in "${kdv_reference_markers[@]}"; do

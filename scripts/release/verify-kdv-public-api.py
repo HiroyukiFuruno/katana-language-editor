@@ -15,6 +15,14 @@ def active_library_package(metadata: dict[str, object], source: Path) -> dict[st
     return None
 
 
+def active_library_packages(metadata: dict[str, object]) -> list[dict[str, object]]:
+    packages: list[dict[str, object]] = []
+    for package in metadata["packages"]:
+        if any("lib" in target["kind"] for target in package["targets"]):
+            packages.append(package)
+    return packages
+
+
 def editor_types_package(
     metadata: dict[str, object], audited_package: dict[str, object]
 ) -> dict[str, object] | None:
@@ -91,7 +99,7 @@ def editor_types_dependency_spec(editor_types: dict[str, object]) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", required=True, type=Path)
-    parser.add_argument("--source", required=True, type=Path)
+    parser.add_argument("--source", type=Path)
     parser.add_argument("--module", required=True)
     parser.add_argument("--function", required=True)
     args = parser.parse_args()
@@ -112,29 +120,39 @@ def main() -> int:
     if metadata.returncode != 0:
         return metadata.returncode
     resolved_metadata = json.loads(metadata.stdout)
-    package = active_library_package(resolved_metadata, args.source.resolve())
-    editor_types = editor_types_package(resolved_metadata, package)
-    if package is None or editor_types is None:
-        return 1
+    if args.source is None:
+        packages = active_library_packages(resolved_metadata)
+    else:
+        package = active_library_package(resolved_metadata, args.source.resolve())
+        packages = [] if package is None else [package]
 
-    with tempfile.TemporaryDirectory(prefix="kle-kdv-api-audit-") as directory:
-        root = Path(directory)
-        try:
-            consumer_manifest = write_consumer(
-                root, package, editor_types, args.module, args.function
+    failures: list[subprocess.CompletedProcess[str]] = []
+    for package in packages:
+        editor_types = editor_types_package(resolved_metadata, package)
+        if editor_types is None:
+            continue
+        with tempfile.TemporaryDirectory(prefix="kle-kdv-api-audit-") as directory:
+            root = Path(directory)
+            try:
+                consumer_manifest = write_consumer(
+                    root, package, editor_types, args.module, args.function
+                )
+            except ValueError:
+                continue
+            result = subprocess.run(
+                ["cargo", "check", "--quiet", "--manifest-path", str(consumer_manifest)],
+                capture_output=True,
+                text=True,
+                check=False,
             )
-        except ValueError:
-            return 1
-        result = subprocess.run(
-            ["cargo", "check", "--quiet", "--manifest-path", str(consumer_manifest)],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if result.returncode != 0:
-            print(result.stdout, end="")
-            print(result.stderr, end="", file=sys.stderr)
-        return result.returncode
+            if result.returncode == 0:
+                return 0
+            failures.append(result)
+
+    for result in failures:
+        print(result.stdout, end="")
+        print(result.stderr, end="", file=sys.stderr)
+    return 1
 
 
 if __name__ == "__main__":

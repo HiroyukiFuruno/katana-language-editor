@@ -41,6 +41,7 @@ class KdvPresetFollowupTests(unittest.TestCase):
         viewer_is_workspace_member: bool = True,
         strings_is_impl_method: bool = False,
         settings_returns_viewer_state: bool = True,
+        inline_preset_modules: bool = False,
     ) -> Path:
         repository = root / "katana-document-viewer"
         source = repository / "crates/viewer/src"
@@ -68,6 +69,18 @@ class KdvPresetFollowupTests(unittest.TestCase):
             'pub struct Strings;\npub struct Locale;\n',
             encoding="utf-8",
         )
+        if inline_preset_modules:
+            (source / "lib.rs").write_text(
+                "pub mod strings { pub fn en() -> katana_language_editor::Strings { "
+                "katana_language_editor::Strings } }\n"
+                "pub mod locale { pub fn en_ltr() -> katana_language_editor::Locale { "
+                "katana_language_editor::Locale } }\n"
+                "pub struct ViewerSettingsState;\n"
+                "pub mod settings { pub fn default_editor() -> crate::ViewerSettingsState { "
+                "crate::ViewerSettingsState } }\n",
+                encoding="utf-8",
+            )
+            return repository
         (source / "lib.rs").write_text(
             f"{strings_export} mod strings;\npub mod locale;\npub mod settings;\n",
             encoding="utf-8",
@@ -165,6 +178,15 @@ class KdvPresetFollowupTests(unittest.TestCase):
             self.assertIn(
                 "status: follow-up not required",
                 self.run_followup(public_repository, without_rg_output, without_rg=True),
+            )
+
+            inline_output = root / "inline.md"
+            inline_repository = self.create_kdv_repository(
+                root / "inline", "pub", inline_preset_modules=True
+            )
+            self.assertIn(
+                "status: follow-up not required",
+                self.run_followup(inline_repository, inline_output),
             )
 
             restricted_output = root / "restricted.md"
