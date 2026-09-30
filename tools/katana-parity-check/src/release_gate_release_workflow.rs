@@ -49,6 +49,12 @@ impl ReleaseGateAudit {
             }
         }
 
+        let release = Self::job_section(lines, "release")?;
+        let checkout = Self::step_section(release, "Checkout")?;
+        Self::exact_trimmed_line(checkout, "ref: ${{ github.sha }}").map_err(|_| {
+            "Release checkout must pin the immutable triggering commit with github.sha".to_string()
+        })?;
+
         let required = [
             "  source-closure:",
             "    uses: ./.github/workflows/source-closure.yml",

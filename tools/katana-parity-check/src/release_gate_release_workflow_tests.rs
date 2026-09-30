@@ -32,6 +32,15 @@ fn release_workflow_requires_release_predicate_for_source_closure() -> Result<()
 }
 
 #[test]
+fn release_workflow_requires_immutable_checkout_for_source_closure_evidence() -> Result<(), String>
+{
+    let workflow = RELEASE_WORKFLOW.replace("ref: ${{ github.sha }}", "ref: master");
+    let lines = workflow.lines().collect::<Vec<_>>();
+    let result = ReleaseGateAudit::validate_release_source_closure_handoff_from_lines(&lines);
+    assert_error_contains(result, "immutable triggering commit")
+}
+
+#[test]
 fn release_workflow_rejects_source_closure_artifact_from_another_run() -> Result<(), String> {
     let workflow = RELEASE_WORKFLOW.replace(
         "source-closure-assembled-${{ github.run_id }}-${{ github.run_attempt }}",

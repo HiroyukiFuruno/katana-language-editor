@@ -45,6 +45,14 @@ fn source_closure_contract_rejects_unpinned_kuc_dependency_checkout() -> Result<
 }
 
 #[test]
+fn source_closure_contract_rejects_mutable_kle_checkout_ref() -> Result<(), String> {
+    let workflow = workflow_fixture().replace("ref: ${{ github.sha }}", "ref: master");
+    let lines = workflow.lines().collect::<Vec<_>>();
+    let result = ReleaseGateAudit::validate_source_closure_native_host_contract_from_lines(&lines);
+    assert_error_contains(result, "immutable triggering commit")
+}
+
+#[test]
 fn source_closure_contract_rejects_line_ending_conversion() -> Result<(), String> {
     let lines = workflow_fixture().replace(
         "      - name: Disable Git line-ending conversion",

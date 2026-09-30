@@ -88,12 +88,35 @@ has_public_api_declaration() {
           continue
           ;;
       esac
-      if grep -E -q -- "${declaration_pattern}" "${source_file}"; then
+      if has_public_module_export "${source_file}" "${module}" \
+        && grep -E -q -- "${declaration_pattern}" "${source_file}"; then
         return 0
       fi
     done < <(rg --files "${scope}" -g '*.rs')
   done
   return 1
+}
+
+has_public_module_export() {
+  local source_file="$1"
+  local module="$2"
+  local source_root
+  local root_module
+
+  case "${source_file}" in
+    */"${module}.rs")
+      source_root="${source_file%/"${module}.rs"}"
+      ;;
+    */"${module}"/mod.rs)
+      source_root="${source_file%/"${module}"/mod.rs}"
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+  root_module="${source_root}/lib.rs"
+  [[ -f "${root_module}" ]] || return 1
+  grep -E -q -- "^[[:space:]]*pub[[:space:]]+mod[[:space:]]+${module}[[:space:];{]" "${root_module}"
 }
 
 for marker in "${kdv_reference_markers[@]}"; do

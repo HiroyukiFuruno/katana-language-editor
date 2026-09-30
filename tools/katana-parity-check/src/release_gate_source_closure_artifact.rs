@@ -8,6 +8,7 @@ impl ReleaseGateAudit {
         lines: &[&str],
     ) -> Result<(), String> {
         Self::validate_source_closure_kuc_checkout_contract(lines)?;
+        Self::validate_source_closure_kle_checkout_commit_contract(lines)?;
         Self::validate_source_closure_canonical_git_checkout(lines)?;
         Self::validate_source_closure_fixed_dependency_fetch(lines)?;
         Self::validate_source_closure_kle_release_parity(lines)?;
@@ -24,6 +25,21 @@ impl ReleaseGateAudit {
             return Err(format!(
                 "source-closure native parity gate is missing canonical artifact directory `{CANONICAL_ARTIFACT_DIRECTORY}`"
             ));
+        }
+        Ok(())
+    }
+
+    fn validate_source_closure_kle_checkout_commit_contract(lines: &[&str]) -> Result<(), String> {
+        for job_name in [
+            "capture-profile",
+            "assemble-validate-materialize",
+            "native-host-e2e",
+        ] {
+            let job = Self::job_section(lines, job_name)?;
+            let checkout = Self::step_section(job, "Checkout KLE")?;
+            Self::exact_trimmed_line(checkout, "ref: ${{ github.sha }}").map_err(|_| {
+                "source-closure KLE checkouts must pin the immutable triggering commit with github.sha".to_string()
+            })?;
         }
         Ok(())
     }
