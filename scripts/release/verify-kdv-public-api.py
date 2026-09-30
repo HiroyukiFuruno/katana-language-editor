@@ -46,7 +46,6 @@ def main() -> int:
         [
             "cargo",
             "metadata",
-            "--offline",
             "--no-deps",
             "--format-version",
             "1",
@@ -68,7 +67,7 @@ def main() -> int:
         consumer_manifest = write_consumer(root, package, args.module, args.function)
         environment = os.environ | {"CARGO_TARGET_DIR": str(root / "target")}
         return subprocess.run(
-            ["cargo", "check", "--offline", "--quiet", "--manifest-path", str(consumer_manifest)],
+            ["cargo", "check", "--quiet", "--manifest-path", str(consumer_manifest)],
             env=environment,
             check=False,
         ).returncode
