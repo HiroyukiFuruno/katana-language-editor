@@ -116,7 +116,8 @@ class KdvPresetFollowupTests(unittest.TestCase):
         )
         if result.returncode != 0:
             self.fail(f"follow-up script failed:\n{result.stdout}\n{result.stderr}")
-        return output.read_text(encoding="utf-8")
+        artifact = output.read_text(encoding="utf-8")
+        return f"{artifact}\n## script stderr\n{result.stderr}"
 
     def test_accepts_only_unrestricted_public_preset_functions(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
