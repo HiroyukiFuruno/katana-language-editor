@@ -15,10 +15,32 @@ def active_library_package(metadata: dict[str, object], source: Path) -> dict[st
     return None
 
 
-def editor_types_package(metadata: dict[str, object]) -> dict[str, object] | None:
-    return next(
-        (package for package in metadata["packages"] if package["name"] == "katana-language-editor"),
+def editor_types_package(
+    metadata: dict[str, object], audited_package: dict[str, object]
+) -> dict[str, object] | None:
+    audited_id = audited_package.get("id")
+    resolve = metadata.get("resolve")
+    if not isinstance(audited_id, str) or not isinstance(resolve, dict):
+        return None
+    nodes = resolve.get("nodes")
+    if not isinstance(nodes, list):
+        return None
+    node = next((node for node in nodes if node.get("id") == audited_id), None)
+    if not isinstance(node, dict):
+        return None
+    dependencies = node.get("deps")
+    if not isinstance(dependencies, list):
+        return None
+    package_id = next(
+        (
+            dependency.get("pkg")
+            for dependency in dependencies
+            if dependency.get("name") == "katana_language_editor"
+        ),
         None,
+    )
+    return next(
+        (package for package in metadata["packages"] if package.get("id") == package_id), None
     )
 
 
@@ -91,7 +113,7 @@ def main() -> int:
         return metadata.returncode
     resolved_metadata = json.loads(metadata.stdout)
     package = active_library_package(resolved_metadata, args.source.resolve())
-    editor_types = editor_types_package(resolved_metadata)
+    editor_types = editor_types_package(resolved_metadata, package)
     if package is None or editor_types is None:
         return 1
 

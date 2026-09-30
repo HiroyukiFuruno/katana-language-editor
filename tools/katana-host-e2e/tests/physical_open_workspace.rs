@@ -4,6 +4,9 @@ use katana_host_e2e_fixed::{
     AxPreflight, AxTargetLocator, AxWindowCreatedObserver, KatanAChild, KatanACommand,
     FixedSourceHarnessBuilder, NativePhysicalRunLayout,
 };
+use std::time::{Duration, Instant};
+
+const AX_TARGET_READY_TIMEOUT: Duration = Duration::from_secs(30);
 
 #[test]
 fn fixed_source_open_workspace_requires_native_selection() -> Result<(), String> {
@@ -65,7 +68,7 @@ fn observe_open_workspace(child: &KatanAChild, locator: &AxTargetLocator) -> Res
         .map_err(|error| format!("KatanA main window AX notification was not observed: {error}"))?;
     let observer = AxWindowCreatedObserver::register_native_dialog(&application, child)
         .map_err(|error| format!("AX native-dialog observer registration failed: {error}"))?;
-    application.locate(locator).map_err(|error| {
+    wait_for_ax_target(|| application.locate(locator)).map_err(|error| {
         format!("source-derived Open Workspace target resolution failed: {error}")
     })?;
     application
@@ -91,8 +94,18 @@ fn observe_workspace_restoration(
         .map_err(|error| format!("AX KatanA window observer registration failed: {error}"))?
         .wait_for_existing_window_or_notification(&application)
         .map_err(|error| format!("KatanA main window AX notification was not observed: {error}"))?;
-    application
-        .observe_workspace_frame(contract, workspace_basename)
+    wait_for_ax_target(|| application.observe_workspace_frame(contract, workspace_basename))
         .map_err(|error| format!("workspace-correlated editor observation failed: {error}"))?;
     Ok(())
+}
+
+fn wait_for_ax_target<T, E>(mut resolve: impl FnMut() -> Result<T, E>) -> Result<T, E> {
+    let deadline = Instant::now() + AX_TARGET_READY_TIMEOUT;
+    loop {
+        match resolve() {
+            Ok(value) => return Ok(value),
+            Err(error) if Instant::now() < deadline => std::thread::sleep(Duration::from_millis(100)),
+            Err(error) => return Err(error),
+        }
+    }
 }
