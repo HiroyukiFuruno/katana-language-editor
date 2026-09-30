@@ -131,7 +131,7 @@ class KdvPresetFollowupTests(unittest.TestCase):
                     resolved = shutil.which(executable)
                     if resolved is None:
                         self.fail(f"required test executable is unavailable: {executable}")
-                    os.symlink(resolved, Path(isolated_path) / executable)
+                    os.symlink(resolved, Path(isolated_path) / Path(resolved).name)
                 environment["PATH"] = isolated_path
                 result = subprocess.run(
                     command, cwd=REPOSITORY_ROOT, text=True, capture_output=True, env=environment

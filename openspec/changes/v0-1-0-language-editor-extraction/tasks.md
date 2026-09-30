@@ -32,6 +32,7 @@
 - [x] 2026-09-30 KDV preset diagnostic cross-platform execution: Python contract test は Bash follow-up script を明示的に `bash` で起動し、`PATH` の tool 除外には `os.pathsep` を用いる。Windows で shell script を直接 exec して `WinError 193` となる経路を許可しない。
 - [x] 2026-09-30 KDV preset no-rg isolation: no-`rg` regression は `rg` と同居する PATH directory を一括除外せず、必要な Shell/Cargo/Python/Unix utility だけを一時 PATH に明示する。Bash を失わせず、script が `rg` 非依存であることを検証する。
 - [x] 2026-09-30 KDV preset Windows shell selection: Windows runner では WSL launcher ではなく Git for Windows の `bash.exe` を優先し、no-`rg` isolation 内の nested `bash` invocation も同一 Bash を利用可能にする。
+- [x] 2026-09-30 KDV preset Windows executable isolation: no-`rg` isolated PATH の symlink 名は解決済み executable の suffix を保持し、Windows の `cargo`/`python3` native executable lookup を壊さない。
 - [x] 2026-09-30 KDV resolved dependency identity: audited KDV library の resolve node を起点に `katana_language_editor` dependency package ID を特定し、workspace 全体の name-only 検索で別版・別source KLEを選ばない。
 - [x] 2026-09-30 native AX readiness: `AXWindowCreated` 後は source-derived locator と workspace frame を条件成立まで bounded retry し、window existence を UI subtree readiness と誤認しない。
 - [x] 2026-09-30 idempotent release retry gate: `release-preflight-check` は初回公開前の `assert-crates-not-published` を維持する。Release workflow の `release-check` は remote tag が存在しないときだけ同 assertion を実行し、同一 HEAD を指す既存 tag だけが partial crates.io publication の idempotent resume へ進める。tag の不存在/不一致を公開済み crate で通過させない。
