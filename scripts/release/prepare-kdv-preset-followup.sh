@@ -2,6 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PUBLIC_API_CHECKER="${SCRIPT_DIR}/verify-kdv-public-api.py"
 
 version_stdout="$(bash "${SCRIPT_DIR}/verify-version.sh" "${1:-}")"
 version=""
@@ -36,6 +37,10 @@ if [[ ! -f "${manifest_file}" ]]; then
 fi
 if [[ ! -r "${manifest_file}" ]]; then
   echo "KDV manifest is not readable: ${manifest_file}" >&2
+  exit 1
+fi
+if [[ ! -r "${PUBLIC_API_CHECKER}" ]]; then
+  echo "KDV public API checker is not readable: ${PUBLIC_API_CHECKER}" >&2
   exit 1
 fi
 
@@ -76,6 +81,7 @@ has_public_api_declaration() {
   local scope
   local source_file
   local declaration_pattern
+  local root_module
 
   declaration_pattern="^[[:space:]]*pub[[:space:]]+fn[[:space:]]+${function}[[:space:]]*\\("
   for scope in "${kdv_repo}/crates" "${kdv_repo}/tools"; do
@@ -88,8 +94,14 @@ has_public_api_declaration() {
           continue
           ;;
       esac
-      if has_public_module_export "${source_file}" "${module}" \
-        && grep -E -q -- "${declaration_pattern}" "${source_file}"; then
+      root_module="$(module_root_module "${source_file}" "${module}")" || continue
+      if has_public_module_export "${root_module}" "${module}" \
+        && grep -E -q -- "${declaration_pattern}" "${source_file}" \
+        && python3 "${PUBLIC_API_CHECKER}" \
+          --manifest "${manifest_file}" \
+          --source "${root_module}" \
+          --module "${module}" \
+          --function "${function}"; then
         return 0
       fi
     done < <(rg --files "${scope}" -g '*.rs')
@@ -98,10 +110,17 @@ has_public_api_declaration() {
 }
 
 has_public_module_export() {
+  local root_module="$1"
+  local module="$2"
+
+  [[ -f "${root_module}" ]] \
+    && grep -E -q -- "^[[:space:]]*pub[[:space:]]+mod[[:space:]]+${module}[[:space:];{]" "${root_module}"
+}
+
+module_root_module() {
   local source_file="$1"
   local module="$2"
   local source_root
-  local root_module
 
   case "${source_file}" in
     */"${module}.rs")
@@ -114,34 +133,7 @@ has_public_module_export() {
       return 1
       ;;
   esac
-  root_module="${source_root}/lib.rs"
-  [[ -f "${root_module}" ]] || return 1
-  has_active_cargo_library_target "${root_module}" \
-    && grep -E -q -- "^[[:space:]]*pub[[:space:]]+mod[[:space:]]+${module}[[:space:];{]" "${root_module}"
-}
-
-has_active_cargo_library_target() {
-  local root_module="$1"
-  local metadata
-
-  if ! metadata="$(cargo metadata --offline --no-deps --format-version 1 --manifest-path "${manifest_file}")"; then
-    return 1
-  fi
-
-  KDV_ROOT_MODULE="${root_module}" python3 -c '
-import json
-import os
-import sys
-
-root_module = os.path.realpath(os.environ["KDV_ROOT_MODULE"])
-metadata = json.load(sys.stdin)
-has_active_target = any(
-    "lib" in target["kind"] and os.path.realpath(target["src_path"]) == root_module
-    for package in metadata["packages"]
-    for target in package["targets"]
-)
-sys.exit(0 if has_active_target else 1)
-' <<< "${metadata}"
+  printf '%s\n' "${source_root}/lib.rs"
 }
 
 for marker in "${kdv_reference_markers[@]}"; do

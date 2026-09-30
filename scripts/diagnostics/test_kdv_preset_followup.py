@@ -15,6 +15,7 @@ class KdvPresetFollowupTests(unittest.TestCase):
         strings_visibility: str,
         strings_export: str = "pub",
         viewer_is_workspace_member: bool = True,
+        strings_is_impl_method: bool = False,
     ) -> Path:
         repository = root / "katana-document-viewer"
         source = repository / "crates/viewer/src"
@@ -31,14 +32,26 @@ class KdvPresetFollowupTests(unittest.TestCase):
             f"{strings_export} mod strings;\npub mod locale;\npub mod settings;\n",
             encoding="utf-8",
         )
-        self.write_module(source, "strings", strings_visibility, "en")
+        self.write_module(
+            source, "strings", strings_visibility, "en", strings_is_impl_method
+        )
         self.write_module(source, "locale", "pub", "en_ltr")
         self.write_module(source, "settings", "pub", "default_editor")
         return repository
 
-    def write_module(self, source: Path, module: str, visibility: str, function: str) -> None:
+    def write_module(
+        self,
+        source: Path,
+        module: str,
+        visibility: str,
+        function: str,
+        is_impl_method: bool = False,
+    ) -> None:
+        contents = f"{visibility} fn {function}() {{}}\n"
+        if is_impl_method:
+            contents = f"pub struct Presets;\nimpl Presets {{ {visibility} fn {function}() {{}} }}\n"
         (source / f"{module}.rs").write_text(
-            f"{visibility} fn {function}() {{}}\n", encoding="utf-8"
+            contents, encoding="utf-8"
         )
 
     def run_followup(self, repository: Path, output: Path) -> str:
@@ -82,6 +95,14 @@ class KdvPresetFollowupTests(unittest.TestCase):
             inactive_result = self.run_followup(inactive_repository, inactive_output)
             self.assertIn("status: follow-up required", inactive_result)
             self.assertIn("- `strings::en()`", inactive_result)
+
+            method_output = root / "method.md"
+            method_repository = self.create_kdv_repository(
+                root / "method", "pub", strings_is_impl_method=True
+            )
+            method_result = self.run_followup(method_repository, method_output)
+            self.assertIn("status: follow-up required", method_result)
+            self.assertIn("- `strings::en()`", method_result)
 
 
 if __name__ == "__main__":
