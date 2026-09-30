@@ -1,7 +1,6 @@
 use crate::release_gate::ReleaseGateAudit;
 
-const NATIVE_HOST_LAYOUT_ARTIFACT: &str =
-    "source-closure-native-host-e2e-${{ github.run_id }}";
+const NATIVE_HOST_LAYOUT_ARTIFACT: &str = "source-closure-native-host-e2e-${{ github.run_id }}";
 
 pub(crate) struct NativeHostStepAudit;
 
