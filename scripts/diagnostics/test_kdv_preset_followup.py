@@ -12,6 +12,17 @@ SCRIPT = REPOSITORY_ROOT / "scripts/release/prepare-kdv-preset-followup.sh"
 API_CHECKER = REPOSITORY_ROOT / "scripts/release/verify-kdv-public-api.py"
 
 
+def shell_bash() -> str:
+    if os.name == "nt":
+        git_bash = Path(os.environ.get("ProgramFiles", r"C:\\Program Files")) / "Git/bin/bash.exe"
+        if git_bash.is_file():
+            return str(git_bash)
+    resolved = shutil.which("bash")
+    if resolved is None:
+        raise RuntimeError("bash is unavailable")
+    return resolved
+
+
 def load_api_checker():
     specification = importlib.util.spec_from_file_location("verify_kdv_public_api", API_CHECKER)
     if specification is None or specification.loader is None:
@@ -113,7 +124,7 @@ class KdvPresetFollowupTests(unittest.TestCase):
         self, repository: Path, output: Path, *, without_rg: bool = False
     ) -> str:
         environment = os.environ.copy()
-        command = ["bash", str(SCRIPT), "v0.1.0", str(repository), str(output)]
+        command = [shell_bash(), str(SCRIPT), "v0.1.0", str(repository), str(output)]
         if without_rg:
             with tempfile.TemporaryDirectory() as isolated_path:
                 for executable in ("awk", "bash", "cat", "dirname", "find", "grep", "mkdir", "python3", "sed", "sort", "tr", "cargo"):
@@ -122,7 +133,6 @@ class KdvPresetFollowupTests(unittest.TestCase):
                         self.fail(f"required test executable is unavailable: {executable}")
                     os.symlink(resolved, Path(isolated_path) / executable)
                 environment["PATH"] = isolated_path
-                command[0] = str(Path(isolated_path) / "bash")
                 result = subprocess.run(
                     command, cwd=REPOSITORY_ROOT, text=True, capture_output=True, env=environment
                 )
