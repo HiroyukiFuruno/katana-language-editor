@@ -77,6 +77,8 @@ macro_rules! source_closure_visit_items {
         self.record_inherent_methods(node);
         self.with_impl_type(
             super::ast_scan::type_shape_for_index(&node.self_ty),
+            node.trait_.is_none(),
+            super::ast_scan::inherent_member_names(node),
             |this| {
                 this.with_symbol("impl".to_string(), |this| {
                     this.record_cfg_attributes(&node.attrs);

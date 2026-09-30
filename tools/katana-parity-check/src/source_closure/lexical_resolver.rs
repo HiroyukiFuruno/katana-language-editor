@@ -1,11 +1,13 @@
-use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
 use proc_macro2::Span;
-use syn::{File, Item, ItemUse};
+use syn::{File, Item};
 
-use super::ast_resolution::{LexicalImport, collect_lexical_imports};
 use super::path_resolution::resolve_rust_name_path_candidates;
+
+mod scope;
+use scope::{Scope, scope_from_items};
 
 #[derive(Clone, Debug)]
 pub(super) enum LexicalResolution {
@@ -13,17 +15,6 @@ pub(super) enum LexicalResolution {
     Unresolved { reason: String },
     Ambiguous { candidates: Vec<PathBuf> },
     AmbiguousAlias { alias: String },
-}
-
-#[derive(Clone, Debug)]
-struct AliasBinding {
-    source: Vec<String>,
-    span: Span,
-}
-
-#[derive(Clone, Debug, Default)]
-struct Scope {
-    aliases: BTreeMap<String, Vec<AliasBinding>>,
 }
 
 #[derive(Clone, Debug)]
@@ -66,6 +57,53 @@ impl LexicalPathResolver {
             };
         }
 
+        self.resolve_expanded(root, current, segments, None, false, None)
+    }
+
+    pub(super) fn resolve_with_impl(
+        &self,
+        root: &Path,
+        current: &Path,
+        segments: &[String],
+        impl_type: Option<&str>,
+        inherent_impl: bool,
+        inherent_members: Option<&BTreeSet<String>>,
+    ) -> LexicalResolution {
+        if segments.is_empty() {
+            return LexicalResolution::Unresolved {
+                reason: "empty Rust path".to_string(),
+            };
+        }
+
+        self.resolve_expanded(
+            root,
+            current,
+            segments,
+            impl_type,
+            inherent_impl,
+            inherent_members,
+        )
+    }
+
+    fn resolve_expanded(
+        &self,
+        root: &Path,
+        current: &Path,
+        segments: &[String],
+        impl_type: Option<&str>,
+        inherent_impl: bool,
+        inherent_members: Option<&BTreeSet<String>>,
+    ) -> LexicalResolution {
+        if segments.first().is_some_and(|segment| segment == "Self") {
+            return self.resolve_inherent_self(
+                current,
+                segments,
+                impl_type,
+                inherent_impl,
+                inherent_members,
+            );
+        }
+
         let (expanded, alias_span, alias_ambiguous) = self.expand_alias(segments);
         if let Some(alias) = alias_ambiguous {
             return LexicalResolution::AmbiguousAlias { alias };
@@ -88,6 +126,30 @@ impl LexicalPathResolver {
             _ => LexicalResolution::Ambiguous {
                 candidates: candidates.to_vec(),
             },
+        }
+    }
+
+    fn resolve_inherent_self(
+        &self,
+        current: &Path,
+        segments: &[String],
+        impl_type: Option<&str>,
+        inherent_impl: bool,
+        inherent_members: Option<&BTreeSet<String>>,
+    ) -> LexicalResolution {
+        let method = segments.get(1);
+        let defined = impl_type
+            .filter(|_| inherent_impl && segments.len() == 2)
+            .and(inherent_members)
+            .is_some_and(|members| method.is_some_and(|method| members.contains(method)));
+        if defined {
+            return LexicalResolution::Local(current.to_path_buf());
+        }
+        LexicalResolution::Unresolved {
+            reason: format!(
+                "path `{}` is not an exact inherent member in the current impl",
+                segments.join("::")
+            ),
         }
     }
 
@@ -115,34 +177,4 @@ impl LexicalPathResolver {
         expanded.extend(segments.iter().skip(1).cloned());
         (expanded, Some(entry.span), None)
     }
-}
-
-fn scope_from_items(items: &[Item]) -> Scope {
-    let mut scope = Scope::default();
-    for item in items {
-        let Item::Use(ItemUse { tree, .. }) = item else {
-            continue;
-        };
-        let mut imports = Vec::new();
-        collect_lexical_imports(tree, Vec::new(), &mut imports);
-        for LexicalImport {
-            source,
-            local,
-            glob,
-            span,
-        } in imports
-        {
-            if glob {
-                continue;
-            }
-            if let Some(local) = local {
-                scope
-                    .aliases
-                    .entry(local)
-                    .or_default()
-                    .push(AliasBinding { source, span });
-            }
-        }
-    }
-    scope
 }

@@ -26,6 +26,7 @@ mod handler_tests;
 mod input_candidate_tests;
 mod profile_tests;
 mod publication_tests;
+mod self_resolution_tests;
 
 fn action_origins_bytes_for_source(name: &str, source: &str) -> TestResult<Vec<u8>> {
     let (state, _discovered, root) =

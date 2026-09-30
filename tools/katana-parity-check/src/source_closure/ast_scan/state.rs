@@ -16,6 +16,8 @@ pub(crate) struct SourceClosureVisitor<'a> {
     pub(crate) discovered_files: &'a mut Vec<PathBuf>,
     pub(crate) symbol_stack: Vec<String>,
     pub(crate) impl_type_stack: Vec<String>,
+    pub(crate) inherent_impl_stack: Vec<bool>,
+    pub(crate) inherent_member_stack: Vec<BTreeSet<String>>,
     pub(crate) lexical_resolver: Option<LexicalPathResolver>,
     pub(crate) recorded_call_spans: BTreeSet<String>,
     pub(crate) input_candidate_stack: Vec<super::super::scan_state::InputOriginCandidate>,
@@ -46,6 +48,8 @@ impl<'a> SourceClosureVisitor<'a> {
             discovered_files,
             symbol_stack: Vec::new(),
             impl_type_stack: Vec::new(),
+            inherent_impl_stack: Vec::new(),
+            inherent_member_stack: Vec::new(),
             lexical_resolver: None,
             recorded_call_spans: BTreeSet::new(),
             input_candidate_stack: Vec::new(),
@@ -80,10 +84,28 @@ impl<'a> SourceClosureVisitor<'a> {
         self.impl_type_stack.last().cloned()
     }
 
-    pub(crate) fn with_impl_type<F: FnOnce(&mut Self)>(&mut self, type_name: String, f: F) {
+    pub(crate) fn current_impl_is_inherent(&self) -> bool {
+        self.inherent_impl_stack.last().copied().unwrap_or(false)
+    }
+
+    pub(crate) fn current_inherent_members(&self) -> Option<&BTreeSet<String>> {
+        self.inherent_member_stack.last()
+    }
+
+    pub(crate) fn with_impl_type<F: FnOnce(&mut Self)>(
+        &mut self,
+        type_name: String,
+        inherent: bool,
+        members: BTreeSet<String>,
+        f: F,
+    ) {
         self.impl_type_stack.push(type_name);
+        self.inherent_impl_stack.push(inherent);
+        self.inherent_member_stack.push(members);
         f(self);
         self.impl_type_stack.pop();
+        self.inherent_impl_stack.pop();
+        self.inherent_member_stack.pop();
     }
 
     pub(crate) fn with_pattern<F: FnOnce(&mut Self)>(&mut self, f: F) {

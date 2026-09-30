@@ -104,7 +104,16 @@ impl<'a> SourceClosureVisitor<'a> {
             || LexicalResolution::Unresolved {
                 reason: "lexical resolver was not initialized".to_string(),
             },
-            |resolver| resolver.resolve(self.katana_root, self.current_path, names),
+            |resolver| {
+                resolver.resolve_with_impl(
+                    self.katana_root,
+                    self.current_path,
+                    names,
+                    self.current_impl_type().as_deref(),
+                    self.current_impl_is_inherent(),
+                    self.current_inherent_members(),
+                )
+            },
         )
     }
 }
