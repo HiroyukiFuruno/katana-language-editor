@@ -1,7 +1,7 @@
 use crate::release_gate::ReleaseGateAudit;
 
 const NATIVE_HOST_LAYOUT_ARTIFACT: &str =
-    "source-closure-native-host-e2e-${{ github.run_id }}-${{ github.run_attempt }}";
+    "source-closure-native-host-e2e-${{ github.run_id }}";
 
 pub(crate) struct NativeHostStepAudit;
 
@@ -16,7 +16,7 @@ impl NativeHostStepAudit {
             "artifacts/source-derived-native-target.json",
             "artifacts/context-menu-target-manifest.json",
             "profiles/macos-latest/probe.json",
-            "name: source-closure-native-host-e2e-${{ github.run_id }}-${{ github.run_attempt }}",
+            "name: source-closure-native-host-e2e-${{ github.run_id }}",
         ];
         for needle in required_assemble {
             if !assemble
@@ -30,7 +30,7 @@ impl NativeHostStepAudit {
         }
         let required_native = [
             "- name: Download native host E2E layout",
-            "name: source-closure-native-host-e2e-${{ github.run_id }}-${{ github.run_attempt }}",
+            "name: source-closure-native-host-e2e-${{ github.run_id }}",
             "path: katana-language-editor/target/source-closure",
         ];
         for needle in required_native {
