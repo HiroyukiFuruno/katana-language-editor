@@ -1,6 +1,6 @@
 #[test]
 fn binding_retains_only_the_kuc_host_root() -> Result<(), String> {
-    let source = include_str!("kuc_root_binding.rs");
+    let source = include_str!("kuc_root_binding.rs").replace("\r\n", "\n");
     let fields = source
         .split_once("pub struct KucRootBinding {")
         .and_then(|(_, rest)| rest.split_once("}\n\n#[derive"))
@@ -13,8 +13,8 @@ fn binding_retains_only_the_kuc_host_root() -> Result<(), String> {
 
 #[test]
 fn receipt_contains_only_closed_record_and_forwarding_values() -> Result<(), String> {
-    let source = include_str!("kuc_root_binding.rs");
-    let fields = receipt_fields(source)?;
+    let source = include_str!("kuc_root_binding.rs").replace("\r\n", "\n");
+    let fields = receipt_fields(&source)?;
     assert_receipt_fields(fields);
     assert_receipt_does_not_leak(fields);
     Ok(())
@@ -70,7 +70,7 @@ fn assert_receipt_does_not_leak(fields: &str) {
 
 #[test]
 fn binding_has_no_old_sanitized_surface_or_local_projection_builder() {
-    let source = include_str!("kuc_root_binding.rs");
+    let source = include_str!("kuc_root_binding.rs").replace("\r\n", "\n");
     for forbidden in [
         "EguiTextCommandSurfacePresentation",
         "EguiTextCommandSurfaceHostTarget",

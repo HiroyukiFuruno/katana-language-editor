@@ -20,10 +20,12 @@ impl HostProjectionProvider for FailingProvider {
     }
 }
 
-fn production_source() -> &'static str {
-    include_str!("root_editor.rs")
+fn production_source() -> String {
+    let source = include_str!("root_editor.rs").replace("\r\n", "\n");
+    source
         .split_once("#[cfg(test)]")
-        .map_or(include_str!("root_editor.rs"), |(source, _)| source)
+        .map_or(source.as_str(), |(production, _)| production)
+        .to_owned()
 }
 
 #[test]
