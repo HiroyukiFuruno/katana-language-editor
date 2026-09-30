@@ -42,6 +42,7 @@ class KdvPresetFollowupTests(unittest.TestCase):
         strings_is_impl_method: bool = False,
         settings_returns_viewer_state: bool = True,
         inline_preset_modules: bool = False,
+        editor_types_dependency_name: str = "katana-language-editor",
     ) -> Path:
         repository = root / "katana-document-viewer"
         source = repository / "crates/viewer/src"
@@ -56,9 +57,14 @@ class KdvPresetFollowupTests(unittest.TestCase):
         (repository / "Cargo.toml").write_text(
             f"[workspace]\nmembers = {members}\nresolver = \"2\"\n", encoding="utf-8"
         )
+        editor_types_dependency = (
+            'katana-language-editor = { path = "../kle-types" }'
+            if editor_types_dependency_name == "katana-language-editor"
+            else f'{editor_types_dependency_name} = {{ package = "katana-language-editor", path = "../kle-types" }}'
+        )
         (source.parent / "Cargo.toml").write_text(
             '[package]\nname = "viewer"\nversion = "0.1.0"\nedition = "2024"\n'
-            '[dependencies]\nkatana-language-editor = { path = "../kle-types" }\n',
+            f'[dependencies]\n{editor_types_dependency}\n',
             encoding="utf-8",
         )
         (editor_types.parent / "Cargo.toml").write_text(
@@ -71,7 +77,12 @@ class KdvPresetFollowupTests(unittest.TestCase):
         )
         if inline_preset_modules:
             (source / "lib.rs").write_text(
-                "pub mod strings { pub fn en() -> katana_language_editor::Strings { "
+                (
+                    "extern crate kle as katana_language_editor;\n"
+                    if editor_types_dependency_name == "kle"
+                    else ""
+                )
+                + "pub mod strings { pub fn en() -> katana_language_editor::Strings { "
                 "katana_language_editor::Strings } }\n"
                 "pub mod locale { pub fn en_ltr() -> katana_language_editor::Locale { "
                 "katana_language_editor::Locale } }\n"
@@ -80,9 +91,15 @@ class KdvPresetFollowupTests(unittest.TestCase):
                 "crate::ViewerSettingsState } }\n",
                 encoding="utf-8",
             )
+            self.generate_lockfile(repository)
             return repository
         (source / "lib.rs").write_text(
-            f"{strings_export} mod strings;\npub mod locale;\npub mod settings;\n",
+            (
+                "extern crate kle as katana_language_editor;\n"
+                if editor_types_dependency_name == "kle"
+                else ""
+            )
+            + f"{strings_export} mod strings;\npub mod locale;\npub mod settings;\n",
             encoding="utf-8",
         )
         self.write_module(source, "strings", strings_visibility, "en", "Strings", strings_is_impl_method)
@@ -98,7 +115,16 @@ class KdvPresetFollowupTests(unittest.TestCase):
             )
         else:
             self.write_module(source, "settings", "pub", "default_editor", "Strings")
+        self.generate_lockfile(repository)
         return repository
+
+    def generate_lockfile(self, repository: Path) -> None:
+        subprocess.run(
+            ["cargo", "generate-lockfile", "--manifest-path", str(repository / "Cargo.toml")],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
 
     def write_module(
         self,
@@ -138,6 +164,8 @@ class KdvPresetFollowupTests(unittest.TestCase):
     ) -> str:
         environment = os.environ.copy()
         command = [shell_bash(), str(SCRIPT), "v0.1.0", str(repository), str(output)]
+        lockfile = repository / "Cargo.lock"
+        lockfile_before = lockfile.read_bytes()
         if without_rg:
             with tempfile.TemporaryDirectory() as guard_directory:
                 guard_log = Path(guard_directory) / "rg-invocations.log"
@@ -161,6 +189,7 @@ class KdvPresetFollowupTests(unittest.TestCase):
             )
         if result.returncode != 0:
             self.fail(f"follow-up script failed:\n{result.stdout}\n{result.stderr}")
+        self.assertEqual(lockfile.read_bytes(), lockfile_before)
         artifact = output.read_text(encoding="utf-8")
         return f"{artifact}\n## script stderr\n{result.stderr}"
 
@@ -187,6 +216,15 @@ class KdvPresetFollowupTests(unittest.TestCase):
             self.assertIn(
                 "status: follow-up not required",
                 self.run_followup(inline_repository, inline_output),
+            )
+
+            renamed_output = root / "renamed.md"
+            renamed_repository = self.create_kdv_repository(
+                root / "renamed", "pub", editor_types_dependency_name="kle"
+            )
+            self.assertIn(
+                "status: follow-up not required",
+                self.run_followup(renamed_repository, renamed_output),
             )
 
             restricted_output = root / "restricted.md"

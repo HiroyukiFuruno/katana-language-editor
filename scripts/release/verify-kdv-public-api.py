@@ -39,16 +39,19 @@ def editor_types_package(
     dependencies = node.get("deps")
     if not isinstance(dependencies, list):
         return None
-    package_id = next(
+    package_ids = {
+        dependency.get("pkg")
+        for dependency in dependencies
+        if isinstance(dependency.get("pkg"), str)
+    }
+    return next(
         (
-            dependency.get("pkg")
-            for dependency in dependencies
-            if dependency.get("name") in {"katana_language_editor", "katana-language-editor"}
+            package
+            for package in metadata["packages"]
+            if package.get("id") in package_ids
+            and package.get("name") == "katana-language-editor"
         ),
         None,
-    )
-    return next(
-        (package for package in metadata["packages"] if package.get("id") == package_id), None
     )
 
 
@@ -108,6 +111,7 @@ def main() -> int:
         [
             "cargo",
             "metadata",
+            "--locked",
             "--format-version",
             "1",
             "--manifest-path",
