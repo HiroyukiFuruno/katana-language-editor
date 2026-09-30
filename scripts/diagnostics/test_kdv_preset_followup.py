@@ -126,16 +126,26 @@ class KdvPresetFollowupTests(unittest.TestCase):
         environment = os.environ.copy()
         command = [shell_bash(), str(SCRIPT), "v0.1.0", str(repository), str(output)]
         if without_rg:
-            with tempfile.TemporaryDirectory() as isolated_path:
-                for executable in ("awk", "bash", "cat", "dirname", "find", "grep", "mkdir", "python3", "sed", "sort", "tr", "cargo"):
-                    resolved = shutil.which(executable)
-                    if resolved is None:
-                        self.fail(f"required test executable is unavailable: {executable}")
-                    os.symlink(resolved, Path(isolated_path) / Path(resolved).name)
-                environment["PATH"] = isolated_path
-                result = subprocess.run(
-                    command, cwd=REPOSITORY_ROOT, text=True, capture_output=True, env=environment
+            path_entries = environment.get("PATH", "").split(os.pathsep)
+            rg_entries = {
+                str(Path(candidate).resolve())
+                for candidate in path_entries
+                if candidate
+                and any(
+                    (Path(candidate) / f"rg{suffix}").is_file()
+                    for suffix in ("", ".exe", ".cmd", ".bat")
                 )
+            }
+            self.assertTrue(rg_entries, "the test environment must provide rg before hiding it")
+            environment["PATH"] = os.pathsep.join(
+                entry
+                for entry in path_entries
+                if entry and str(Path(entry).resolve()) not in rg_entries
+            )
+            self.assertIsNone(shutil.which("rg", path=environment["PATH"]))
+            result = subprocess.run(
+                command, cwd=REPOSITORY_ROOT, text=True, capture_output=True, env=environment
+            )
         else:
             result = subprocess.run(
                 command, cwd=REPOSITORY_ROOT, text=True, capture_output=True, env=environment
