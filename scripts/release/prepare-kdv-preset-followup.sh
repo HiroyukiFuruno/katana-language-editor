@@ -105,10 +105,10 @@ has_public_module_export() {
 
   case "${source_file}" in
     */"${module}.rs")
-      source_root="${source_file%/"${module}.rs"}"
+      source_root="$(dirname "${source_file}")"
       ;;
     */"${module}"/mod.rs)
-      source_root="${source_file%/"${module}"/mod.rs}"
+      source_root="$(dirname "$(dirname "${source_file}")")"
       ;;
     *)
       return 1
