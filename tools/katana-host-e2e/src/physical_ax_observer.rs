@@ -91,17 +91,24 @@ impl AxWindowCreatedObserver {
     }
 
     pub fn wait_for_notification(self) -> Result<(), AxObserverError> {
-        let run_result = objc2_core_foundation::CFRunLoop::run_in_mode(
-            unsafe { objc2_core_foundation::kCFRunLoopDefaultMode },
-            NOTIFICATION_WAIT_SECONDS,
-            true,
-        );
+        let deadline = std::time::Instant::now()
+            + std::time::Duration::from_secs_f64(NOTIFICATION_WAIT_SECONDS);
+        while !self.observed.load(std::sync::atomic::Ordering::Acquire) {
+            let remaining = deadline.saturating_duration_since(std::time::Instant::now());
+            if remaining.is_zero() {
+                break;
+            }
+            let _ = objc2_core_foundation::CFRunLoop::run_in_mode(
+                unsafe { objc2_core_foundation::kCFRunLoopDefaultMode },
+                remaining.as_secs_f64(),
+                true,
+            );
+        }
         let observed = self.observed.load(std::sync::atomic::Ordering::Acquire);
         let _ = &self.observer;
         if observed {
             Ok(())
         } else {
-            let _ = run_result;
             Err(AxObserverError::NotificationNotObserved)
         }
     }

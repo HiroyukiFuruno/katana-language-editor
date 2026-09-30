@@ -15,20 +15,43 @@ def active_library_package(metadata: dict[str, object], source: Path) -> dict[st
     return None
 
 
-def write_consumer(root: Path, package: dict[str, object], module: str, function: str) -> Path:
+def editor_types_package(metadata: dict[str, object]) -> dict[str, object] | None:
+    return next(
+        (package for package in metadata["packages"] if package["name"] == "katana-language-editor"),
+        None,
+    )
+
+
+def write_consumer(
+    root: Path,
+    package: dict[str, object],
+    editor_types: dict[str, object],
+    module: str,
+    function: str,
+) -> Path:
     manifest = Path(package["manifest_path"])
+    editor_types_manifest = Path(editor_types["manifest_path"])
     package_name = json.dumps(package["name"])
     dependency_path = json.dumps(str(manifest.parent))
+    editor_types_path = json.dumps(str(editor_types_manifest.parent))
     (root / "Cargo.toml").write_text(
         "[package]\nname = \"kle-kdv-api-audit\"\nversion = \"0.0.0\"\nedition = \"2024\"\n"
         "\n[dependencies]\nkdv_audit_target = { package = "
-        f"{package_name}, path = {dependency_path} }}\n",
+        f"{package_name}, path = {dependency_path} }}\n"
+        "kle_preset_types = { package = \"katana-language-editor\", path = "
+        f"{editor_types_path} }}\n",
         encoding="utf-8",
     )
     source = root / "src"
     source.mkdir()
+    expected_type = {
+        "strings": "Strings",
+        "locale": "Locale",
+        "settings": "EditorSettings",
+    }[module]
     (source / "main.rs").write_text(
-        f"fn main() {{ let _ = kdv_audit_target::{module}::{function}(); }}\n",
+        f"fn main() {{ let _: kle_preset_types::{expected_type} = "
+        f"kdv_audit_target::{module}::{function}(); }}\n",
         encoding="utf-8",
     )
     return root / "Cargo.toml"
@@ -46,7 +69,6 @@ def main() -> int:
         [
             "cargo",
             "metadata",
-            "--no-deps",
             "--format-version",
             "1",
             "--manifest-path",
@@ -58,13 +80,17 @@ def main() -> int:
     )
     if metadata.returncode != 0:
         return metadata.returncode
-    package = active_library_package(json.loads(metadata.stdout), args.source.resolve())
-    if package is None:
+    resolved_metadata = json.loads(metadata.stdout)
+    package = active_library_package(resolved_metadata, args.source.resolve())
+    editor_types = editor_types_package(resolved_metadata)
+    if package is None or editor_types is None:
         return 1
 
     with tempfile.TemporaryDirectory(prefix="kle-kdv-api-audit-") as directory:
         root = Path(directory)
-        consumer_manifest = write_consumer(root, package, args.module, args.function)
+        consumer_manifest = write_consumer(
+            root, package, editor_types, args.module, args.function
+        )
         environment = os.environ | {"CARGO_TARGET_DIR": str(root / "target")}
         return subprocess.run(
             ["cargo", "check", "--quiet", "--manifest-path", str(consumer_manifest)],

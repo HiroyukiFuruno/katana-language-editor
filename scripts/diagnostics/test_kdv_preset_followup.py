@@ -19,24 +19,37 @@ class KdvPresetFollowupTests(unittest.TestCase):
     ) -> Path:
         repository = root / "katana-document-viewer"
         source = repository / "crates/viewer/src"
+        editor_types = repository / "crates/kle-types/src"
         source.mkdir(parents=True)
-        members = '["crates/viewer"]' if viewer_is_workspace_member else "[]"
+        editor_types.mkdir(parents=True)
+        members = (
+            '["crates/viewer", "crates/kle-types"]'
+            if viewer_is_workspace_member
+            else '["crates/kle-types"]'
+        )
         (repository / "Cargo.toml").write_text(
             f"[workspace]\nmembers = {members}\nresolver = \"2\"\n", encoding="utf-8"
         )
         (source.parent / "Cargo.toml").write_text(
-            '[package]\nname = "viewer"\nversion = "0.1.0"\nedition = "2024"\n',
+            '[package]\nname = "viewer"\nversion = "0.1.0"\nedition = "2024"\n'
+            '[dependencies]\nkatana-language-editor = { path = "../kle-types" }\n',
+            encoding="utf-8",
+        )
+        (editor_types.parent / "Cargo.toml").write_text(
+            '[package]\nname = "katana-language-editor"\nversion = "0.1.0"\nedition = "2024"\n',
+            encoding="utf-8",
+        )
+        (editor_types / "lib.rs").write_text(
+            'pub struct Strings;\npub struct Locale;\npub struct EditorSettings;\n',
             encoding="utf-8",
         )
         (source / "lib.rs").write_text(
             f"{strings_export} mod strings;\npub mod locale;\npub mod settings;\n",
             encoding="utf-8",
         )
-        self.write_module(
-            source, "strings", strings_visibility, "en", strings_is_impl_method
-        )
-        self.write_module(source, "locale", "pub", "en_ltr")
-        self.write_module(source, "settings", "pub", "default_editor")
+        self.write_module(source, "strings", strings_visibility, "en", "Strings", strings_is_impl_method)
+        self.write_module(source, "locale", "pub", "en_ltr", "Locale")
+        self.write_module(source, "settings", "pub", "default_editor", "EditorSettings")
         return repository
 
     def write_module(
@@ -45,11 +58,19 @@ class KdvPresetFollowupTests(unittest.TestCase):
         module: str,
         visibility: str,
         function: str,
+        return_type: str,
         is_impl_method: bool = False,
     ) -> None:
-        contents = f"{visibility} fn {function}() {{}}\n"
+        contents = (
+            f"{visibility} fn {function}() -> katana_language_editor::{return_type} "
+            f"{{ katana_language_editor::{return_type} }}\n"
+        )
         if is_impl_method:
-            contents = f"pub struct Presets;\nimpl Presets {{ {visibility} fn {function}() {{}} }}\n"
+            contents = (
+                "pub struct Presets;\n"
+                f"impl Presets {{ {visibility} fn {function}() -> "
+                f"katana_language_editor::{return_type} {{ katana_language_editor::{return_type} }} }}\n"
+            )
         (source / f"{module}.rs").write_text(
             contents, encoding="utf-8"
         )
