@@ -34,6 +34,7 @@
 - [x] 2026-09-30 KDV preset Windows shell selection: Windows runner では WSL launcher ではなく Git for Windows の `bash.exe` を優先し、no-`rg` isolation 内の nested `bash` invocation も同一 Bash を利用可能にする。
 - [x] 2026-09-30 KDV preset Windows executable isolation: no-`rg` isolated PATH の symlink 名は解決済み executable の suffix を保持し、Windows の `cargo`/`python3` native executable lookup を壊さない。
 - [x] 2026-09-30 KDV resolved dependency identity: audited KDV library の resolve node を起点に `katana_language_editor` dependency package ID を特定し、workspace 全体の name-only 検索で別版・別source KLEを選ばない。
+- [x] 2026-09-30 KDV resolved dependency alias: cargo metadata resolve node の dependency name は hyphen/underscore 双方を許容し、package ID の edge traversal を維持する。
 - [x] 2026-09-30 native AX readiness: `AXWindowCreated` 後は source-derived locator と workspace frame を条件成立まで bounded retry し、window existence を UI subtree readiness と誤認しない。
 - [x] 2026-09-30 idempotent release retry gate: `release-preflight-check` は初回公開前の `assert-crates-not-published` を維持する。Release workflow の `release-check` は remote tag が存在しないときだけ同 assertion を実行し、同一 HEAD を指す既存 tag だけが partial crates.io publication の idempotent resume へ進める。tag の不存在/不一致を公開済み crate で通過させない。
 - [x] 2026-09-30 physical native dialog observation: initial KatanA window は `AnyWindow` observer で別途確認し、Open Workspace click 後の observer は `AXWindowCreated` callback が element の `AXRole` を読み `AXSheet`/`AXDialog` だけを native dialog と受理する。`AXWindow`/`AXPopover` 等では成功にしない。実 physical execution は source-closure 三OS artifact と fixed detached KatanA checkout が揃うまで未完了とする。

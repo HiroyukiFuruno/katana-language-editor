@@ -35,7 +35,7 @@ def editor_types_package(
         (
             dependency.get("pkg")
             for dependency in dependencies
-            if dependency.get("name") == "katana_language_editor"
+            if dependency.get("name") in {"katana_language_editor", "katana-language-editor"}
         ),
         None,
     )
