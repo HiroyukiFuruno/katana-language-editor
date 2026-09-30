@@ -45,7 +45,7 @@ permissions:
 env:
   CARGO_INCREMENTAL: 0
   CARGO_TERM_COLOR: always
-  SOURCE_CLOSURE_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+  SOURCE_CLOSURE_RUN_ID: ${{ github.run_id }}
 
 jobs:
   capture-profile:
@@ -104,6 +104,7 @@ jobs:
           path: katana-language-editor/target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}/profiles/${{ matrix.profile }}
           if-no-files-found: error
           retention-days: 14
+          overwrite: true
 
   assemble-validate-materialize:
     name: Assemble and validate source closure input
@@ -216,6 +217,7 @@ jobs:
             katana-language-editor/artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567
           if-no-files-found: error
           retention-days: 14
+          overwrite: true
 
       - name: Upload native host E2E layout
         uses: actions/upload-artifact@v4
@@ -226,6 +228,7 @@ jobs:
             katana-language-editor/target/source-closure/native-host-e2e/profiles/macos-latest/probe.json
           if-no-files-found: error
           retention-days: 14
+          overwrite: true
 
   native-host-e2e:
     name: Run protected native host E2E
