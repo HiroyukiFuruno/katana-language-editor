@@ -1,8 +1,7 @@
 use crate::release_gate::ReleaseGateAudit;
 use crate::release_gate_sources::SOURCE_CLOSURE_WORKFLOW;
 
-const ASSEMBLED_ARTIFACT: &str =
-    "source-closure-assembled-${{ github.run_id }}-${{ github.run_attempt }}";
+const ASSEMBLED_ARTIFACT: &str = "source-closure-assembled-${{ github.run_id }}";
 
 impl ReleaseGateAudit {
     pub(crate) fn validate_source_closure_native_host_contract() -> Result<(), String> {

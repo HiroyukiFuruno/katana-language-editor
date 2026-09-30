@@ -13,7 +13,7 @@ remote_tag_commit="$(python3 - "${version}" "${remote_tag_refs}" <<'PY'
 import sys
 
 version = sys.argv[1]
-refs = dict(line.split(maxsplit=1) for line in sys.argv[2].splitlines() if line.strip())
+refs = {ref: object_id for object_id, ref in (line.split(maxsplit=1) for line in sys.argv[2].splitlines() if line.strip())}
 print(refs.get(f"refs/tags/{version}^{{}}") or refs.get(f"refs/tags/{version}") or "")
 PY
 )"

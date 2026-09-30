@@ -60,7 +60,7 @@ impl ReleaseGateAudit {
             "    uses: ./.github/workflows/source-closure.yml",
             "    needs: source-closure",
             "      - name: Download validated source-closure evidence",
-            "          name: source-closure-assembled-${{ github.run_id }}-${{ github.run_attempt }}",
+            "          name: source-closure-assembled-${{ github.run_id }}",
             "          path: katana-language-editor",
             "          KATANA_PARITY_SOURCE_CLOSURE_ARTIFACT_DIR: artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts",
         ];

@@ -107,7 +107,7 @@ jobs:
       - name: Download validated source-closure evidence
         uses: actions/download-artifact@v4
         with:
-          name: source-closure-assembled-${{ github.run_id }}-${{ github.run_attempt }}
+          name: source-closure-assembled-${{ github.run_id }}
           path: katana-language-editor
 
       - name: Release check

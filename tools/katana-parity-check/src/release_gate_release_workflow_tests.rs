@@ -43,7 +43,7 @@ fn release_workflow_requires_immutable_checkout_for_source_closure_evidence() ->
 #[test]
 fn release_workflow_rejects_source_closure_artifact_from_another_run() -> Result<(), String> {
     let workflow = RELEASE_WORKFLOW.replace(
-        "source-closure-assembled-${{ github.run_id }}-${{ github.run_attempt }}",
+        "source-closure-assembled-${{ github.run_id }}",
         "source-closure-assembled-stale-run",
     );
     let lines = workflow.lines().collect::<Vec<_>>();
@@ -53,7 +53,7 @@ fn release_workflow_rejects_source_closure_artifact_from_another_run() -> Result
 
 #[test]
 fn release_workflow_rejects_release_check_before_source_closure_download() -> Result<(), String> {
-    let download = "      - name: Download validated source-closure evidence\n        uses: actions/download-artifact@v4\n        with:\n          name: source-closure-assembled-${{ github.run_id }}-${{ github.run_attempt }}\n          path: katana-language-editor\n\n";
+    let download = "      - name: Download validated source-closure evidence\n        uses: actions/download-artifact@v4\n        with:\n          name: source-closure-assembled-${{ github.run_id }}\n          path: katana-language-editor\n\n";
     let without_download = RELEASE_WORKFLOW.replace(download, "");
     let reordered = without_download.replace(
         "      - name: Create release tag\n",
