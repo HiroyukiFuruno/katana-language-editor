@@ -10,13 +10,22 @@ SCRIPT = REPOSITORY_ROOT / "scripts/release/prepare-kdv-preset-followup.sh"
 
 class KdvPresetFollowupTests(unittest.TestCase):
     def create_kdv_repository(
-        self, root: Path, strings_visibility: str, strings_export: str = "pub"
+        self,
+        root: Path,
+        strings_visibility: str,
+        strings_export: str = "pub",
+        viewer_is_workspace_member: bool = True,
     ) -> Path:
         repository = root / "katana-document-viewer"
         source = repository / "crates/viewer/src"
         source.mkdir(parents=True)
+        members = '["crates/viewer"]' if viewer_is_workspace_member else "[]"
         (repository / "Cargo.toml").write_text(
-            '[package]\nname = "viewer"\nversion = "0.1.0"\n', encoding="utf-8"
+            f"[workspace]\nmembers = {members}\nresolver = \"2\"\n", encoding="utf-8"
+        )
+        (source.parent / "Cargo.toml").write_text(
+            '[package]\nname = "viewer"\nversion = "0.1.0"\nedition = "2024"\n',
+            encoding="utf-8",
         )
         (source / "lib.rs").write_text(
             f"{strings_export} mod strings;\npub mod locale;\npub mod settings;\n",
@@ -65,6 +74,14 @@ class KdvPresetFollowupTests(unittest.TestCase):
             unexported_result = self.run_followup(unexported_repository, unexported_output)
             self.assertIn("status: follow-up required", unexported_result)
             self.assertIn("- `strings::en()`", unexported_result)
+
+            inactive_output = root / "inactive.md"
+            inactive_repository = self.create_kdv_repository(
+                root / "inactive", "pub", viewer_is_workspace_member=False
+            )
+            inactive_result = self.run_followup(inactive_repository, inactive_output)
+            self.assertIn("status: follow-up required", inactive_result)
+            self.assertIn("- `strings::en()`", inactive_result)
 
 
 if __name__ == "__main__":

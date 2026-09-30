@@ -1,7 +1,8 @@
 use crate::content::TextContent;
 use serde::{Deserialize, Serialize};
 
-const ID_SEPARATOR: &str = "::";
+const DOCUMENT_ID_PREFIX: &str = "document";
+const WORKSPACE_ID_PREFIX: &str = "workspace";
 const ORIGIN_USER_INPUT: &str = "user-input";
 const ORIGIN_HOST_EXTERNAL_CHANGE: &str = "host-external-change";
 const ORIGIN_DISK_REFRESH: &str = "disk-refresh";
@@ -30,10 +31,17 @@ impl EditorDocumentIdentity {
 
     pub fn stable_id_source(&self) -> String {
         match &self.workspace_id {
-            Some(workspace_id) => {
-                format!("{workspace_id}{ID_SEPARATOR}{}", self.document_id)
-            }
-            None => self.document_id.clone(),
+            Some(workspace_id) => format!(
+                "{WORKSPACE_ID_PREFIX}:{}:{workspace_id};{DOCUMENT_ID_PREFIX}:{}:{}",
+                workspace_id.len(),
+                self.document_id.len(),
+                self.document_id,
+            ),
+            None => format!(
+                "{DOCUMENT_ID_PREFIX}:{}:{}",
+                self.document_id.len(),
+                self.document_id,
+            ),
         }
     }
 }
@@ -159,33 +167,5 @@ impl EditorExternalUndoRecord {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn identity_is_scoped_by_workspace_and_document() {
-        let first = EditorDocumentIdentity::with_workspace("workspace-a", "doc.md");
-        let second = EditorDocumentIdentity::with_workspace("workspace-b", "doc.md");
-
-        assert_ne!(first.stable_id_source(), second.stable_id_source());
-    }
-
-    #[test]
-    fn reference_document_is_effectively_read_only() {
-        let mut state = EditorDocumentState::new(EditorDocumentIdentity::new("doc.md"));
-        state.reference = true;
-
-        assert!(state.is_effectively_read_only());
-    }
-
-    #[test]
-    fn host_external_change_requests_undo_and_refreshes() {
-        let update = EditorDocumentUpdate::host_external_change(TextContent::new("after"));
-
-        assert!(update.record_external_undo);
-        assert!(update.refresh_preview);
-        assert!(update.refresh_search);
-        assert!(update.refresh_diagnostics);
-        assert_eq!(update.origin.tag(), ORIGIN_HOST_EXTERNAL_CHANGE);
-    }
-}
+#[path = "document_state_tests.rs"]
+mod tests;

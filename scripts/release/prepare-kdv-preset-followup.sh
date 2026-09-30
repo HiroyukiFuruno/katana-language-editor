@@ -116,7 +116,32 @@ has_public_module_export() {
   esac
   root_module="${source_root}/lib.rs"
   [[ -f "${root_module}" ]] || return 1
-  grep -E -q -- "^[[:space:]]*pub[[:space:]]+mod[[:space:]]+${module}[[:space:];{]" "${root_module}"
+  has_active_cargo_library_target "${root_module}" \
+    && grep -E -q -- "^[[:space:]]*pub[[:space:]]+mod[[:space:]]+${module}[[:space:];{]" "${root_module}"
+}
+
+has_active_cargo_library_target() {
+  local root_module="$1"
+  local metadata
+
+  if ! metadata="$(cargo metadata --offline --no-deps --format-version 1 --manifest-path "${manifest_file}")"; then
+    return 1
+  fi
+
+  KDV_ROOT_MODULE="${root_module}" python3 -c '
+import json
+import os
+import sys
+
+root_module = os.path.realpath(os.environ["KDV_ROOT_MODULE"])
+metadata = json.load(sys.stdin)
+has_active_target = any(
+    "lib" in target["kind"] and os.path.realpath(target["src_path"]) == root_module
+    for package in metadata["packages"]
+    for target in package["targets"]
+)
+sys.exit(0 if has_active_target else 1)
+' <<< "${metadata}"
 }
 
 for marker in "${kdv_reference_markers[@]}"; do
