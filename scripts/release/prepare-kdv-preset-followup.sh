@@ -104,7 +104,7 @@ has_public_api_declaration() {
           --function "${function}"; then
         return 0
       fi
-    done < <(rg --files "${scope}" -g '*.rs')
+    done < <(find "${scope}" -type f -name '*.rs' -print)
   done
   return 1
 }

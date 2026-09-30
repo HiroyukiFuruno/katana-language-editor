@@ -1,4 +1,5 @@
 import importlib.util
+import os
 import subprocess
 import tempfile
 import unittest
@@ -107,12 +108,22 @@ class KdvPresetFollowupTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-    def run_followup(self, repository: Path, output: Path) -> str:
+    def run_followup(
+        self, repository: Path, output: Path, *, without_rg: bool = False
+    ) -> str:
+        environment = os.environ.copy()
+        if without_rg:
+            environment["PATH"] = ":".join(
+                directory
+                for directory in environment["PATH"].split(":")
+                if not (Path(directory) / "rg").exists()
+            )
         result = subprocess.run(
             [str(SCRIPT), "v0.1.0", str(repository), str(output)],
             cwd=REPOSITORY_ROOT,
             text=True,
             capture_output=True,
+            env=environment,
         )
         if result.returncode != 0:
             self.fail(f"follow-up script failed:\n{result.stdout}\n{result.stderr}")
@@ -127,6 +138,12 @@ class KdvPresetFollowupTests(unittest.TestCase):
             self.assertIn(
                 "status: follow-up not required",
                 self.run_followup(public_repository, public_output),
+            )
+
+            without_rg_output = root / "without-rg.md"
+            self.assertIn(
+                "status: follow-up not required",
+                self.run_followup(public_repository, without_rg_output, without_rg=True),
             )
 
             restricted_output = root / "restricted.md"
