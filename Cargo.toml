@@ -22,6 +22,6 @@ egui = "0.34"
 floem = { git = "https://github.com/lapce/floem", rev = "bcafaaad3fbf47091e28a64934295194d8e14463" }
 ignore = "0.4"
 proc-macro2 = { version = "1", features = ["span-locations"] }
-syn = { version = "2", features = ["full", "visit"] }
+syn = { version = "3", features = ["full", "visit"] }
 toml = "1.1"
 katana-ast-lint = "0.5.1"
