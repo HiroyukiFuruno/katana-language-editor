@@ -18,6 +18,8 @@ mod external_ui_dependency;
 mod fingerprint;
 mod fixed_reference;
 mod generator;
+mod generic_interaction_annotation_catalog;
+mod generic_interaction_mapping;
 mod input_validation;
 mod kle_release_evidence;
 mod kle_release_evidence_integrity;
@@ -40,6 +42,7 @@ mod operational_evidence;
 mod operational_evidence_validation;
 #[cfg(test)]
 mod operational_fixture_write;
+mod operational_generic_mapping;
 mod operational_identity;
 mod operational_input;
 mod operational_input_assembly;

@@ -1,5 +1,20 @@
 # Tasks: katana-language-editor v0.1.0
 
+## 2026-10-03 KUC v0.4.1 再開
+
+- [x] 公開済み `katana-ui-core@0.4.1` を registry dependency として取り込み、lockfile を最新互換解決した。KUC V2 の可変 multi-leaf consumer plan を既存の contract artifact に接続し、focused KUC contract test を通過した。
+- [x] source-closure / release workflow と publish blocker が KUC `v0.4.1` を固定参照することを検査した。KLE release parity は canonical source-closure artifact 不在で fail-closed することを確認した。
+- [x] source-derived leaf と KUC V2 stage の profile-local producer contract を設計書に固定し、`kle.consumer-artifact-plan.v1` を受ける KLE producer を実装した。producer は重複 leaf、未知 interaction、profile drift、既存 output を拒否し、KUC が生成した numbered PNG、SHA-256、AccessKit、Unicode evidence だけを `kle-consumer-artifact-evidence.v1` へ記録する。
+- [x] KUC Issue #81 の完了条件、`katana-ui-core@0.4.1` の公開registry、公開releaseを再確認した。KUC manifest の `native_ime_measured=false` は実機IME計測の未取得を表す制約であり、KLE consumer integration の再開条件ではない。
+- [x] source leaf から KUC stage への境界と拒否条件を `docs/v0-1-0-source-kuc-mapping-design.md` に固定した。source candidate/action/branch/profile を推測で補完せず、全件一意かつ source SHA・branch span・excerpt hash が一致する semantic evidence を持つ mapping だけを受理する。
+- [x] canonical leaf/source-closure/branch-catalog を再検証して、全 candidate の immutable source evidence を出力する `emit-generic-annotation-catalog` を追加した。この catalog は producer 入力ではなく、interaction class や passing status を含まないため、根拠のない semantic mapping を通過させない。
+- [x] source-closure CI が固定 KatanA SHA の generic interaction annotation catalog を release parity gate より前に同一 run artifact として保存するようにした。catalog は未注釈 candidate の診断入力であり、release artifact や passing evidence には扱わない。
+- [/] source-closure canonical join を実装中である。未解決 leaf を passing に昇格させず、verified generic interaction mapping がない限り producer workflow を起動しない。
+- [ ] 各 canonical source leaf の verified generic interaction mapping を source closure から生成し、macOS / Windows / Linux の KUC producer artifact を生成する。
+- [ ] KUC producer artifact を source-closure が検証して `execution-record.json` / `storybook-artifacts.json` と canonical media へ結合し、既存 `kle-release` validator を通す。
+- [/] Floem の最新公開revision `1351ffb162faeb8be983f1301d718a0d5fb59c27` を調査したが、依然 `wgpu 27 -> metal 0.32 -> block 0.1.6` を含む。Issue #15 の完了条件を満たす上流公開版が出るまで、release dependency gate は external wait とする。`[patch]`、監査除外、future-incompatibility の緩和は行わない。
+- [ ] 実 KatanA host E2E、release gate、Draft PR review、公開、downstream adoption、Issue closure、branch cleanup を完了する。
+
 ## 2026-09-05 再開時の入口
 
 - [x] カーソル下流の直接callHierarchy診断とmodifier参照を追加した。実LSP3rootから19target record/33callsiteを採取し、epaint8targetは固定Cargo.lockのarchive、tar member、展開済みbytes一致時のみsource identityとして認証する。target名の意味解決、再帰closure/native/KUC比較は未完了。

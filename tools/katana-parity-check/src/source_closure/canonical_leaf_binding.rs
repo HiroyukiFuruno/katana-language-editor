@@ -82,6 +82,26 @@ impl CanonicalLeafBindingEvidence {
         super::canonical_leaf_projection::project(self, branches)
     }
 
+    pub(crate) fn enrich_leafs(
+        &self,
+        branches: &BranchCatalogArtifact,
+        mapping: &super::generic_interaction_mapping::GenericInteractionMapping,
+    ) -> Result<Vec<LeafStatusRecord>, String> {
+        mapping.enrich(self, branches)
+    }
+
+    pub(crate) fn annotation_catalog(
+        &self,
+        branches: &BranchCatalogArtifact,
+    ) -> Result<
+        super::generic_interaction_annotation_catalog::GenericInteractionAnnotationCatalog,
+        String,
+    > {
+        super::generic_interaction_annotation_catalog::GenericInteractionAnnotationCatalog::build(
+            self, branches,
+        )
+    }
+
     pub(crate) fn validate_projection(
         &self,
         branches: &BranchCatalogArtifact,

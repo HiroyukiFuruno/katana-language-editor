@@ -14,16 +14,19 @@ before the final release gate passes.
 
 ## Current Gap
 
-`katana-ui-core@0.3.17` publishes `ConsumerArtifactPlanIssuer` and the opaque
-consumer-artifact execution path. Its ten-stage
-`GenericInteractionClass::FULL_EDITOR_SEQUENCE` is KUC-owned and emits physical
-PNG, Unicode/IME/measurement/hit-test evidence, and one-shot receipts. KLE must
-use that published registry API; it must not reproduce a renderer, raw-input
-builder, glyph fallback, or stage writer.
+`katana-ui-core@0.4.1` publishes `ConsumerArtifactPlanIssuer` and the opaque
+consumer-artifact execution path. `ConsumerArtifactPlanV2` accepts a
+consumer-defined, variable-length set of distinct leaf bindings while KUC keeps
+ownership of stage numbering, PNG generation, Unicode/IME/measurement/hit-test
+evidence, AccessKit evidence, and one-shot receipts. KLE must use that published
+registry API; it must not reproduce a renderer, raw-input builder, glyph
+fallback, or stage writer.
 
-KUC Issue #66's Linux color-emoji expected-hash correction was published in
-`0.3.13`; the `0.3.17` registry consumer is the current KLE dependency. KLE
-must not inject a font path, hash, or fallback to conceal a platform failure.
+KUC Issue #81 closed with the `0.4.1` registry release and installable native
+evidence verifier. Its manifest distinguishes verifier output from unavailable
+physical-device measurement; KLE must preserve that distinction and must not
+inject a font path, hash, fallback, or synthetic native-input claim to conceal a
+platform failure.
 
 KLE's current consumer uses synthetic identifiers
 `kle-full-editor-stage-<index>` and the fixed generic action target
@@ -36,14 +39,11 @@ source leaves is invalid.
 The remaining KLE work is therefore a fail-closed source-to-KUC join. It is not
 a KUC rendering change. The fixed KatanA inventory contains many independently
 observable leaves (including 17 code-block kinds, 12 toolbar commands, search,
-replace, diagnostics, gutter, context-menu, scroll, and IME branches). The v1
-issuer accepts the ten generic classes exactly once and therefore cannot bind
-every source-derived leaf without reusing an unrelated stage. KLE must reject
-that mismatch. KUC Issue #65 is closed with source-leaf inventory, fixture
-generation, and host E2E ownership assigned to KLE; it does not make the fixed
-ten-stage v1 plan a multi-leaf artifact API. The required generic capability is
-tracked in [KUC Issue #79](https://github.com/HiroyukiFuruno/katana-ui-core/issues/79).
-KLE must not work around it with a local renderer, synthetic stage reuse, or an
+replace, diagnostics, gutter, context-menu, scroll, and IME branches). KUC V2
+removes the fixed-ten-stage limitation, but it does not map KatanA leaves or
+create canonical KLE records. KLE must still reject unresolved source fields,
+duplicate leaf bindings, profile drift, and static fixture reuse. It must not
+work around those checks with a local renderer, synthetic stage reuse, or an
 unpublished KUC dependency.
 
 ## Required KUC Consumer Contract
@@ -77,8 +77,8 @@ The KUC API must provide a versioned, opaque, consumer-defined artifact plan tha
    distinct KUC-issued stage, source/profile identities are unchanged, and no
    `unresolved:*` field remains. Multiple leaves may share a generic interaction
    class, but they must never share a KUC stage or reuse its media/receipt. The
-   current v1 exact-ten-stage sequence cannot meet this condition; implementation
-   begins only after the required published KUC plan version is available. A
+   published KUC V2 plan can meet this condition only after KLE verifies the
+   source mapping. A
    host-effect leaf remains `downstream_required` for KatanA #336 but still
    requires the KLE/KUC generic stage evidence.
 3. Create `ConsumerArtifactStageBinding` values from the verified leaf IDs, not
@@ -102,6 +102,25 @@ The KUC API must provide a versioned, opaque, consumer-defined artifact plan tha
 6. `kle-release` validates this KLE/KUC evidence and leaves KatanA host effects
    as `downstream_required`. KatanA #336 remains a separate post-publication
    downstream adoption and real-host E2E gate.
+
+## Producer Wire Contract
+
+The KLE producer accepts only a versioned `kle.consumer-artifact-plan.v1` JSON
+document. Each stage contains a source-derived opaque `leaf_id` and one of the
+published KUC generic interaction classes. The document also names exactly one
+canonical profile. It contains no KatanA action, document text, Markdown input,
+path, URL, coordinate, font policy, raw input, renderer callback, or host effect.
+
+The producer rejects an empty or duplicate leaf set, an empty profile, an unknown
+interaction, an invalid leaf identifier, or an existing output directory. It
+issues `ConsumerArtifactPlanV2`, validates KUC Unicode evidence after every
+stage, and writes a `kle-consumer-artifact-evidence.v1` manifest beside the
+KUC-owned numbered PNG and per-stage manifest files. The evidence manifest
+records only KUC-returned identifiers, hashes, AccessKit hash, Unicode hash, and
+the numbered media filename. It is a per-profile producer artifact, not a
+canonical source-closure record. `katana-parity-check` remains the owner of the
+cross-profile canonical `execution-record.json` and `storybook-artifacts.json`
+join and must verify the source leaf manifest before accepting this output.
 
 ## Non-Goals
 

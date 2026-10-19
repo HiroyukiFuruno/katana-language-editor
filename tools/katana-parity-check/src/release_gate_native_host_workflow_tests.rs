@@ -32,6 +32,6 @@ fn source_closure_reruns_keep_capture_identity_and_replace_artifacts() {
     );
     assert_eq!(
         SOURCE_CLOSURE_WORKFLOW.matches("overwrite: true").count(),
-        3
+        4
     );
 }

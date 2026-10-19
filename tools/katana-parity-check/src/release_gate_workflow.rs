@@ -163,27 +163,4 @@ impl ReleaseGateAudit {
             .unwrap_or(lines.len());
         Ok(&lines[start..end])
     }
-
-    pub(crate) fn artifact_name_in_step<'a>(
-        lines: &'a [&'a str],
-        action: &str,
-        job: &str,
-    ) -> Result<&'a str, String> {
-        let action_index = lines
-            .iter()
-            .position(|line| line.trim() == action)
-            .ok_or_else(|| format!("{job} job is missing `{action}`"))?;
-        let end = lines
-            .iter()
-            .enumerate()
-            .skip(action_index + 1)
-            .find(|(_, line)| line.starts_with("      - name:"))
-            .map(|(index, _)| index)
-            .unwrap_or(lines.len());
-        let step = &lines[action_index..end];
-        step.iter()
-            .find(|line| line.trim().starts_with("name:"))
-            .map(|line| line.trim().trim_start_matches("name: "))
-            .ok_or_else(|| format!("{job} job artifact step is missing an artifact name"))
-    }
 }

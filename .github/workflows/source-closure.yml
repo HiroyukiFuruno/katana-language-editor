@@ -76,7 +76,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: HiroyukiFuruno/katana-ui-core
-          ref: v0.3.17
+          ref: v0.4.1
           path: katana-ui-core
 
       - name: Install Rust
@@ -128,7 +128,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: HiroyukiFuruno/katana-ui-core
-          ref: v0.3.17
+          ref: v0.4.1
           path: katana-ui-core
 
       - name: Install Rust
@@ -193,6 +193,24 @@ jobs:
           --katana-repo ../katana
           --canonical-root artifacts
 
+      - name: Emit generic interaction annotation catalog
+        working-directory: katana-language-editor
+        run: >-
+          cargo run --locked -p katana-parity-check -- source-closure emit-generic-annotation-catalog
+          --input artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts/leaf-manifest.json
+          --source-closure artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts/source-closure.json
+          --branches artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts/branch-catalog.json
+          --output target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}/generic-interaction-annotation-catalog.json
+
+      - name: Upload generic interaction annotation catalog
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-closure-generic-interaction-annotations-${{ github.run_id }}
+          path: katana-language-editor/target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}/generic-interaction-annotation-catalog.json
+          if-no-files-found: error
+          retention-days: 14
+          overwrite: true
+
       - name: Validate KLE release parity
         working-directory: katana-language-editor
         env:
@@ -254,7 +272,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: HiroyukiFuruno/katana-ui-core
-          ref: v0.3.17
+          ref: v0.4.1
           path: katana-ui-core
 
       - name: Install Rust

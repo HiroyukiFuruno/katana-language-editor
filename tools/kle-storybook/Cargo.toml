@@ -14,4 +14,5 @@ katana-language-editor-egui = { path = "../../crates/katana-language-editor-egui
 katana-ui-core = { workspace = true, features = ["storybook-artifacts"] }
 egui = { workspace = true }
 eframe = { workspace = true }
+serde = { workspace = true }
 serde_json = { workspace = true }

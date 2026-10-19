@@ -38,10 +38,10 @@ fn source_closure_contract_rejects_kuc_checkout_missing_only_from_native_host_jo
 
 #[test]
 fn source_closure_contract_rejects_unpinned_kuc_dependency_checkout() -> Result<(), String> {
-    let lines = workflow_fixture().replace("ref: v0.3.17", "ref: master");
+    let lines = workflow_fixture().replace("ref: v0.4.1", "ref: master");
     let lines = lines.lines().collect::<Vec<_>>();
     let result = ReleaseGateAudit::validate_source_closure_native_host_contract_from_lines(&lines);
-    assert_error_contains(result, "ref: v0.3.17")
+    assert_error_contains(result, "ref: v0.4.1")
 }
 
 #[test]
@@ -83,6 +83,18 @@ fn source_closure_contract_rejects_missing_kle_release_parity_validation() -> Re
     let lines = lines.lines().collect::<Vec<_>>();
     let result = ReleaseGateAudit::validate_source_closure_native_host_contract_from_lines(&lines);
     assert_error_contains(result, "Validate KLE release parity")
+}
+
+#[test]
+fn source_closure_contract_rejects_missing_generic_interaction_annotation_catalog()
+-> Result<(), String> {
+    let lines = workflow_fixture().replace(
+        "      - name: Emit generic interaction annotation catalog",
+        "      - name: Skip generic interaction annotation catalog",
+    );
+    let lines = lines.lines().collect::<Vec<_>>();
+    let result = ReleaseGateAudit::validate_source_closure_native_host_contract_from_lines(&lines);
+    assert_error_contains(result, "Emit generic interaction annotation catalog")
 }
 
 #[test]

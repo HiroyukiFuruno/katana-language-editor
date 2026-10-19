@@ -46,19 +46,14 @@ impl ReleaseGateAudit {
         crate::release_gate_native_host_steps::NativeHostStepAudit::validate_materialize_step(
             assemble,
         )?;
+        crate::release_gate_generic_interaction_annotation_catalog::GenericInteractionAnnotationCatalogAudit::validate(assemble)?;
         Self::validate_source_closure_input_recipes()?;
         Self::validate_source_closure_materialize_recipe()?;
 
-        let uploaded_artifact = Self::artifact_name_in_step(
-            assemble,
-            "uses: actions/upload-artifact@v4",
-            "assemble-validate-materialize",
-        )?;
-        let downloaded_artifact = Self::artifact_name_in_step(
-            native,
-            "uses: actions/download-artifact@v4",
-            "native-host-e2e",
-        )?;
+        let uploaded_artifact =
+            artifact_name_in_named_step(assemble, "Upload assembled source-closure evidence")?;
+        let downloaded_artifact =
+            artifact_name_in_named_step(native, "Download assembled source-closure evidence")?;
         if uploaded_artifact != ASSEMBLED_ARTIFACT || downloaded_artifact != ASSEMBLED_ARTIFACT {
             return Err(
                 "source-closure native host E2E must consume the same run assembled artifact"
@@ -70,6 +65,17 @@ impl ReleaseGateAudit {
         )?;
         Ok(())
     }
+}
+
+fn artifact_name_in_named_step<'a>(
+    lines: &'a [&'a str],
+    step_name: &str,
+) -> Result<&'a str, String> {
+    ReleaseGateAudit::step_section(lines, step_name)?
+        .iter()
+        .find(|line| line.trim().starts_with("name:"))
+        .map(|line| line.trim().trim_start_matches("name: "))
+        .ok_or_else(|| format!("source-closure `{step_name}` step is missing an artifact name"))
 }
 
 fn validate_native_job_restrictions(lines: &[&str]) -> Result<(), String> {

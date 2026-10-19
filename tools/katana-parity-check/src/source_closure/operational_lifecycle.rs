@@ -43,6 +43,20 @@ pub(super) fn run_cli(args: &[String]) -> Result<(), String> {
             options.reject_unknown(&["input", "katana-repo", "canonical-root"])?;
             super::operational_input_assembly::materialize_closure(&options)
         }
+        "emit-generic-annotation-catalog" => {
+            options.reject_unknown(&["input", "source-closure", "branches", "output"])?;
+            super::operational_generic_mapping::emit_annotation_catalog(&options)
+        }
+        "enrich-leaf-manifest" => {
+            options.reject_unknown(&[
+                "input",
+                "source-closure",
+                "branches",
+                "mapping",
+                "output",
+            ])?;
+            super::operational_generic_mapping::enrich_leaf_manifest(&options)
+        }
         "audit-requirement-bindings" => {
             options.reject_unknown(&["katana-repo", "output"])?;
             super::requirement_diagnostic::audit_requirement_bindings(&options)
@@ -84,6 +98,34 @@ mod tests {
         assert!(matches!(
             run_cli(&arguments),
             Err(error) if error.contains("missing required option --output")
+        ));
+    }
+
+    #[test]
+    fn leaf_enrichment_requires_immutable_source_artifacts() {
+        let arguments = vec![
+            "enrich-leaf-manifest".to_string(),
+            "--input".to_string(),
+            "leaf-manifest.json".to_string(),
+        ];
+
+        assert!(matches!(
+            run_cli(&arguments),
+            Err(error) if error.contains("missing required option --source-closure")
+        ));
+    }
+
+    #[test]
+    fn annotation_catalog_requires_the_source_closure_artifact() {
+        let arguments = vec![
+            "emit-generic-annotation-catalog".to_string(),
+            "--input".to_string(),
+            "leaf-manifest.json".to_string(),
+        ];
+
+        assert!(matches!(
+            run_cli(&arguments),
+            Err(error) if error.contains("missing required option --source-closure")
         ));
     }
 }

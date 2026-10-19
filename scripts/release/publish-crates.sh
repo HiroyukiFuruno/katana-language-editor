@@ -46,8 +46,8 @@ if "path" in declaration or "git" in declaration:
     raise SystemExit("katana-ui-core must resolve from crates.io before KLE publication.")
 version = declaration.get("version")
 features = set(declaration.get("features", []))
-if version != "=0.3.17":
-    raise SystemExit("KLE v0.1.0 requires katana-ui-core v0.3.17 exactly.")
+if version != "=0.4.1":
+    raise SystemExit("KLE v0.1.0 requires katana-ui-core v0.4.1 exactly.")
 if not {"egui", "text-raster"}.issubset(features):
     raise SystemExit("katana-ui-core must enable egui and text-raster features.")
 registry_version = version.removeprefix("=")

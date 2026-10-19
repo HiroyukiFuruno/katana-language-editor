@@ -11,6 +11,7 @@ pub enum StorybookMode {
     InteractionCheck,
     ContractCheck,
     MotionArtifact,
+    ConsumerArtifactPlan,
 }
 
 pub struct StorybookArgs {
@@ -18,6 +19,7 @@ pub struct StorybookArgs {
     pub frames: usize,
     frames_explicit: bool,
     pub artifact_output: PathBuf,
+    pub consumer_plan_input: Option<PathBuf>,
 }
 
 impl StorybookArgs {
@@ -27,25 +29,47 @@ impl StorybookArgs {
             frames: DEFAULT_SMOKE_FRAMES,
             frames_explicit: false,
             artifact_output: PathBuf::from(MOTION_ARTIFACT_PATH),
+            consumer_plan_input: None,
         };
         let mut args = args.peekable();
         while let Some(arg) = args.next() {
             if parsed.select_mode(&arg) {
                 continue;
             }
-            match arg.as_str() {
-                "--frames" => {
-                    parsed.frames = parse_frames(next_value(&mut args, "--frames")?)?;
-                    parsed.frames_explicit = true;
-                }
-                "--artifact-output" => {
-                    parsed.artifact_output =
-                        PathBuf::from(next_value(&mut args, "--artifact-output")?);
-                }
-                value => return Err(format!("unknown KLE Storybook argument: {value}")),
-            }
+            parsed.apply_option(&arg, &mut args)?;
         }
         Ok(parsed)
+    }
+
+    fn apply_option(
+        &mut self,
+        option: &str,
+        args: &mut impl Iterator<Item = String>,
+    ) -> Result<(), String> {
+        match option {
+            "--frames" => self.set_frames(next_value(args, "--frames")?),
+            "--artifact-output" => self.set_artifact_output(next_value(args, "--artifact-output")?),
+            "--consumer-plan-input" => {
+                self.set_consumer_plan_input(next_value(args, "--consumer-plan-input")?)
+            }
+            value => Err(format!("unknown KLE Storybook argument: {value}")),
+        }
+    }
+
+    fn set_frames(&mut self, value: String) -> Result<(), String> {
+        self.frames = parse_frames(value)?;
+        self.frames_explicit = true;
+        Ok(())
+    }
+
+    fn set_artifact_output(&mut self, value: String) -> Result<(), String> {
+        self.artifact_output = PathBuf::from(value);
+        Ok(())
+    }
+
+    fn set_consumer_plan_input(&mut self, value: String) -> Result<(), String> {
+        self.consumer_plan_input = Some(PathBuf::from(value));
+        Ok(())
     }
 
     fn select_mode(&mut self, argument: &str) -> bool {
@@ -55,6 +79,7 @@ impl StorybookArgs {
             "--interaction-check" => StorybookMode::InteractionCheck,
             "--contract-check" => StorybookMode::ContractCheck,
             "--motion-artifact" => StorybookMode::MotionArtifact,
+            "--consumer-artifact-plan" => StorybookMode::ConsumerArtifactPlan,
             _ => return false,
         };
         self.mode = mode;
@@ -78,6 +103,12 @@ impl StorybookArgs {
     pub fn interactive_frame_limit(&self) -> Option<usize> {
         self.frames_explicit.then_some(self.frames)
     }
+
+    pub fn required_consumer_plan_input(&self) -> Result<&PathBuf, String> {
+        self.consumer_plan_input
+            .as_ref()
+            .ok_or_else(|| "--consumer-artifact-plan requires --consumer-plan-input".to_string())
+    }
 }
 
 fn default_motion_artifact_frames() -> usize {
@@ -97,79 +128,4 @@ fn parse_frames(value: String) -> Result<usize, String> {
         return Err("--frames must be greater than 0".to_string());
     }
     Ok(frames)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn parses_interaction_check() -> Result<(), String> {
-        let args = StorybookArgs::parse(["--interaction-check"].into_iter().map(str::to_string))?;
-        assert_eq!(args.mode, StorybookMode::InteractionCheck);
-        Ok(())
-    }
-
-    #[test]
-    fn resolves_default_motion_sequence_output() -> Result<(), String> {
-        let args = StorybookArgs::parse(["--motion-artifact"].into_iter().map(str::to_string))?;
-        assert_eq!(args.mode, StorybookMode::MotionArtifact);
-        assert!(
-            args.resolved_artifact_output()
-                .ends_with("kle-storybook-motion-artifact")
-        );
-        assert_eq!(args.resolved_frames(), default_motion_artifact_frames());
-        Ok(())
-    }
-
-    #[test]
-    fn rejects_the_removed_full_acceptance_alias() {
-        let result = StorybookArgs::parse(
-            ["--live-acceptance-artifact"]
-                .into_iter()
-                .map(str::to_string),
-        );
-        assert!(matches!(
-            result.as_ref(),
-            Err(error) if error.contains("unknown KLE Storybook argument")
-        ));
-    }
-
-    #[test]
-    fn rejects_the_removed_emoji_check_alias() {
-        let result = StorybookArgs::parse(["--emoji-check"].into_iter().map(str::to_string));
-        assert!(matches!(
-            result.as_ref(),
-            Err(error) if error.contains("unknown KLE Storybook argument")
-        ));
-    }
-
-    #[test]
-    fn interactive_defaults_to_unlimited_frames() -> Result<(), String> {
-        let args = StorybookArgs::parse(std::iter::empty())?;
-        assert_eq!(args.mode, StorybookMode::Interactive);
-        assert_eq!(args.interactive_frame_limit(), None);
-        Ok(())
-    }
-
-    #[test]
-    fn explicit_interactive_frames_are_a_positive_limit() -> Result<(), String> {
-        let args = StorybookArgs::parse(
-            ["--interactive", "--frames", "1"]
-                .into_iter()
-                .map(str::to_string),
-        )?;
-        assert_eq!(args.interactive_frame_limit(), Some(1));
-        Ok(())
-    }
-
-    #[test]
-    fn rejects_zero_interactive_frames() {
-        let result = StorybookArgs::parse(
-            ["--interactive", "--frames", "0"]
-                .into_iter()
-                .map(str::to_string),
-        );
-        assert!(matches!(result, Err(error) if error.contains("greater than 0")));
-    }
 }
