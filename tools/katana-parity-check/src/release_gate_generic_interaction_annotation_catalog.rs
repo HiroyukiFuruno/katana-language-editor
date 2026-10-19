@@ -6,6 +6,7 @@ impl GenericInteractionAnnotationCatalogAudit {
     pub(crate) fn validate(assemble: &[&str]) -> Result<(), String> {
         validate_catalog_generation(assemble)?;
         validate_catalog_upload(assemble)?;
+        validate_mapping_input_upload(assemble)?;
         validate_catalog_ordering(assemble)
     }
 }
@@ -55,15 +56,39 @@ fn validate_catalog_upload(assemble: &[&str]) -> Result<(), String> {
 fn validate_catalog_ordering(assemble: &[&str]) -> Result<(), String> {
     let catalog_index = step_index(assemble, "Emit generic interaction annotation catalog")?;
     let upload_index = step_index(assemble, "Upload generic interaction annotation catalog")?;
+    let mapping_input_index = step_index(assemble, "Upload source mapping input")?;
     let validation_index = step_index(assemble, "Validate KLE release parity")?;
-    if catalog_index < upload_index && upload_index < validation_index {
+    if catalog_index < upload_index
+        && upload_index < mapping_input_index
+        && mapping_input_index < validation_index
+    {
         Ok(())
     } else {
         Err(
-            "source-closure must upload the immutable annotation catalog before release parity validation"
+            "source-closure must upload the immutable mapping inputs before release parity validation"
                 .to_string(),
         )
     }
+}
+
+fn validate_mapping_input_upload(assemble: &[&str]) -> Result<(), String> {
+    let upload = ReleaseGateAudit::step_section(assemble, "Upload source mapping input")?;
+    for expected in [
+        "uses: actions/upload-artifact@v4",
+        "name: source-closure-mapping-input-${{ github.run_id }}",
+        "katana-language-editor/target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}/generic-interaction-annotation-catalog.json",
+        "katana-language-editor/artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts/leaf-manifest.json",
+        "katana-language-editor/artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts/source-closure.json",
+        "katana-language-editor/artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts/branch-catalog.json",
+        "if-no-files-found: error",
+    ] {
+        if !upload.iter().any(|line| line.trim() == expected) {
+            return Err(format!(
+                "source-closure mapping input upload is missing `{expected}`"
+            ));
+        }
+    }
+    Ok(())
 }
 
 fn step_index(lines: &[&str], step_name: &str) -> Result<usize, String> {

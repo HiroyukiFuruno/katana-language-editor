@@ -110,6 +110,17 @@ fn source_closure_native_host_contract_rejects_unsupported_materialize_option() 
 }
 
 #[test]
+fn source_closure_native_host_contract_rejects_missing_mapping_input() -> Result<(), String> {
+    let lines = source_closure_workflow_fixture().replace(
+        "      - name: Upload source mapping input",
+        "      - name: Skip source mapping input",
+    );
+    let lines = lines.lines().collect::<Vec<_>>();
+    let result = ReleaseGateAudit::validate_source_closure_native_host_contract_from_lines(&lines);
+    assert_error_contains(result, "Upload source mapping input")
+}
+
+#[test]
 fn source_closure_materialize_recipe_rejects_unsupported_option() -> Result<(), String> {
     let lines = crate::release_gate_sources::JUSTFILE.replace(
         "--canonical-root \"artifacts\"",

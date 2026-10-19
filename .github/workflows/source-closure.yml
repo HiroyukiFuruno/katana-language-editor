@@ -211,6 +211,19 @@ jobs:
           retention-days: 14
           overwrite: true
 
+      - name: Upload source mapping input
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-closure-mapping-input-${{ github.run_id }}
+          path: |
+            katana-language-editor/target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}/generic-interaction-annotation-catalog.json
+            katana-language-editor/artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts/leaf-manifest.json
+            katana-language-editor/artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts/source-closure.json
+            katana-language-editor/artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts/branch-catalog.json
+          if-no-files-found: error
+          retention-days: 14
+          overwrite: true
+
       - name: Validate KLE release parity
         working-directory: katana-language-editor
         env:
