@@ -35,7 +35,7 @@ fn native_host_contract_rejects_missing_mapping_input() {
 }
 
 #[test]
-fn source_closure_reruns_keep_capture_identity_and_replace_artifacts() {
+fn source_closure_reruns_keep_capture_identity_and_replace_artifacts() -> Result<(), String> {
     assert!(SOURCE_CLOSURE_WORKFLOW.contains("SOURCE_CLOSURE_RUN_ID: ${{ github.run_id }}"));
     assert!(
         !SOURCE_CLOSURE_WORKFLOW
@@ -47,21 +47,25 @@ fn source_closure_reruns_keep_capture_identity_and_replace_artifacts() {
         "source-closure-assembled-${{ github.run_id }}",
         "source-closure-native-host-e2e-${{ github.run_id }}",
     ] {
-        assert_upload_is_replaced(artifact);
+        assert_upload_is_replaced(artifact)?;
     }
+    Ok(())
 }
 
-fn assert_upload_is_replaced(artifact_name: &str) {
+fn assert_upload_is_replaced(artifact_name: &str) -> Result<(), String> {
     let start = SOURCE_CLOSURE_WORKFLOW
         .find(artifact_name)
-        .unwrap_or_else(|| panic!("missing source-closure upload artifact {artifact_name}"));
+        .ok_or_else(|| format!("missing source-closure upload artifact {artifact_name}"))?;
     let step = &SOURCE_CLOSURE_WORKFLOW[start..];
     let step = step
         .split("      - name:")
         .next()
-        .unwrap_or_else(|| panic!("missing source-closure upload step for {artifact_name}"));
-    assert!(
-        step.contains("overwrite: true"),
-        "source-closure upload artifact must overwrite on rerun: {artifact_name}"
-    );
+        .ok_or_else(|| format!("missing source-closure upload step for {artifact_name}"))?;
+    if step.contains("overwrite: true") {
+        Ok(())
+    } else {
+        Err(format!(
+            "source-closure upload artifact must overwrite on rerun: {artifact_name}"
+        ))
+    }
 }
