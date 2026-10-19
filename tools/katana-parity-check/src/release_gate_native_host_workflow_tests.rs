@@ -24,14 +24,44 @@ fn native_host_contract_rejects_attempt_qualified_layout_artifact() {
 }
 
 #[test]
+fn native_host_contract_rejects_missing_mapping_input() {
+    let workflow = SOURCE_CLOSURE_WORKFLOW.replace(
+        "      - name: Upload source mapping input",
+        "      - name: Skip source mapping input",
+    );
+    let lines = workflow.lines().collect::<Vec<_>>();
+    let result = ReleaseGateAudit::validate_source_closure_native_host_contract_from_lines(&lines);
+    assert!(matches!(result, Err(error) if error.contains("Upload source mapping input")));
+}
+
+#[test]
 fn source_closure_reruns_keep_capture_identity_and_replace_artifacts() {
     assert!(SOURCE_CLOSURE_WORKFLOW.contains("SOURCE_CLOSURE_RUN_ID: ${{ github.run_id }}"));
     assert!(
         !SOURCE_CLOSURE_WORKFLOW
             .contains("SOURCE_CLOSURE_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}")
     );
-    assert_eq!(
-        SOURCE_CLOSURE_WORKFLOW.matches("overwrite: true").count(),
-        4
+    for artifact in [
+        "source-closure-generic-interaction-annotations-${{ github.run_id }}",
+        "source-closure-mapping-input-${{ github.run_id }}",
+        "source-closure-assembled-${{ github.run_id }}",
+        "source-closure-native-host-e2e-${{ github.run_id }}",
+    ] {
+        assert_upload_is_replaced(artifact);
+    }
+}
+
+fn assert_upload_is_replaced(artifact_name: &str) {
+    let start = SOURCE_CLOSURE_WORKFLOW
+        .find(artifact_name)
+        .unwrap_or_else(|| panic!("missing source-closure upload artifact {artifact_name}"));
+    let step = &SOURCE_CLOSURE_WORKFLOW[start..];
+    let step = step
+        .split("      - name:")
+        .next()
+        .unwrap_or_else(|| panic!("missing source-closure upload step for {artifact_name}"));
+    assert!(
+        step.contains("overwrite: true"),
+        "source-closure upload artifact must overwrite on rerun: {artifact_name}"
     );
 }
