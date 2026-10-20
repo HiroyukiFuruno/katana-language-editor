@@ -1,5 +1,9 @@
 pub(crate) const JUSTFILE: &str = include_str!("../../../Justfile");
 pub(crate) const LEFTHOOK: &str = include_str!("../../../lefthook.yml");
+pub(crate) const PRE_PUSH_STRICT_HOOK: &str =
+    include_str!("../../../.lefthook/pre-push/check-strict.sh");
+pub(crate) const PRE_PUSH_GUARD_HOOK: &str =
+    include_str!("../../../.lefthook/pre-push/issue-and-dependency.sh");
 pub(crate) const WORKSPACE_MANIFEST: &str = include_str!("../../../Cargo.toml");
 pub(crate) const RELEASE_WORKFLOW: &str = include_str!("../../../.github/workflows/release.yml");
 pub(crate) const TEST_AND_BUILD_WORKFLOW: &str =

@@ -223,13 +223,29 @@ coverage:
 # Run the advisory RC-quality precheck during ordinary development. The required
 # public-release gate is `release-check -> kle-release-parity-check`; KatanA #336
 # remains a separate post-publication `downstream-full` gate.
-check: fmt-check check-types lint unit-test ast-lint kuc-contract-check katana-interface-check katana-downstream-check storybook-motion-artifact-gate katana-parity-rc-check
+check: governance-test fmt-check check-types lint unit-test ast-lint kuc-contract-check katana-interface-check katana-downstream-check storybook-motion-artifact-gate katana-parity-rc-check
     @echo "checks passed"
 
 # Run every strict local gate before push. Three-OS source-closure artifacts are
 # intentionally excluded because this push publishes the workflow that creates them.
-pre-push-check: fmt-check check-types lint unit-test ast-lint kuc-contract-check katana-interface-check katana-downstream-check storybook-motion-artifact-gate
+pre-push-check: governance-test fmt-check check-types lint unit-test ast-lint kuc-contract-check katana-interface-check katana-downstream-check storybook-motion-artifact-gate
     @echo "pre-push checks passed"
+
+# Verify commit/ref/dependency policies and release cleanup using real local Git fixtures.
+governance-test:
+    python3 -B -m unittest discover -s scripts/governance -p 'test_*.py' -v
+
+# Install the configured hooks without bypassing existing strict checks.
+hooks-install:
+    lefthook install
+
+# Synchronize the clean local default and remove only verified published release branches.
+release-cleanup-local:
+    bash scripts/governance/release-cleanup.sh local --tag "{{VERSION}}"
+
+# Delete only origin release branches already contained in the verified published release.
+release-cleanup-remote:
+    bash scripts/governance/release-cleanup.sh remote --tag "{{VERSION}}"
 
 # Compatibility alias for the advisory precheck; it is not a release prerequisite.
 kle-rc-check: check

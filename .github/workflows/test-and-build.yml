@@ -119,6 +119,9 @@ jobs:
       - name: Install just
         uses: taiki-e/install-action@just
 
+      - name: Install Lefthook for real hook integration tests
+        run: npm install --global lefthook@2.2.0
+
       - name: Check types
         run: just check-types
 
@@ -140,6 +143,9 @@ jobs:
 
       - name: Run tests
         run: just unit-test
+
+      - name: Run Issue and cleanup policy tests
+        run: just governance-test
 
       - name: Run coverage
         if: matrix.os == 'ubuntu-latest'

@@ -2,6 +2,7 @@
 
 ## 2026-10-20 実装再開
 
+- [/] Issue #9のguard/cleanupをprimaryのrelease branchへ再実装した。workspace/member依存の変更検出、実Open Issue、Git trailer、全push ref、公開tag/両registry crate/defaultへの包含、default同期を検査する。Lefthookのscript jobで空commit/変更なしpushも省略せず、実Git+実Lefthookを含む24回帰が成功した。公開前監査への接続を検証中。未公開KLEの実cleanupや旧dirty worktreeの破棄は行っていない。
 - [x] 公開KUC 0.4.2のmacOS producer ZIP/binary digestを照合し、OS日本語IMEで`にほんご`を変換・確定した。元artifact、process受領値、数値観測、公開verifier exit 0、未検証範囲を`docs/evidence/2026-10-20-kuc-native-macos/`へ保存した。seedの⭐️表示を⭐️の実入力証明にはしない。三OS/KLE編集/公開attestationは未完了。
 - [x] 固定 source-closure と total semantic mapping から `emit-consumer-plan` を生成し、run ID / source-closure bytes hash / profile fingerprint を producer output まで保持する。profile plan は全 candidate の検証後に投影し、未検証の interaction を補完しない。mapping回帰8件・実KUC producer/source-plan回帰・strict Clippy・AST検査を確認した。
 - [x] `validate-consumer-artifact` は同じ canonical 入力から期待 plan を再構築し、全 leaf / interaction / profile / run、KUC stage と root revision の順序、media / Unicode hash、receipt の一意性、path / symlink を検証する。2-stage metadata契約と改変拒否5テストを確認した。canonical record の生成・公開合格とは区別する。

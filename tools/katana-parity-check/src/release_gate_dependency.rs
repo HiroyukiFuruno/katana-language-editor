@@ -1,7 +1,8 @@
 use crate::release_gate::ReleaseGateAudit;
-use crate::release_gate_sources::{JUSTFILE, LEFTHOOK};
+use crate::release_gate_sources::{JUSTFILE, LEFTHOOK, PRE_PUSH_GUARD_HOOK, PRE_PUSH_STRICT_HOOK};
 
 const PRE_PUSH_LOCAL_GATES: &[&str] = &[
+    "governance-test",
     "fmt-check",
     "check-types",
     "lint",
@@ -58,10 +59,11 @@ impl ReleaseGateAudit {
     }
 
     pub(crate) fn validate_pre_push_gate() -> Result<(), String> {
-        let expected_hook = "run: just JOBS=2 pre-push-check";
-        if !LEFTHOOK.lines().any(|line| line.trim() == expected_hook) {
-            return Err(format!("lefthook pre-push must run `{expected_hook}`"));
-        }
+        crate::release_gate_hook::ReleaseGateHookAudit::validate_pre_push_hook_sources(
+            LEFTHOOK,
+            PRE_PUSH_STRICT_HOOK,
+            PRE_PUSH_GUARD_HOOK,
+        )?;
 
         let lines = JUSTFILE.lines().collect::<Vec<_>>();
         let dependencies = Self::dependencies_for_recipe(&lines, "pre-push-check")?;
@@ -79,3 +81,7 @@ impl ReleaseGateAudit {
         Ok(())
     }
 }
+
+#[cfg(test)]
+#[path = "release_gate_hook_tests.rs"]
+mod hook_tests;

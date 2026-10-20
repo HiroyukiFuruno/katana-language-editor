@@ -78,6 +78,9 @@ jobs:
       - name: Install just
         uses: taiki-e/install-action@just
 
+      - name: Install Lefthook for governance validation
+        run: npm install --global lefthook@2.2.0
+
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
 

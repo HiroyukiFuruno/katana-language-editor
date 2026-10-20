@@ -22,6 +22,7 @@ mod matrix;
 mod release_gate;
 mod release_gate_dependency;
 mod release_gate_generic_interaction_annotation_catalog;
+mod release_gate_hook;
 mod release_gate_kle;
 mod release_gate_native_host_steps;
 mod release_gate_native_host_workflow;
