@@ -193,6 +193,30 @@ jobs:
           --katana-repo ../katana
           --canonical-root artifacts
 
+      - name: Emit source anchor catalog
+        working-directory: katana-language-editor
+        run: >-
+          cargo run --locked -p katana-parity-check -- source-closure emit-source-anchors
+          --source-closure artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts/source-closure.json
+          --katana-repo ../katana
+          --output target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}/source-anchor-catalog.json
+
+      - name: Validate source anchor catalog
+        working-directory: katana-language-editor
+        run: >-
+          cargo run --locked -p katana-parity-check -- source-closure validate-source-anchors
+          --source-closure artifacts/v0-1-0/source-closure-input/4f6a6287c650a38633c7baeb544a92e739c68567/artifacts/source-closure.json
+          --catalog target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}/source-anchor-catalog.json
+
+      - name: Upload source anchor catalog
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-closure-source-anchors-${{ github.run_id }}
+          path: katana-language-editor/target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}/source-anchor-catalog.json
+          if-no-files-found: error
+          retention-days: 14
+          overwrite: true
+
       - name: Emit generic interaction annotation catalog
         working-directory: katana-language-editor
         run: >-

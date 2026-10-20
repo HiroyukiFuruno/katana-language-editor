@@ -36,6 +36,8 @@ mod release_gate_publish_tests;
 mod release_gate_release_workflow;
 #[cfg(test)]
 mod release_gate_release_workflow_tests;
+#[cfg(test)]
+mod release_gate_source_anchor_tests;
 mod release_gate_source_closure_artifact;
 mod release_gate_source_closure_assemble;
 mod release_gate_source_closure_kuc;

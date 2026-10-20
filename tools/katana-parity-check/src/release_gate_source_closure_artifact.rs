@@ -12,6 +12,7 @@ impl ReleaseGateAudit {
         Self::validate_source_closure_canonical_git_checkout(lines)?;
         Self::validate_source_closure_fixed_dependency_fetch(lines)?;
         Self::validate_source_closure_kle_release_parity(lines)?;
+        Self::validate_source_anchor_catalog_handoff(lines)?;
         let native = Self::job_section(lines, "native-host-e2e")?;
         let step = Self::step_section(native, "Run full KatanA editor parity gate")?;
         let command = step
@@ -26,6 +27,78 @@ impl ReleaseGateAudit {
                 "source-closure native parity gate is missing canonical artifact directory `{CANONICAL_ARTIFACT_DIRECTORY}`"
             ));
         }
+        Ok(())
+    }
+
+    fn validate_source_anchor_catalog_handoff(lines: &[&str]) -> Result<(), String> {
+        let assemble = Self::job_section(lines, "assemble-validate-materialize")?;
+        Self::step_section(assemble, "Materialize source closure")?;
+        let emit = Self::step_section(assemble, "Emit source anchor catalog")?;
+        let validate = Self::step_section(assemble, "Validate source anchor catalog")?;
+        let upload = Self::step_section(assemble, "Upload source anchor catalog")?;
+        Self::step_section(assemble, "Emit generic interaction annotation catalog")?;
+        let materialize_index = step_index(assemble, "Materialize source closure")?;
+        let emit_index = step_index(assemble, "Emit source anchor catalog")?;
+        let validate_index = step_index(assemble, "Validate source anchor catalog")?;
+        let upload_index = step_index(assemble, "Upload source anchor catalog")?;
+        let annotation_index = step_index(assemble, "Emit generic interaction annotation catalog")?;
+        if !(materialize_index < emit_index
+            && emit_index < validate_index
+            && validate_index < upload_index
+            && upload_index < annotation_index)
+        {
+            return Err("source anchor catalog steps must be ordered materialize < emit < validate < upload < generic annotation".into());
+        }
+
+        let canonical =
+            format!("--source-closure {CANONICAL_ARTIFACT_DIRECTORY}/source-closure.json");
+        let output = "--output target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}/source-anchor-catalog.json";
+        let catalog =
+            "target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}/source-anchor-catalog.json";
+        validate_exact_step(
+            emit,
+            &[
+                "- name: Emit source anchor catalog",
+                "working-directory: katana-language-editor",
+                "run: >-",
+                "cargo run --locked -p katana-parity-check -- source-closure emit-source-anchors",
+                &canonical,
+                "--katana-repo ../katana",
+                output,
+            ],
+            "emit",
+        )?;
+        let canonical = format!(
+            "--source-closure {}/source-closure.json",
+            CANONICAL_ARTIFACT_DIRECTORY
+        );
+        let catalog_argument = format!("--catalog {catalog}");
+        validate_exact_step(
+            validate,
+            &[
+                "- name: Validate source anchor catalog",
+                "working-directory: katana-language-editor",
+                "run: >-",
+                "cargo run --locked -p katana-parity-check -- source-closure validate-source-anchors",
+                &canonical,
+                &catalog_argument,
+            ],
+            "validate",
+        )?;
+        validate_exact_step(
+            upload,
+            &[
+                "- name: Upload source anchor catalog",
+                "uses: actions/upload-artifact@v4",
+                "with:",
+                "name: source-closure-source-anchors-${{ github.run_id }}",
+                "path: katana-language-editor/target/source-closure/${{ env.SOURCE_CLOSURE_RUN_ID }}/source-anchor-catalog.json",
+                "if-no-files-found: error",
+                "retention-days: 14",
+                "overwrite: true",
+            ],
+            "upload",
+        )?;
         Ok(())
     }
 
@@ -82,5 +155,35 @@ impl ReleaseGateAudit {
             ));
         }
         Ok(())
+    }
+}
+
+fn step_index(lines: &[&str], step_name: &str) -> Result<usize, String> {
+    let expected = format!("- name: {step_name}");
+    let matches = lines
+        .iter()
+        .enumerate()
+        .filter(|(_, line)| line.trim() == expected)
+        .map(|(index, _)| index)
+        .collect::<Vec<_>>();
+    match matches.as_slice() {
+        [index] => Ok(*index),
+        [] => Err(format!("source-closure `{step_name}` step is missing")),
+        _ => Err(format!("source-closure `{step_name}` step is duplicated")),
+    }
+}
+
+fn validate_exact_step(step: &[&str], expected: &[&str], name: &str) -> Result<(), String> {
+    let actual = step
+        .iter()
+        .map(|line| line.trim())
+        .filter(|line| !line.is_empty() && !line.starts_with('#'))
+        .collect::<Vec<_>>();
+    if actual == expected {
+        Ok(())
+    } else {
+        Err(format!(
+            "source anchor {name} step must match its exact fail-closed shape"
+        ))
     }
 }
