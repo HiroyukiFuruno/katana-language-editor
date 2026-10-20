@@ -92,8 +92,8 @@ if not isinstance(dependency, dict) or "path" in dependency or "git" in dependen
 else:
     version = dependency.get("version")
     features = set(dependency.get("features", []))
-    if version != "=0.4.1":
-        errors.append(f"{required} must pin the published v0.4.1 API exactly")
+    if version != "=0.4.2":
+        errors.append(f"{required} must pin the published v0.4.2 API exactly")
     if not required_features.issubset(features):
         errors.append(f"{required} must enable {sorted(required_features)}")
 metadata = json.loads(subprocess.run(

@@ -38,10 +38,27 @@ fn source_closure_contract_rejects_kuc_checkout_missing_only_from_native_host_jo
 
 #[test]
 fn source_closure_contract_rejects_unpinned_kuc_dependency_checkout() -> Result<(), String> {
-    let lines = workflow_fixture().replace("ref: v0.4.1", "ref: master");
+    let manifest: toml::Value = toml::from_str(crate::release_gate_sources::WORKSPACE_MANIFEST)
+        .map_err(|error| error.to_string())?;
+    let version = manifest
+        .get("workspace")
+        .and_then(|value| value.get("dependencies"))
+        .and_then(|value| value.get("katana-ui-core"))
+        .and_then(|value| value.get("version"))
+        .and_then(toml::Value::as_str)
+        .ok_or("fixture requires a KUC version")?;
+    let exact_version = version
+        .strip_prefix('=')
+        .ok_or("KUC must be exact-pinned")?;
+    let expected = format!("ref: v{exact_version}");
+    let fixture = workflow_fixture();
+    if !fixture.contains(&expected) {
+        return Err(format!("workflow fixture lacks mutation target {expected}"));
+    }
+    let lines = fixture.replace(&expected, "ref: master");
     let lines = lines.lines().collect::<Vec<_>>();
     let result = ReleaseGateAudit::validate_source_closure_native_host_contract_from_lines(&lines);
-    assert_error_contains(result, "ref: v0.4.1")
+    assert_error_contains(result, &expected)
 }
 
 #[test]
