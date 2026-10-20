@@ -1,5 +1,13 @@
 # Tasks: katana-language-editor v0.1.0
 
+## 2026-10-20 実装再開
+
+- [x] 固定 source-closure と total semantic mapping から `emit-consumer-plan` を生成し、run ID / source-closure bytes hash / profile fingerprint を producer output まで保持する。profile plan は全 candidate の検証後に投影し、未検証の interaction を補完しない。mapping回帰8件・実KUC producer/source-plan回帰・strict Clippy・AST検査を確認した。
+- [x] `validate-consumer-artifact` は同じ canonical 入力から期待 plan を再構築し、全 leaf / interaction / profile / run、KUC stage と root revision の順序、media / Unicode hash、receipt の一意性、path / symlink を検証する。2-stage metadata契約と改変拒否5テストを確認した。canonical record の生成・公開合格とは区別する。
+- [x] execution kind を `katana_host` / `kuc_consumer_artifact` に分け、旧記録はhost扱い、未知kindは拒否、KUC実行ではhost coverageが成立しないことを3回帰で確認した。旧receipt形式を拒否する理由から、公開済みKUC #40待ちという誤った外部依存表示を除いた。workspace 706テスト成功、追加intake回帰5件成功。公開gateの新形式受入と全source completenessは未完了。
+- [ ] 三OS profile の受入結果を canonical execution / Storybook / release evidence へ結合する。
+- [ ] run 39229018204 の 283 candidates は全要件の完了母数ではない。未結合 requirement binding 10,213件、未結合 branch 8,342件、未解決 requirement 12件の意味分類を継続する。command inventory / 型宣言 / branch を持たない処理の参照分類と、実装がない user-mandated replace 機能は個別に扱う。件数の削減を完了条件にせず、各要件と実入力・効果の根拠を検証する。
+
 ## 2026-10-03 KUC v0.4.1 再開
 
 - [x] 公開済み `katana-ui-core@0.4.1` を registry dependency として取り込み、lockfile を最新互換解決した。KUC V2 の可変 multi-leaf consumer plan を既存の contract artifact に接続し、focused KUC contract test を通過した。
@@ -10,6 +18,7 @@
 - [x] canonical leaf/source-closure/branch-catalog を再検証して、全 candidate の immutable source evidence を出力する `emit-generic-annotation-catalog` を追加した。この catalog は producer 入力ではなく、interaction class や passing status を含まないため、根拠のない semantic mapping を通過させない。
 - [x] source-closure CI が固定 KatanA SHA の generic interaction annotation catalog を release parity gate より前に同一 run artifact として保存するようにした。catalog は未注釈 candidate の診断入力であり、release artifact や passing evidence には扱わない。
 - [/] source-closure canonical join を実装中である。未解決 leaf を passing に昇格させず、verified generic interaction mapping がない限り producer workflow を起動しない。
+- [/] `emit-consumer-plan` で canonical binding と total mapping を再検証し、profile-local producer wire plan を生成する。mapping の意味根拠、三OS実行、canonical join の完成とは区別する。
 - [ ] 各 canonical source leaf の verified generic interaction mapping を source closure から生成し、macOS / Windows / Linux の KUC producer artifact を生成する。
 - [ ] KUC producer artifact を source-closure が検証して `execution-record.json` / `storybook-artifacts.json` と canonical media へ結合し、既存 `kle-release` validator を通す。
 - [/] Floem の最新公開revision `1351ffb162faeb8be983f1301d718a0d5fb59c27` を調査したが、依然 `wgpu 27 -> metal 0.32 -> block 0.1.6` を含む。Issue #15 の完了条件を満たす上流公開版が出るまで、release dependency gate は external wait とする。`[patch]`、監査除外、future-incompatibility の緩和は行わない。

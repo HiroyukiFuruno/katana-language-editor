@@ -5,6 +5,14 @@ use super::super::source_action_binding::tests::fixture;
 use super::super::structured_leaf_candidates::StructuredLeafCandidatesReport;
 use super::*;
 
+fn provenance() -> ConsumerPlanProvenance {
+    ConsumerPlanProvenance {
+        run_id: "test-run".into(),
+        source_closure_sha256: format!("sha256:{}", "a".repeat(64)),
+        profile_fingerprint: format!("sha256:{}", "b".repeat(64)),
+    }
+}
+
 fn fixture_inputs() -> Result<(CanonicalLeafBindingEvidence, BranchCatalogArtifact), String> {
     let facts = fixture::actual_fixture().map_err(|error| error.to_string())?;
     let mut branches =
@@ -98,6 +106,104 @@ fn enriches_only_a_total_identity_matched_mapping() -> Result<(), String> {
             && leaf.storybook_stage_id.starts_with("kuc-stage:")
             && leaf.kuc_component == "TextCommandSurface"
     }));
+    Ok(())
+}
+
+#[test]
+fn consumer_plan_preserves_each_verified_leaf_interaction() -> Result<(), String> {
+    let (evidence, branches) = fixture_inputs()?;
+    let mut mapping = mapping_for(&evidence, &branches)?;
+    for (index, entry) in mapping.mappings.iter_mut().enumerate() {
+        entry.interaction = if index % 2 == 0 {
+            "selection"
+        } else {
+            "search"
+        }
+        .into();
+    }
+    for profile in super::super::operational_cli::PROFILE_IDS {
+        let plan = mapping.consumer_plan(&evidence, &branches, profile, provenance())?;
+        assert_eq!(plan.schema, "kle.consumer-artifact-plan.v1");
+        assert_eq!(plan.profile_id, profile);
+        assert_eq!(plan.stages.len(), mapping.mappings.len());
+        let wire = serde_json::to_value(&plan).map_err(|error| error.to_string())?;
+        assert_eq!(wire["run_id"], "test-run");
+        assert_eq!(
+            wire["source_closure_sha256"],
+            provenance().source_closure_sha256
+        );
+        assert_eq!(
+            wire["profile_fingerprint"],
+            provenance().profile_fingerprint
+        );
+        for stage in plan.stages {
+            let entry = mapping
+                .mappings
+                .iter()
+                .find(|entry| {
+                    stage.leaf_id
+                        == format!("source-candidate:{}", entry.source_candidate_fingerprint)
+                })
+                .ok_or_else(|| "plan stage has no mapping".to_string())?;
+            assert_eq!(stage.interaction, entry.interaction);
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn consumer_plan_rejects_unusable_run_provenance() -> Result<(), String> {
+    let (evidence, branches) = fixture_inputs()?;
+    let mapping = mapping_for(&evidence, &branches)?;
+    for field in ["run", "source", "profile"] {
+        let mut facts = provenance();
+        match field {
+            "run" => facts.run_id = "invalid run".into(),
+            "source" => facts.source_closure_sha256 = "sha256:short".into(),
+            _ => facts.profile_fingerprint = format!("sha256:{}", "A".repeat(64)),
+        }
+        assert!(
+            matches!(mapping.consumer_plan(&evidence, &branches, "macos-latest", facts), Err(error) if error.contains("provenance"))
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn consumer_plan_rejects_incomplete_mapping_and_unknown_profile() -> Result<(), String> {
+    let (evidence, branches) = fixture_inputs()?;
+    let mut mapping = mapping_for(&evidence, &branches)?;
+    assert!(
+        matches!(mapping.consumer_plan(&evidence, &branches, "other", provenance()), Err(error) if error.contains("unsupported"))
+    );
+    mapping.mappings.pop();
+    assert!(
+        matches!(mapping.consumer_plan(&evidence, &branches, "macos-latest", provenance()), Err(error) if error.contains("not total"))
+    );
+    Ok(())
+}
+
+#[test]
+fn consumer_plan_revalidates_semantics_before_emitting_stages() -> Result<(), String> {
+    let (evidence, branches) = fixture_inputs()?;
+    for field in ["interaction", "effect", "component", "evidence"] {
+        let mut mapping = mapping_for(&evidence, &branches)?;
+        let entry = mapping
+            .mappings
+            .first_mut()
+            .ok_or_else(|| "fixture has no mappings".to_string())?;
+        match field {
+            "interaction" => entry.interaction = "unknown".into(),
+            "effect" => entry.declared_effect_kind = "unknown".into(),
+            "component" => entry.kuc_component = "unresolved:component".into(),
+            _ => entry.semantic_evidence.clear(),
+        }
+        assert!(
+            mapping
+                .consumer_plan(&evidence, &branches, "macos-latest", provenance())
+                .is_err()
+        );
+    }
     Ok(())
 }
 

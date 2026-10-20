@@ -167,6 +167,7 @@ pub(super) fn complete_artifacts(dir: &Path) -> Result<ArtifactPaths, String> {
             .iter()
             .enumerate()
             .map(|(index, profile_id)| ExecutionRecord {
+                execution_kind: ExecutionKind::KatanaHost,
                 execution_id: if index == 0 {
                     "exec-format-bold".to_string()
                 } else {

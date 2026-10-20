@@ -1,9 +1,11 @@
 use std::path::Path;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use super::artifact_model::{BranchCatalogArtifact, LeafStatusRecord};
 use super::canonical_leaf_binding::CanonicalLeafBindingEvidence;
+
+const SHA256_HEX_LENGTH: usize = 64;
 
 mod validation;
 
@@ -46,7 +48,76 @@ struct SemanticEvidence {
     source_excerpt_sha256: String,
 }
 
+#[derive(Debug, Serialize)]
+pub(crate) struct ConsumerArtifactPlan {
+    schema: &'static str,
+    #[serde(flatten)]
+    provenance: ConsumerPlanProvenance,
+    profile_id: String,
+    stages: Vec<ConsumerArtifactStage>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub(crate) struct ConsumerPlanProvenance {
+    pub(crate) run_id: String,
+    pub(crate) source_closure_sha256: String,
+    pub(crate) profile_fingerprint: String,
+}
+
+#[derive(Debug, Serialize)]
+struct ConsumerArtifactStage {
+    leaf_id: String,
+    interaction: String,
+}
+
 impl GenericInteractionMapping {
+    pub(crate) fn consumer_plan(
+        &self,
+        evidence: &CanonicalLeafBindingEvidence,
+        branches: &BranchCatalogArtifact,
+        profile_id: &str,
+        provenance: ConsumerPlanProvenance,
+    ) -> Result<ConsumerArtifactPlan, String> {
+        if !super::operational_cli::PROFILE_IDS.contains(&profile_id) {
+            return Err(format!("unsupported consumer plan profile: {profile_id}"));
+        }
+        if provenance.run_id.is_empty()
+            || provenance.run_id.chars().any(char::is_whitespace)
+            || [
+                &provenance.source_closure_sha256,
+                &provenance.profile_fingerprint,
+            ]
+            .into_iter()
+            .any(|value| !valid_digest(value))
+        {
+            return Err("invalid consumer plan provenance".into());
+        }
+        let leafs = self.enrich(evidence, branches)?;
+        let entries = validation::index_entries(self)?;
+        let stages = leafs
+            .into_iter()
+            .filter(|leaf| leaf.required_profile_ids.iter().any(|id| id == profile_id))
+            .map(|leaf| {
+                let entry = entries
+                    .get(leaf.source_candidate_fingerprint.as_str())
+                    .ok_or_else(|| "validated consumer plan candidate is missing".to_string())?;
+                Ok(ConsumerArtifactStage {
+                    leaf_id: leaf.leaf_id,
+                    interaction: entry.interaction.clone(),
+                })
+            })
+            .collect::<Result<Vec<_>, String>>()?;
+        if stages.is_empty() {
+            return Err("consumer plan has no source leaves for profile".into());
+        }
+        Ok(ConsumerArtifactPlan {
+            schema: "kle.consumer-artifact-plan.v1",
+            provenance,
+            profile_id: profile_id.to_owned(),
+            stages,
+        })
+    }
+
     pub(crate) fn enrich(
         &self,
         evidence: &CanonicalLeafBindingEvidence,
@@ -91,6 +162,15 @@ impl GenericInteractionMapping {
         serde_json::from_slice(&bytes)
             .map_err(|error| format!("failed to parse generic interaction mapping: {error}"))
     }
+}
+
+fn valid_digest(value: &str) -> bool {
+    value.strip_prefix("sha256:").is_some_and(|digest| {
+        digest.len() == SHA256_HEX_LENGTH
+            && digest
+                .bytes()
+                .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+    })
 }
 
 #[cfg(test)]

@@ -57,6 +57,30 @@ pub(super) fn run_cli(args: &[String]) -> Result<(), String> {
             ])?;
             super::operational_generic_mapping::enrich_leaf_manifest(&options)
         }
+        "emit-consumer-plan" => {
+            options.reject_unknown(&[
+                "input",
+                "source-closure",
+                "branches",
+                "mapping",
+                "profile-id",
+                "run-id",
+                "output",
+            ])?;
+            super::operational_generic_mapping::emit_consumer_plan(&options)
+        }
+        "validate-consumer-artifact" => {
+            options.reject_unknown(&[
+                "input",
+                "source-closure",
+                "branches",
+                "mapping",
+                "profile-id",
+                "run-id",
+                "artifact-dir",
+            ])?;
+            super::operational_generic_mapping::validate_consumer_artifact(&options)
+        }
         "audit-requirement-bindings" => {
             options.reject_unknown(&["katana-repo", "output"])?;
             super::requirement_diagnostic::audit_requirement_bindings(&options)
@@ -127,5 +151,25 @@ mod tests {
             run_cli(&arguments),
             Err(error) if error.contains("missing required option --source-closure")
         ));
+    }
+
+    #[test]
+    fn consumer_plan_requires_an_immutable_output() {
+        let arguments = vec!["emit-consumer-plan".to_string()];
+        assert!(
+            matches!(run_cli(&arguments), Err(error) if error.contains("missing required option --output"))
+        );
+    }
+
+    #[test]
+    fn consumer_artifact_validation_requires_canonical_inputs() {
+        let arguments = vec![
+            "validate-consumer-artifact".to_string(),
+            "--artifact-dir".to_string(),
+            "artifact".to_string(),
+        ];
+        assert!(
+            matches!(run_cli(&arguments), Err(error) if error.contains("missing required option --input"))
+        );
     }
 }

@@ -1,7 +1,7 @@
 //! KLE release-evidence candidate contract.
 //!
-//! The validator consumes opaque KUC writer output only. It cannot grant
-//! release trust until KUC #40 exposes the public actual-show receipt producer.
+//! Legacy before/after receipt records are validated for integrity only.
+//! Published consumer artifact evidence requires the source-bound intake path.
 
 use serde::{Deserialize, Serialize};
 

@@ -73,7 +73,7 @@ fn rejects_tampered_file_and_cross_leaf_stage_reuse() -> Result<(), String> {
 }
 
 #[test]
-fn rejects_missing_or_mismatched_canonical_binding_and_keeps_kuc_blocked() -> Result<(), String> {
+fn rejects_missing_or_mismatched_binding_and_unverified_legacy_receipts() -> Result<(), String> {
     let fixture = FixtureBuilder::root()?;
     let evidence = evidence(&fixture)?;
     failure(
@@ -114,7 +114,7 @@ fn rejects_missing_or_mismatched_canonical_binding_and_keeps_kuc_blocked() -> Re
     };
     failure(
         validate_kle_release_gate(&evidence, Some(&expected)),
-        "KUC #40",
+        "legacy KLE receipt evidence",
     )
 }
 

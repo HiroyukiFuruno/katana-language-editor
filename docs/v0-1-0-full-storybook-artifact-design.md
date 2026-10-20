@@ -108,7 +108,11 @@ The KUC API must provide a versioned, opaque, consumer-defined artifact plan tha
 The KLE producer accepts only a versioned `kle.consumer-artifact-plan.v1` JSON
 document. Each stage contains a source-derived opaque `leaf_id` and one of the
 published KUC generic interaction classes. The document also names exactly one
-canonical profile. It contains no KatanA action, document text, Markdown input,
+canonical profile, the workflow run ID, the exact source-closure file SHA-256,
+and the source-derived profile fingerprint. All three provenance values are
+required and copied unchanged into the producer evidence manifest. Digest
+values use `sha256:` followed by 64 lowercase hexadecimal digits. The run ID
+must be nonempty and contain no whitespace. It contains no KatanA action, document text, Markdown input,
 path, URL, coordinate, font policy, raw input, renderer callback, or host effect.
 
 The producer rejects an empty or duplicate leaf set, an empty profile, an unknown
@@ -116,11 +120,20 @@ interaction, an invalid leaf identifier, or an existing output directory. It
 issues `ConsumerArtifactPlanV2`, validates KUC Unicode evidence after every
 stage, and writes a `kle-consumer-artifact-evidence.v1` manifest beside the
 KUC-owned numbered PNG and per-stage manifest files. The evidence manifest
-records only KUC-returned identifiers, hashes, AccessKit hash, Unicode hash, and
+records the unchanged source-plan provenance, KUC-returned identifiers,
+hashes, AccessKit hash, Unicode hash, and
 the numbered media filename. It is a per-profile producer artifact, not a
 canonical source-closure record. `katana-parity-check` remains the owner of the
 cross-profile canonical `execution-record.json` and `storybook-artifacts.json`
 join and must verify the source leaf manifest before accepting this output.
+
+Profile artifact intake reconstructs the expected plan from canonical source
+inputs and the total verified mapping. It compares run, source hash, profile
+fingerprint, and the exact leaf/interaction population before reading media.
+Each producer stage must agree with the KUC per-stage manifest, including its
+receipt fingerprint and Unicode payload hash. Missing, duplicate, unknown,
+rebound, modified, or symlinked files are rejected. Intake verification alone
+does not produce a canonical execution record or close source completeness.
 
 ## Non-Goals
 

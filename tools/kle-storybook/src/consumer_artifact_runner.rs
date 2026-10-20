@@ -38,7 +38,7 @@ impl ConsumerArtifactRunner {
         output_dir: &Path,
     ) -> Result<PathBuf, Box<dyn std::error::Error>> {
         let plan: SourceLeafArtifactPlan = serde_json::from_slice(&fs::read(input_path)?)?;
-        let (profile_id, stages) = validate_plan(plan)?;
+        let validated_plan = validate_plan(plan)?;
         if output_dir.exists() {
             return Err(format!(
                 "refusing to overwrite source-leaf consumer artifact output: {}",
@@ -46,10 +46,11 @@ impl ConsumerArtifactRunner {
             )
             .into());
         }
-        let evidence = Self::write_artifact_with_evidence(output_dir, &stages)?;
+        let evidence = Self::write_artifact_with_evidence(output_dir, &validated_plan.stages)?;
         let manifest = SourceLeafArtifactEvidence {
             schema: EVIDENCE_SCHEMA,
-            profile_id,
+            provenance: validated_plan.provenance,
+            profile_id: validated_plan.profile_id,
             stages: evidence,
         };
         fs::write(

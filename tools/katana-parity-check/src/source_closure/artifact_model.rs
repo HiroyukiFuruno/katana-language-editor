@@ -153,23 +153,9 @@ pub struct LeafManifestArtifact {
     pub(crate) leafs: Vec<LeafStatusRecord>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct ExecutionRecord {
-    pub(crate) execution_id: String,
-    pub(crate) execution_profile_id: String,
-    pub(crate) leaf_id: String,
-    pub(crate) action_route_signature: String,
-    pub(crate) status: String,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct ExecutionRecordArtifact {
-    #[serde(flatten)]
-    pub(crate) root: ManifestRoot,
-    pub(crate) executions: Vec<ExecutionRecord>,
-    pub(crate) stale_or_missing_leafs: Vec<String>,
-}
+#[cfg(test)]
+pub(crate) use super::execution_record_model::ExecutionRecord;
+pub(crate) use super::execution_record_model::{ExecutionKind, ExecutionRecordArtifact};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct StorybookArtifactEntry {

@@ -3,6 +3,7 @@ use super::consumer_artifact_model::{
     ConsumerArtifactStageRequest, EVIDENCE_MANIFEST, PLAN_SCHEMA, SourceLeafArtifactPlan,
     SourceLeafArtifactStage, current_profile_id, validate_plan,
 };
+use super::consumer_artifact_provenance_tests::provenance;
 use super::unicode_evidence::{REQUIRED_STAR_SCALARS, UnicodeEvidenceValidator};
 use katana_ui_core::egui::text_command_surface::GenericInteractionClass;
 use std::collections::BTreeSet;
@@ -54,6 +55,7 @@ fn unknown_plan() -> Result<SourceLeafArtifactPlan, Box<dyn std::error::Error>> 
 fn profile_drift_plan() -> SourceLeafArtifactPlan {
     SourceLeafArtifactPlan {
         schema: PLAN_SCHEMA.to_string(),
+        provenance: provenance(),
         profile_id: "unsupported-profile".to_string(),
         stages: vec![stage("leaf-a", "text_input")],
     }
@@ -64,6 +66,7 @@ fn source_plan(
 ) -> Result<SourceLeafArtifactPlan, Box<dyn std::error::Error>> {
     Ok(SourceLeafArtifactPlan {
         schema: PLAN_SCHEMA.to_string(),
+        provenance: provenance(),
         profile_id: current_profile_id()?.to_string(),
         stages,
     })
@@ -102,7 +105,7 @@ fn write_producer_artifact(root: &Path) -> Result<std::path::PathBuf, Box<dyn st
 
 fn producer_plan() -> Result<serde_json::Value, Box<dyn std::error::Error>> {
     Ok(
-        serde_json::json!({"schema": PLAN_SCHEMA, "profile_id": current_profile_id()?, "stages": [
+        serde_json::json!({"schema": PLAN_SCHEMA, "run_id": "producer-test-run", "source_closure_sha256": format!("sha256:{}", "c".repeat(64)), "profile_fingerprint": format!("sha256:{}", "d".repeat(64)), "profile_id": current_profile_id()?, "stages": [
             {"leaf_id": "source-leaf-input", "interaction": "text_input"},
             {"leaf_id": "source-leaf-ime", "interaction": "ime_commit"}
         ]}),
@@ -115,6 +118,15 @@ fn assert_producer_artifact(output: &Path) -> Result<(), Box<dyn std::error::Err
     let stages = evidence["stages"]
         .as_array()
         .ok_or("missing stage evidence")?;
+    assert_eq!(evidence["run_id"], "producer-test-run");
+    assert_eq!(
+        evidence["source_closure_sha256"],
+        format!("sha256:{}", "c".repeat(64))
+    );
+    assert_eq!(
+        evidence["profile_fingerprint"],
+        format!("sha256:{}", "d".repeat(64))
+    );
     assert_eq!(stages.len(), 2);
     for (index, leaf) in ["source-leaf-input", "source-leaf-ime"].iter().enumerate() {
         assert_stage(&stages[index], output, leaf)?;

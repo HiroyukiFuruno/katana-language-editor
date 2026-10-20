@@ -1,3 +1,4 @@
+use super::consumer_artifact_provenance::ArtifactProvenance;
 use katana_ui_core::egui::text_command_surface::GenericInteractionClass;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
@@ -5,12 +6,20 @@ use std::collections::BTreeSet;
 pub(super) const PLAN_SCHEMA: &str = "kle.consumer-artifact-plan.v1";
 pub(super) const EVIDENCE_SCHEMA: &str = "kle-consumer-artifact-evidence.v1";
 pub(super) const EVIDENCE_MANIFEST: &str = "kle-consumer-artifact-evidence.json";
-pub(super) type ValidatedPlan = (String, Vec<ConsumerArtifactStageRequest>);
+
+#[derive(Debug)]
+pub(super) struct ValidatedPlan {
+    pub(super) profile_id: String,
+    pub(super) provenance: ArtifactProvenance,
+    pub(super) stages: Vec<ConsumerArtifactStageRequest>,
+}
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(super) struct SourceLeafArtifactPlan {
     pub(super) schema: String,
+    #[serde(flatten)]
+    pub(super) provenance: ArtifactProvenance,
     pub(super) profile_id: String,
     pub(super) stages: Vec<SourceLeafArtifactStage>,
 }
@@ -25,6 +34,8 @@ pub(super) struct SourceLeafArtifactStage {
 #[derive(Debug, Serialize)]
 pub(super) struct SourceLeafArtifactEvidence {
     pub(super) schema: &'static str,
+    #[serde(flatten)]
+    pub(super) provenance: ArtifactProvenance,
     pub(super) profile_id: String,
     pub(super) stages: Vec<SourceLeafArtifactEvidenceStage>,
 }
@@ -66,12 +77,17 @@ pub(super) fn validate_plan(
         return Err("source-leaf artifact plan must contain at least one stage".into());
     }
     let stages = stage_requests(plan.stages)?;
-    Ok((plan.profile_id, stages))
+    Ok(ValidatedPlan {
+        profile_id: plan.profile_id,
+        provenance: plan.provenance,
+        stages,
+    })
 }
 
 fn validate_header(plan: &SourceLeafArtifactPlan) -> Result<(), Box<dyn std::error::Error>> {
     validate_schema(&plan.schema)?;
-    validate_profile(&plan.profile_id)
+    validate_profile(&plan.profile_id)?;
+    plan.provenance.validate()
 }
 
 fn validate_schema(schema: &str) -> Result<(), Box<dyn std::error::Error>> {

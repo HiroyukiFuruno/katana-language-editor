@@ -60,8 +60,9 @@ pub(super) fn validate(
         }
     }
     match mode {
-        ArtifactValidationMode::Rc | ArtifactValidationMode::KleRelease => {
-            execution_coverage::validate_rc_boundary(executions, errors)
+        ArtifactValidationMode::Rc => execution_coverage::validate_rc_boundary(executions, errors),
+        ArtifactValidationMode::KleRelease => {
+            execution_coverage::validate_kle_boundary(executions, leaf_manifest, errors)
         }
         ArtifactValidationMode::Full => {
             execution_coverage::validate_full(executions, leaf_manifest, leaf_ids, errors)

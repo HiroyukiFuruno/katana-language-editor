@@ -11,6 +11,8 @@ type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 #[path = "validator_tests/validator_artifact_boundary.rs"]
 mod validator_artifact_boundary;
+#[path = "validator_tests/validator_execution_kind.rs"]
+mod validator_execution_kind;
 #[path = "validator_tests/validator_external.rs"]
 mod validator_external;
 #[path = "validator_tests/validator_mode.rs"]

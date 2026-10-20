@@ -56,7 +56,10 @@ pub(super) fn validate_kle_release_gate(
     expected: Option<&ExpectedKleReleaseEvidence<'_>>,
 ) -> Result<(), String> {
     validate_expected_binding(evidence, expected)?;
-    Err("KLE release evidence is blocked: KUC #40 published consumer-defined artifact plan is required".to_string())
+    Err(
+        "legacy KLE receipt evidence does not establish source-bound consumer artifact execution"
+            .to_string(),
+    )
 }
 
 fn validate_evidence_header(evidence: &KleReleaseEvidence) -> Result<(), String> {

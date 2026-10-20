@@ -47,8 +47,10 @@ following:
    profile set exactly match one canonical structured candidate.
 3. Every canonical candidate has one mapping and no mapping targets an unknown
    candidate.
-4. A candidate, branch/action tuple, and declared Storybook placeholder occur
-   only once.
+4. A candidate identity and its declared Storybook placeholder occur only
+   once. Several requirement bindings or source construction/dispatch routes
+   may legitimately refer to the same branch/action pair; they retain their
+   distinct authenticated candidate identities and must each be covered.
 5. Every mapping has a source-hash and branch-span-matched semantic-evidence
    reference.  A prose rationale, action name, or fixture name alone is not
    evidence.
@@ -64,6 +66,15 @@ mapping, default interaction, or fixture-stage reuse mode.
 
 ## Producer and Join
 
+`source-closure emit-consumer-plan` reads the immutable leaf manifest, source
+closure, branch catalog, and mapping together. It revalidates canonical binding
+and the complete mapping before selecting one canonical profile. It writes
+only the producer wire schema, run ID, exact source-closure file SHA-256,
+source-derived profile fingerprint, profile ID, source leaf IDs, and their
+verified interaction classes, and refuses to overwrite an existing plan. An enriched
+leaf manifest alone is not an authority for an interaction: the verified
+mapping remains required at both plan generation and the later evidence join.
+
 After source materialization succeeds, the tool derives one profile-local
 `kle.consumer-artifact-plan.v1` from verified mappings.  It passes the exact
 leaf IDs and mapped generic interaction classes to the KLE producer.  KUC alone
@@ -77,6 +88,17 @@ receipt are unique and match the enriched leaf manifest.  It then writes
 `execution_kind = kuc_consumer_artifact`.  This is KLE/KUC UI evidence only;
 it cannot satisfy a KatanA host effect.  Host effects remain separately gated
 by the downstream KatanA #336 record.
+
+## Execution Record Boundary
+
+Each canonical execution entry declares `execution_kind` as `katana_host` or
+`kuc_consumer_artifact`. Existing records without the field are interpreted
+as `katana_host`, preserving their stricter pre-publication rejection. Unknown
+kinds are rejected during deserialization. RC artifacts continue to contain no
+execution entries. KLE release artifacts may contain only consumer executions
+with complete leaf/profile coverage; downstream full parity counts only host
+executions and must never accept consumer stages as host-effect proof. The
+separate source completeness and consumer evidence integrity gates still apply.
 
 ## Annotation Catalog
 
