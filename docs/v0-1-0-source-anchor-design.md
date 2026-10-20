@@ -153,3 +153,22 @@ release gateのunresolvedを減らさない。次段でproducer/public validator
 受入は、固定Git blobとの不一致、file追加/欠落/重複、未知field、別root、alias差替え、
 anchor/node/span/excerpt改変を拒否すること、Unicode/CRLFの元bytesとspanを保つこと、
 同一入力の決定性、branchlessな宣言/testを偽branchへ変換しないことである。
+
+## 次段のcfg scope検証
+
+現行`branch_catalog/record.rs`は`kind == cfg`だけにinactive profileを記録する。
+そのため、無効なcfg itemの内側にある通常の分岐へ条件が継承されない。
+さらに`leaf_validation.rs`はnon-cfg branchのinactive predicateを拒否する。
+この不整合はKUCの公開待ちではなく、source解析・検証モデルの課題として修正する。
+
+修正はvalidatorの拒否条件を削除するだけでは行わない。元sourceを再解析して
+分岐のlexical ancestorと各cfg attributeの所有nodeを確定し、実profileが採取した
+inactive cfg edgeのidentity/predicateへ結ぶ。入れ子のguardは積み重ね、いずれかの
+ancestorが無効ならそのprofileでinactiveとする。未知predicate・未確定の所有nodeは
+active/未解決のままにして、除外へ推測変換しない。
+
+同じ行に複数nodeがある場合も一意に照合できるbyte/column付きspanが必要である。
+現在のline-onlyなBranchRecordへ名前や近い行だけで結ばず、必要なschema/revisionの
+変更と旧artifact拒否を先に確定する。生成側と検証側は同じ認証sourceからguardの
+祖先関係を復元し、誤ったancestor、span、profile、predicate、重複・欠落を拒否する。
+inactiveの修正をunclassified/T2/T3の全件処理や動作証拠の省略には使わない。

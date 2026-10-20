@@ -2,6 +2,11 @@
 
 ## 2026-10-20 実装再開
 
+- [x] source-closure CIへ固定Gitからのanchor emit→canonical authorityによるvalidate→同一run catalog uploadを接続した。3step全体のexact shape・順序・authority/output・skip/shell/env・重複path/stepの改変拒否5テストが成功した。これはworkflow実装の検査であり、新HEADでの実CI成功は未確認。CIの実Rustは1.99.1であることをログで再確認し、同版でもstrict Clippy/fmtがexit 0となった。既存block 0.1.6のfuture-incompat警告は残っている。
+- [x] 同じ非公開API試作へKUC検索projectionとtyped search/toolbarイベントを接続した。実KUCのquery入力・単体/全件置換・undo toolbar操作からhost本文/履歴と次frameのAccessKit値を検証し、Rust 1.99.0で9 tests/strict Clippy/fmtが成功した（`tmp/functional-host-api-spike/verification-undo.log`）。最初のliteral一致だけの単体置換、検索option未対応、置換ボタンに限ったread-only検査という制限を設計書に明記した。正式Storybook、production所有判断、全機能踏襲は未完了。
+- [x] 認証source anchor catalogのphase1を実装した。生成側が余分な未関連factを残す不具合を修正し、fresh run 39369825320のcanonical source bytesと固定Git blobからemit/validateがともにexit 0となった（`target/source-anchor-smoke-39369825320/catalog-v2.json`）。31 files/423 reference candidates/77 unresolvedを保持し、要件passへ昇格しない。Source Anchor 9件、postcheck 6件、Rust 1.99.0の全779 tests/41 doctests/diagnostic 40件、strict Clippy、AST、fmtが成功した。宣言候補の意味分類と動作routeのphase2結合は未完了。
+- [x] 公開KUC APIのhost結合試作を`tmp/functional-host-api-spike/`へ復元し、Rust 1.99.0でfmt、strict Clippy、3テストを実行した。実KUC入力eventから文書効果と次frameの実AccessKit値の完全一致、stale leaseと再消費拒否を確認した。synthetic RawInputであり実IME・正式Storybook・production所有境界の確定ではない。旧lock全文は復元できず再生成した。検証ログは同directoryの`verification.log`に保存した。
+- [ ] 最新run 39369825320は三OS source capture成功、execution-record未生成でrelease parity失敗。run 39369825317はUbuntuのRust 1.99 Clippy失敗、他OSはfail-fast取消し。単一要素loopの修正と統合再検証、再push後の三OS検査を完了する。KUC未公開を原因にしない。
 - [/] Issue #9のguard/cleanupをprimaryのrelease branchへ再実装した。workspace/member依存の変更検出、実Open Issue、Git trailer、全push ref、公開tag/両registry crate/defaultへの包含、default同期を検査する。Lefthookのscript jobで空commit/変更なしpushも省略せず、実Git+実Lefthookを含む24回帰が成功した。公開前監査への接続を検証中。未公開KLEの実cleanupや旧dirty worktreeの破棄は行っていない。
 - [x] 公開KUC 0.4.2のmacOS producer ZIP/binary digestを照合し、OS日本語IMEで`にほんご`を変換・確定した。元artifact、process受領値、数値観測、公開verifier exit 0、未検証範囲を`docs/evidence/2026-10-20-kuc-native-macos/`へ保存した。seedの⭐️表示を⭐️の実入力証明にはしない。三OS/KLE編集/公開attestationは未完了。
 - [x] 固定 source-closure と total semantic mapping から `emit-consumer-plan` を生成し、run ID / source-closure bytes hash / profile fingerprint を producer output まで保持する。profile plan は全 candidate の検証後に投影し、未検証の interaction を補完しない。mapping回帰8件・実KUC producer/source-plan回帰・strict Clippy・AST検査を確認した。
@@ -10,6 +15,7 @@
 - [/] 三OS profile の受入結果を canonical execution / Storybook / release evidence へ結合する。`join-consumer-artifacts`と新bundle verifierを実装し、canonical source/mappingから各planを再構築する。profile間receipt再利用、source snapshot/ハッシュ不一致、出力配列不一致、既存出力の置換を拒否する。consumer契約37回帰が成功し、全体729件・doctest41件成功後の追加変更もfocused検証した。これは結合実装の検証であり、実三OSの全leaf生成・full release合格は未完了。run 39358275448は三OS source captureが成功し、KLEのexecution-record未生成で失敗したもので、KUC待ちではない。
 - [x] 実run 39229018204のcanonical入力を新joinに渡すと、未解決inventory/T2/T3/structured populationを理由に拒否し、`target/rejected-incomplete-consumer-join`を生成しないことを確認した。既存資料の不完全な解析をpassingへ変換しない。
 - [ ] `docs/v0-1-0-source-anchor-design.md`に従って宣言・straightline test・実分岐・未実装extensionを区別し、認証AST anchorと動作routeを生成側／検証側へ接続する。宣言だけで置換やショートカットを対応済みにしない。
+- [ ] 同設計書のcfg scope検証に従い、inactive cfgのlexical子分岐へのprofile継承と公開validatorの独立再検証を実装する。現在のline-only spanで曖昧な祖先を推測せず、schema/revision・精密span・入れ子guard・未知predicateの保守的処理を先に固定する。non-cfg拒否の削除だけで検査を通さない。
 - [x] 同設計書のMacro Token Recoveryを実装した。元TokenStreamからlist/repeatのvalue/countを巡回し、macro/callbackの未解決根拠とshadowing拒否を保持する。固定`view_commands.rs`の認証fixture（SHA-256 `f73e623798485c5e5e01ddf0cd3300590a957b1b9fe01d043715031aa7c7988a`）で16 itemと利用可否分岐をproduction visitorから採取し、focused 8件・AST/Clippyを確認した。sibling依存・skipはない。全要件の意味分類は未完了。
 - [x] 同設計書のStructural Edge Recordingを実装した。既知control-flowだけを型付き経路で記録し、span/kind/symbol/edge IDと全branchを維持する。通常のNone-path edge、未知call、未知branch kindは未解決に残す。enum/通常経路/production visitorの回帰を追加し、validatorの除外追加やunclassified gate緩和は行っていない。
 - [x] canonical bindingへ必須`kle.source-analysis.v2`を追加し、欠落・旧revisionのcatalogを拒否する3回帰を追加した。version値を完全性の証明には使わず、既存root/fingerprint/population検査を維持する。
@@ -119,7 +125,7 @@ tinyvec `1.13.2` は実コンパイルに成功したため非互換の旧断定
 ## Branch Rule
 
 - **標準ブランチ**: `release/v0.1.0`
-- **作業ブランチ**: `feature/v0.1.0-task-x`
+- **作業ブランチ**: KatanAシリーズは`release/*`のみ。master直編集、新規worktree作成、通常作業のstash退避は行わない。
 
 ---
 

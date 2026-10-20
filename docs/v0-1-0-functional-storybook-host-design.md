@@ -22,6 +22,30 @@ revision/correlationとtyped text/toolbar/floating/search/context eventsを公�
 hostは`KucOpaqueHostEffectBatch::from_handler`へone-shot効果を渡せる。
 このAPIが存在するため、現在のno-op dispatcherから直ちにKUC機能不足と断定しない。
 
+## 公開APIの結合実験（2026-10-20）
+
+`tmp/functional-host-api-spike/`で、公開KUC 0.4.2の実UIからKLEのopaque
+one-shot transport、host効果、次frameの実AccessKit値まで結合した。
+Rust 1.99.0で9テスト、strict Clippy、fmt checkを実行し、全件成功した。
+実行ログは`tmp/functional-host-api-spike/verification-undo.log`に保存した。検索なしprojectionでの
+Unavailableは自己設定による結果であり、KUCの機能不足とは扱わない。
+
+- 文書への文字入力と次frameの本文値の完全一致。
+- 検索欄の実focus/文字入力からhostのquery更新。本文は変化しない。
+- KUCの単体/全件置換ボタンをopaque locatorのpointer継続で押し、
+  `日本語⭐️ / 日本語⭐️ / ☆`がそれぞれ`置換⭐️ / 日本語⭐️ / ☆`、
+  `置換⭐️ / 置換⭐️ / ☆`へ更新されることと、次frameの本文値の一致。
+- 各置換で履歴に元本文が一件だけ記録されること。KUCのundo toolbar buttonを
+  opaque locatorで一回押すと原文と空の履歴へ復元され、次frameの本文値も一致すること。
+- 読取専用の置換ボタンがDisabledで、host文書/履歴が変化しないこと。
+- stale lease、同一frameの再消費の拒否。
+
+これはsynthetic egui RawInputによるAPI実験であり、OS実IME、色glyphの
+pixel検査、正式Storybook、全検索option、現在一致位置の単体置換を証明しない。
+読取専用は置換ボタンだけの検査であり、編集全般の読取専用保証には使わない。
+試作の単体置換は最初のliteral一致だけであり、正式仕様と混同しない。
+試作packageは非公開で、productionの所有判断とAST監査対象への組入れは未完了である。
+
 ## 独立Host案の所有
 
 | 所有者 | 責務 | 持たせないもの |
