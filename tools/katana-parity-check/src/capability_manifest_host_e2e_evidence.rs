@@ -133,13 +133,12 @@ impl HostE2eEvidenceValidator {
                 evidence.test.target, evidence.test.selector
             ));
         }
-        for required in ["katana_ui::shell::KatanaApp"] {
-            if !source.path_starts_with(required) {
-                return Err(format!(
-                    "KLE host E2E {}::{} does not prove required actual-host route marker {}",
-                    evidence.test.target, evidence.test.selector, required
-                ));
-            }
+        let required = "katana_ui::shell::KatanaApp";
+        if !source.path_starts_with(required) {
+            return Err(format!(
+                "KLE host E2E {}::{} does not prove required actual-host route marker {}",
+                evidence.test.target, evidence.test.selector, required
+            ));
         }
         for forbidden in REJECTED_HOST_EVIDENCE {
             if source.path_starts_with(forbidden) || source.string_literals.contains(*forbidden) {
