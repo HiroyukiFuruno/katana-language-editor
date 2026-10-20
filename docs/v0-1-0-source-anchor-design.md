@@ -118,3 +118,38 @@ import、external UI semantic evidenceの未解決は削除・分類しない。
 
 この識別子は旧catalogの誤った再利用を防ぐためのもので、version文字列だけで
 解析完全性・実行・署名やprovenanceを証明したとは扱わない。各実証gateを別途通す。
+
+## Authenticated Anchor Catalog
+
+source anchorはbranch IDを捏造せず、別の`kle.source-anchor-catalog.v1`として
+生成する。入力はcanonical source-closure、checked-in requirement alias ledger、
+固定revisionのGit blobである。working treeの内容や名前検索だけを採用しない。
+各参照fileの元UTF-8 bytesをGitから読み、canonical file SHA-256と照合する。
+
+catalogはsource-closureの実bytes hash、ManifestRoot、alias ledger hash、各fileの
+path/hash/元source、AST由来anchorと未解決構文を保持する。公開検証側は既に認証された
+canonical source-closureをauthorityとして受け取り、embedded sourceをfile hashで
+結び直し、ASTを再解析してanchor全件・span・excerpt hashを再生成し、一致を要求する。
+artifactから期待source hashを読み戻すだけでは認証にしない。
+
+AST factはenum variant、function/test declaration、struct constructionを区別する。
+aliasの参照先fileに存在するfactは、その要件を実装するとの証明ではなく、意味を
+確認するための候補である。同じfileを参照する複数要件へ候補を関連づけても、
+その全要件の動作routeが成立したとは扱わない。候補catalogだけでT2/T3の
+未結合状態を解除せず、個別nodeと入力・効果の意味的な対応を次段で証明する。
+test declarationはtestの実行・合格やbranchlessの証明ではない。struct constructionも
+型解決・callback実行の証明ではない。owner、node kind、byte/line/column spanと元nodeの
+SHA-256を保持し、同一ownerの複数nodeは元spanで区別する。
+
+macro内の構文採取は既存vec recovery parserを共用する。独自の再tokenizeや
+第二のmacro parserは追加しない。shadowing、未知macro、parse失敗、callbackの
+未確定性は記録に残し、macroの不存在や実行可否を推測しない。
+
+CLIを`emit-source-anchors`/`validate-source-anchors`として追加し、旧source解析の
+問題を再現できる固定sourceと改変拒否を検証する。この段階ではcanonical leafや
+release gateのunresolvedを減らさない。次段でproducer/public validatorへ正式結合し、
+宣言から入力・dispatch・効果へのrouteがない限り行動要件は未達のままにする。
+
+受入は、固定Git blobとの不一致、file追加/欠落/重複、未知field、別root、alias差替え、
+anchor/node/span/excerpt改変を拒否すること、Unicode/CRLFの元bytesとspanを保つこと、
+同一入力の決定性、branchlessな宣言/testを偽branchへ変換しないことである。

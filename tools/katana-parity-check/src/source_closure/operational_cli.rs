@@ -5,7 +5,7 @@ pub(super) const PROFILE_SOURCE_PREFIX: &str = "profiles";
 pub(super) const PROVENANCE_PREFIX: &str = "provenance";
 
 pub(super) fn usage() -> &'static str {
-    "usage: katana-parity-check source-closure <capture-profile|capture-provenance|assemble-input|validate-input|materialize-closure|emit-generic-annotation-catalog|enrich-leaf-manifest|emit-consumer-plan|validate-consumer-artifact|join-consumer-artifacts|audit-requirement-bindings> [options]"
+    "usage: katana-parity-check source-closure <capture-profile|capture-provenance|assemble-input|validate-input|materialize-closure|emit-generic-annotation-catalog|enrich-leaf-manifest|emit-consumer-plan|validate-consumer-artifact|join-consumer-artifacts|audit-requirement-bindings|emit-source-anchors|validate-source-anchors> [options]"
 }
 
 pub(super) struct CliOptions {

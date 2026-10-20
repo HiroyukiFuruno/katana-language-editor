@@ -9,6 +9,7 @@ mod resolution;
 mod state;
 mod visit;
 
+pub(crate) use macro_recovery::VecMacroInput;
 pub(super) use state::SourceClosureVisitor;
 
 pub(super) fn type_shape_for_index(ty: &syn::Type) -> String {

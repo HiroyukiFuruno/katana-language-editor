@@ -89,6 +89,7 @@ mod root_model;
 mod root_validation;
 mod scan_state;
 mod source_action_binding;
+mod source_anchor;
 pub(crate) mod source_requirement_alias_ledger;
 #[cfg(test)]
 mod source_requirement_alias_ledger_tests;

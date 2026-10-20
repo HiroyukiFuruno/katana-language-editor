@@ -99,6 +99,14 @@ pub(super) fn run_cli(args: &[String]) -> Result<(), String> {
             options.reject_unknown(&["katana-repo", "output"])?;
             super::requirement_diagnostic::audit_requirement_bindings(&options)
         }
+        "emit-source-anchors" => {
+            options.reject_unknown(&["source-closure", "katana-repo", "output"])?;
+            super::source_anchor::emit(&options)
+        }
+        "validate-source-anchors" => {
+            options.reject_unknown(&["catalog", "source-closure"])?;
+            super::source_anchor::validate(&options)
+        }
         _ => Err(format!(
             "unknown source-closure operation: {operation}
 {}",

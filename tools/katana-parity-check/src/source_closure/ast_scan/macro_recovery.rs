@@ -6,7 +6,7 @@ use super::super::ast_resolution::collect_lexical_imports;
 use super::super::ast_scan::SourceClosureVisitor;
 use super::super::scan_state::InputOriginCandidate;
 
-enum VecMacroInput {
+pub(crate) enum VecMacroInput {
     List(Vec<Expr>),
     Repeat { value: Box<Expr>, count: Box<Expr> },
 }
@@ -40,6 +40,16 @@ impl Parse for VecMacroInput {
             return Err(input.error("unexpected tokens after vec list expression"));
         }
         Ok(Self::List(items))
+    }
+}
+
+impl VecMacroInput {
+    pub(crate) fn file_has_bare_vec_ambiguity(file: &File) -> bool {
+        file_has_bare_vec_ambiguity(file)
+    }
+
+    pub(crate) fn parse_macro(node: &Macro, bare_name_ambiguous: bool) -> Result<Self, String> {
+        parse_vec_macro(node, bare_name_ambiguous)
     }
 }
 
@@ -110,7 +120,7 @@ impl<'a> SourceClosureVisitor<'a> {
             "macro token recovery is syntax-only and does not prove expansion, input provenance, or host effect".to_string(),
         ),
     };
-        match parse_vec_macro(node, self.macro_recovery_ambiguous) {
+        match VecMacroInput::parse_macro(node, self.macro_recovery_ambiguous) {
             Ok(VecMacroInput::List(items)) => {
                 self.with_input_candidate(boundary, |this| {
                     for item in items {
