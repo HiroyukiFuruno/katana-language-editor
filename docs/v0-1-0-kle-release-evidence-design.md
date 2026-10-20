@@ -1,6 +1,28 @@
 # KLE v0.1.0 Release Evidence Design
 
-## R7 統合範囲（2026-09-05）
+## Current Contract (2026-10-20)
+
+KUCのconsumer-defined multi-stage planは公開済みであり、KUC #40は待機理由ではない。
+現在の実装契約は`v0-1-0-source-kuc-mapping-design.md`を一次情報とする。
+公開registry KUC 0.4.2へ更新し、source-derived plan生成、profile-local producer、
+artifact intake、`join-consumer-artifacts`とrelease bundle verifierを接続する。
+
+canonical bindingは必須`kle.source-analysis.v2`を持ち、旧artifactの欠落をdefaultで
+補わない。三OSの全source leaf、total semantic mapping、同一runのKUC stage/media/
+receipt、root/source/profileの結合が不足する限りreleaseは失敗する。
+現状の主な不足はこのKLE側の解析・意味分類・実行結合とfull Storybookであり、
+KUCの公開待ちやKatanA #336へ置き換えない。
+
+execution kindは`katana_host`と`kuc_consumer_artifact`を区別する。旧host記録は
+hostとして扱い、KUCの記録でKatanA文書効果のcoverageを満たさない。
+実IMEについてもsynthetic frameとOS由来の入力を区別し、KUC単体のnative artifactで
+KLEの文書編集・検索・置換・undoを検証済みにしない。macOSの限定実入力結果は
+`docs/evidence/2026-10-20-kuc-native-macos/`に範囲と制約を記録する。
+
+以下はR7時点の履歴であり、KUC #40未公開という当時の制約と旧execution schemaは
+現在の待機条件・現行schemaではない。one-shot transportとUI/media所有境界は維持する。
+
+## R7 Historical Scope (2026-09-05)
 
 `kle-release` は canonical source-closure artifact directory 内の
 `kle-release-evidence.json` を必須とする。`source_closure_root_sha256` は

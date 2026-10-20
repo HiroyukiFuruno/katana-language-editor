@@ -1,4 +1,5 @@
 use super::super::branch_catalog::materialize_branch_catalog;
+use super::super::canonical_leaf_binding::SOURCE_ANALYSIS_REVISION;
 use super::super::requirement_source_inventory::RequirementSourceInventoryReport;
 use super::super::source_action_binding::SourceActionBindingReport;
 use super::super::source_action_binding::tests::fixture;
@@ -14,6 +15,7 @@ fn fixture_evidence() -> Result<(CanonicalLeafBindingEvidence, BranchCatalogArti
         StructuredLeafCandidatesReport::build(&facts.source, &branches, &facts.requirements, &t3)?;
     Ok((
         CanonicalLeafBindingEvidence {
+            source_analysis_revision: SOURCE_ANALYSIS_REVISION.into(),
             inventory: RequirementSourceInventoryReport {
                 requirements_sha256: "fixture".into(),
                 rows: vec![],
@@ -89,6 +91,7 @@ fn rejects_duplicate_leaf_provenance_with_a_missing_candidate_at_equal_populatio
     second.identity_fingerprint = "distinct-candidate".into();
     structured.candidates.push(second);
     let evidence = CanonicalLeafBindingEvidence {
+        source_analysis_revision: SOURCE_ANALYSIS_REVISION.into(),
         inventory: RequirementSourceInventoryReport {
             requirements_sha256: "fixture".into(),
             rows: vec![],

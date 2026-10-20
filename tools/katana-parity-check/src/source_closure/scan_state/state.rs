@@ -6,6 +6,7 @@ use super::super::ast_resolution::span_to_text;
 use super::super::model::{ClosureEdge, LexicalResolutionStatus};
 use super::action::{ActionConstruction, ActionDefinition};
 use super::branch::{DispatchArm, DispatchFallthrough};
+use super::edge::ControlFlowKind;
 use super::method::{FreeFunctionDefinition, MethodDefinition};
 
 #[derive(Debug)]
@@ -103,9 +104,33 @@ impl ScanState {
         to_symbol: Option<&str>,
         span: Span,
     ) -> String {
-        let id = self.next_id();
-        let edge = ClosureEdge {
-            id: id.clone(),
+        let edge = self.new_edge(from_file, kind, from_symbol, to_path, to_symbol, span);
+        self.record_edge(edge, true)
+    }
+
+    pub fn add_structural_edge(
+        &mut self,
+        from_file: &str,
+        kind: ControlFlowKind,
+        from_symbol: &str,
+        to_symbol: Option<&str>,
+        span: Span,
+    ) -> String {
+        let edge = self.new_edge(from_file, kind.as_str(), from_symbol, None, to_symbol, span);
+        self.record_edge(edge, false)
+    }
+
+    fn new_edge(
+        &mut self,
+        from_file: &str,
+        kind: &str,
+        from_symbol: &str,
+        to_path: Option<&str>,
+        to_symbol: Option<&str>,
+        span: Span,
+    ) -> ClosureEdge {
+        ClosureEdge {
+            id: self.next_id(),
             from_file: from_file.to_string(),
             kind: kind.to_string(),
             from_symbol: from_symbol.to_string(),
@@ -113,7 +138,11 @@ impl ScanState {
             to_symbol: to_symbol.map(std::string::ToString::to_string),
             lexical_resolution: None,
             span: span_to_text(from_file, &span),
-        };
+        }
+    }
+
+    fn record_edge(&mut self, edge: ClosureEdge, track_unresolved: bool) -> String {
+        let id = edge.id.clone();
         self.edges.push(edge.clone());
         if let Some(target) = &edge.to_path {
             if !self.files.contains_key(target) {
@@ -122,7 +151,7 @@ impl ScanState {
                     .or_default()
                     .insert(id.clone());
             }
-        } else {
+        } else if track_unresolved {
             self.unresolved_edges.push(edge);
         }
         id

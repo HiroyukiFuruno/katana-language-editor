@@ -2,12 +2,17 @@
 
 ## 2026-10-20 実装再開
 
+- [x] 公開KUC 0.4.2のmacOS producer ZIP/binary digestを照合し、OS日本語IMEで`にほんご`を変換・確定した。元artifact、process受領値、数値観測、公開verifier exit 0、未検証範囲を`docs/evidence/2026-10-20-kuc-native-macos/`へ保存した。seedの⭐️表示を⭐️の実入力証明にはしない。三OS/KLE編集/公開attestationは未完了。
 - [x] 固定 source-closure と total semantic mapping から `emit-consumer-plan` を生成し、run ID / source-closure bytes hash / profile fingerprint を producer output まで保持する。profile plan は全 candidate の検証後に投影し、未検証の interaction を補完しない。mapping回帰8件・実KUC producer/source-plan回帰・strict Clippy・AST検査を確認した。
 - [x] `validate-consumer-artifact` は同じ canonical 入力から期待 plan を再構築し、全 leaf / interaction / profile / run、KUC stage と root revision の順序、media / Unicode hash、receipt の一意性、path / symlink を検証する。2-stage metadata契約と改変拒否5テストを確認した。canonical record の生成・公開合格とは区別する。
 - [x] execution kind を `katana_host` / `kuc_consumer_artifact` に分け、旧記録はhost扱い、未知kindは拒否、KUC実行ではhost coverageが成立しないことを3回帰で確認した。旧receipt形式を拒否する理由から、公開済みKUC #40待ちという誤った外部依存表示を除いた。workspace 706テスト成功、追加intake回帰5件成功。公開gateの新形式受入と全source completenessは未完了。
 - [/] 三OS profile の受入結果を canonical execution / Storybook / release evidence へ結合する。`join-consumer-artifacts`と新bundle verifierを実装し、canonical source/mappingから各planを再構築する。profile間receipt再利用、source snapshot/ハッシュ不一致、出力配列不一致、既存出力の置換を拒否する。consumer契約37回帰が成功し、全体729件・doctest41件成功後の追加変更もfocused検証した。これは結合実装の検証であり、実三OSの全leaf生成・full release合格は未完了。run 39358275448は三OS source captureが成功し、KLEのexecution-record未生成で失敗したもので、KUC待ちではない。
 - [x] 実run 39229018204のcanonical入力を新joinに渡すと、未解決inventory/T2/T3/structured populationを理由に拒否し、`target/rejected-incomplete-consumer-join`を生成しないことを確認した。既存資料の不完全な解析をpassingへ変換しない。
 - [ ] `docs/v0-1-0-source-anchor-design.md`に従って宣言・straightline test・実分岐・未実装extensionを区別し、認証AST anchorと動作routeを生成側／検証側へ接続する。宣言だけで置換やショートカットを対応済みにしない。
+- [x] 同設計書のMacro Token Recoveryを実装した。元TokenStreamからlist/repeatのvalue/countを巡回し、macro/callbackの未解決根拠とshadowing拒否を保持する。固定`view_commands.rs`の認証fixture（SHA-256 `f73e623798485c5e5e01ddf0cd3300590a957b1b9fe01d043715031aa7c7988a`）で16 itemと利用可否分岐をproduction visitorから採取し、focused 8件・AST/Clippyを確認した。sibling依存・skipはない。全要件の意味分類は未完了。
+- [x] 同設計書のStructural Edge Recordingを実装した。既知control-flowだけを型付き経路で記録し、span/kind/symbol/edge IDと全branchを維持する。通常のNone-path edge、未知call、未知branch kindは未解決に残す。enum/通常経路/production visitorの回帰を追加し、validatorの除外追加やunclassified gate緩和は行っていない。
+- [x] canonical bindingへ必須`kle.source-analysis.v2`を追加し、欠落・旧revisionのcatalogを拒否する3回帰を追加した。version値を完全性の証明には使わず、既存root/fingerprint/population検査を維持する。
+- [ ] 単体/全件置換の実装と実入力検証を[Issue #19](https://github.com/HiroyukiFuruno/katana-language-editor/issues/19)で進める。[Issue #10](https://github.com/HiroyukiFuruno/katana-language-editor/issues/10)の既存sourceの有無の検証とは別の完了条件とし、不存在診断だけでユーザー要件を終えない。KatanA #336の採用後実行を実装開始の前提にしない。
 - [ ] run 39229018204 の 283 candidates は全要件の完了母数ではない。未結合 requirement binding 10,213件、未結合 branch 8,342件、未解決 requirement 12件の意味分類を継続する。command inventory / 型宣言 / branch を持たない処理の参照分類と、実装がない user-mandated replace 機能は個別に扱う。件数の削減を完了条件にせず、各要件と実入力・効果の根拠を検証する。
 
 ## 2026-10-03 KUC v0.4.1 再開

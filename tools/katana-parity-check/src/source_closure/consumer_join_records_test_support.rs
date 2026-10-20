@@ -96,7 +96,6 @@ pub(super) fn artifact_with_receipt(
         root,
     ))
 }
-
 pub(super) fn manifest() -> Result<(LeafManifestArtifact, PathBuf), String> {
     let facts = fixture::actual_fixture().map_err(|error| error.to_string())?;
     let branches =
@@ -105,6 +104,8 @@ pub(super) fn manifest() -> Result<(LeafManifestArtifact, PathBuf), String> {
     let structured =
         StructuredLeafCandidatesReport::build(&facts.source, &branches, &facts.requirements, &t3)?;
     let binding = CanonicalLeafBindingEvidence {
+        source_analysis_revision:
+            crate::source_closure::canonical_leaf_binding::SOURCE_ANALYSIS_REVISION.into(),
         inventory: RequirementSourceInventoryReport {
             requirements_sha256: "fixture".into(),
             rows: vec![],
@@ -133,7 +134,6 @@ pub(super) fn manifest() -> Result<(LeafManifestArtifact, PathBuf), String> {
         root,
     ))
 }
-
 pub(super) fn read_json<T: DeserializeOwned>(path: &Path) -> Result<T, String> {
     serde_json::from_slice(&fs::read(path).map_err(|error| error.to_string())?)
         .map_err(|error| error.to_string())

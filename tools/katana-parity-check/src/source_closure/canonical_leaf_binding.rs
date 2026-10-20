@@ -10,9 +10,12 @@ use super::source_action_binding::SourceActionBindingReport;
 use super::source_requirement_alias_ledger::{REQUIREMENTS, RequirementSourceAliasLedger};
 use super::structured_leaf_candidates::StructuredLeafCandidatesReport;
 
+pub(crate) const SOURCE_ANALYSIS_REVISION: &str = "kle.source-analysis.v2";
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct CanonicalLeafBindingEvidence {
+    pub(crate) source_analysis_revision: String,
     pub(crate) inventory: RequirementSourceInventoryReport,
     pub(crate) t2: RequirementBindingResult,
     pub(crate) t3: SourceActionBindingReport,
@@ -30,6 +33,7 @@ impl CanonicalLeafBindingEvidence {
         let t3 = SourceActionBindingReport::build(state, source, &t2)?;
         let structured = StructuredLeafCandidatesReport::build(source, branches, &t2, &t3)?;
         Ok(Self {
+            source_analysis_revision: SOURCE_ANALYSIS_REVISION.into(),
             inventory,
             t2,
             t3,
@@ -54,6 +58,12 @@ impl CanonicalLeafBindingEvidence {
         source: &SourceClosureArtifact,
         branches: &BranchCatalogArtifact,
     ) -> Result<(), String> {
+        if self.source_analysis_revision != SOURCE_ANALYSIS_REVISION {
+            return Err(format!(
+                "unsupported source analysis revision: {}",
+                self.source_analysis_revision
+            ));
+        }
         let expected_inventory = inventory(source)?;
         same("inventory", &expected_inventory, &self.inventory)?;
         let expected_t2 =
@@ -154,3 +164,7 @@ fn same<T: Serialize>(name: &str, expected: &T, actual: &T) -> Result<(), String
         Err(format!("{name} differs from canonical reconstruction"))
     }
 }
+
+#[cfg(test)]
+#[path = "canonical_source_revision_tests.rs"]
+mod tests;

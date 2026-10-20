@@ -3,6 +3,7 @@ use std::collections::BTreeSet;
 
 mod definitions;
 mod input_candidates;
+pub(super) mod macro_recovery;
 mod recording;
 mod resolution;
 mod state;

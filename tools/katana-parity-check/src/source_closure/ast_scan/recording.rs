@@ -3,7 +3,12 @@ use std::path::PathBuf;
 use proc_macro2::Span;
 
 use super::super::model::LexicalResolutionStatus;
+use super::super::scan_state::ControlFlowKind;
 use super::SourceClosureVisitor;
+
+#[cfg(test)]
+#[path = "recording_tests.rs"]
+mod recording_tests;
 
 impl<'a> SourceClosureVisitor<'a> {
     pub(crate) fn record_mod_edge(&mut self, to_path: Option<PathBuf>, name: &str, span: Span) {
@@ -26,11 +31,10 @@ impl<'a> SourceClosureVisitor<'a> {
     }
 
     pub(crate) fn record_cfg_edge(&mut self, predicate: &str, span: Span) {
-        self.state.add_edge(
+        self.state.add_structural_edge(
             self.current_relative_path,
-            "cfg",
+            ControlFlowKind::Cfg,
             &self.current_symbol(),
-            None,
             Some(predicate),
             span,
         );
@@ -41,11 +45,14 @@ impl<'a> SourceClosureVisitor<'a> {
     }
 
     pub(crate) fn record_branch_edge(&mut self, kind: &str, label: Option<&str>, span: Span) {
-        self.state.add_edge(
+        let Some(kind) = ControlFlowKind::parse(kind) else {
+            self.record_unresolved_edge(kind, &format!("unknown control-flow kind: {kind}"), span);
+            return;
+        };
+        self.state.add_structural_edge(
             self.current_relative_path,
             kind,
             &self.current_symbol(),
-            None,
             label,
             span,
         );

@@ -4,33 +4,10 @@ mod record;
 mod source;
 
 use super::model::{BranchCatalogArtifact, ManifestRoot, ProfileRecord};
-use super::scan_state::ScanState;
+use super::scan_state::{ControlFlowKind, ScanState};
 
 pub(super) fn is_branch_kind(kind: &str) -> bool {
-    matches!(
-        kind,
-        "cfg"
-            | "if"
-            | "if_then"
-            | "if_else"
-            | "match"
-            | "match_guard"
-            | "match_body"
-            | "let_else"
-            | "let_else_body"
-            | "logical_and"
-            | "logical_or"
-            | "for"
-            | "for_body"
-            | "while"
-            | "while_body"
-            | "loop"
-            | "loop_body"
-            | "return"
-            | "break"
-            | "continue"
-            | "try"
-    )
+    ControlFlowKind::parse(kind).is_some()
 }
 
 pub(super) fn materialize_branch_catalog(

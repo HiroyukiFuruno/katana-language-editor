@@ -110,6 +110,8 @@ macro_rules! source_closure_visit_items {
 
     fn visit_macro(&mut self, node: &'ast Macro) {
         self.record_app_action_macro(&node.path, node.span());
+        let reason = self.visit_recovered_macro(node);
+        self.record_unresolved("macro_boundary", &reason, node.span());
         visit::visit_macro(self, node);
     }
 

@@ -23,6 +23,7 @@ pub(crate) struct SourceClosureVisitor<'a> {
     pub(crate) input_candidate_stack: Vec<super::super::scan_state::InputOriginCandidate>,
     pub(crate) pattern_depth: usize,
     pub(crate) dispatch_match_depth: usize,
+    pub(crate) macro_recovery_ambiguous: bool,
 }
 
 impl<'a> SourceClosureVisitor<'a> {
@@ -55,6 +56,7 @@ impl<'a> SourceClosureVisitor<'a> {
             input_candidate_stack: Vec::new(),
             pattern_depth: 0,
             dispatch_match_depth: 0,
+            macro_recovery_ambiguous: false,
         }
     }
 
@@ -63,6 +65,7 @@ impl<'a> SourceClosureVisitor<'a> {
         Self: Visit<'ast>,
     {
         self.lexical_resolver = Some(LexicalPathResolver::from_file(file));
+        self.macro_recovery_ambiguous = super::macro_recovery::file_has_bare_vec_ambiguity(file);
         self.visit_file(file);
     }
 

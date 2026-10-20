@@ -4,6 +4,8 @@ mod action;
 mod branch;
 #[path = "scan_state/continuation.rs"]
 mod continuation;
+#[path = "scan_state/edge.rs"]
+mod edge;
 #[path = "scan_state/input.rs"]
 mod input;
 #[path = "scan_state/local_call.rs"]
@@ -20,6 +22,7 @@ pub(super) use branch::{
     BranchOutcomeCandidate, DispatchArm, DispatchFallthrough, HandlerBodyFact,
 };
 pub(super) use continuation::{ContinuationCallFact, HandlerBodyIndex};
+pub(super) use edge::ControlFlowKind;
 pub(super) use input::InputOriginCandidate;
 pub(super) use local_call::HandlerCallFact;
 pub(super) use method::{FreeFunctionDefinition, MethodDefinition};
