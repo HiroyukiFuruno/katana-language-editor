@@ -129,6 +129,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("validate-push")
     issue = sub.add_parser("verify-issue")
     issue.add_argument("number", type=int)
+    sub.add_parser("verify-clean-worktree")
     args = parser.parse_args(argv)
     try:
         root = Path.cwd()
@@ -136,6 +137,8 @@ def main(argv: list[str] | None = None) -> int:
             validate_message(args.path)
         elif args.command == "verify-issue":
             verify_issue(root, args.number)
+        elif args.command == "verify-clean-worktree":
+            require_clean_worktree(root)
         else:
             validate_push(root)
     except (OSError, PolicyError, subprocess.SubprocessError) as exc:

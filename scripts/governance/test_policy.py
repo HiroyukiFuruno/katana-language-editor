@@ -105,6 +105,35 @@ class GitFixtureTests(unittest.TestCase):
             with self.assertRaises(PolicyError):
                 run_git(root, "check-ref-format", "refs/heads/release/")
 
+    def test_verify_clean_worktree_cli_uses_real_git_state(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            git(root, "init", "-q")
+            git(root, "config", "user.email", "test@example.com")
+            git(root, "config", "user.name", "Test")
+            tracked = root / "tracked"
+            tracked.write_text("clean\n", encoding="utf-8")
+            git(root, "add", ".")
+            git(root, "commit", "-qm", "initial")
+            cli = Path(__file__).resolve().with_name("cli.py")
+
+            def verify() -> subprocess.CompletedProcess[str]:
+                return subprocess.run(
+                    [sys.executable, "-B", str(cli), "verify-clean-worktree"],
+                    cwd=root, text=True, capture_output=True, check=False,
+                )
+
+            self.assertEqual(verify().returncode, 0)
+            git(root, "update-index", "--chmod=+x", "tracked")
+            self.assertEqual(verify().returncode, 1)
+            git(root, "update-index", "--chmod=-x", "tracked")
+            self.assertEqual(verify().returncode, 0)
+            tracked.write_text("dirty\n", encoding="utf-8")
+            self.assertEqual(verify().returncode, 1)
+            tracked.write_text("clean\n", encoding="utf-8")
+            (root / "untracked").write_text("untracked\n", encoding="utf-8")
+            self.assertEqual(verify().returncode, 1)
+
 
 class PolicyFixtureTests(unittest.TestCase):
     def test_push_input_requires_records_and_normal_deletion_marker(self):

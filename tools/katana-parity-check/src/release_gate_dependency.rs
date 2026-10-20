@@ -78,10 +78,14 @@ impl ReleaseGateAudit {
                     .to_string(),
             );
         }
-        Ok(())
+        crate::release_gate_hook::ReleaseGateHookAudit::validate_pre_push_recipe_body(&lines)
     }
 }
 
 #[cfg(test)]
 #[path = "release_gate_hook_tests.rs"]
 mod hook_tests;
+
+#[cfg(test)]
+#[path = "release_gate_postcheck_tests.rs"]
+mod postcheck_tests;

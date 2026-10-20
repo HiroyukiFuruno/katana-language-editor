@@ -229,6 +229,7 @@ check: governance-test fmt-check check-types lint unit-test ast-lint kuc-contrac
 # Run every strict local gate before push. Three-OS source-closure artifacts are
 # intentionally excluded because this push publishes the workflow that creates them.
 pre-push-check: governance-test fmt-check check-types lint unit-test ast-lint kuc-contract-check katana-interface-check katana-downstream-check storybook-motion-artifact-gate
+    python3 -B scripts/governance/cli.py verify-clean-worktree
     @echo "pre-push checks passed"
 
 # Verify commit/ref/dependency policies and release cleanup using real local Git fixtures.

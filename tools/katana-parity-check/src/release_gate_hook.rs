@@ -10,6 +10,47 @@ const ROOT_KEYS: &[&str] = &[
 pub(crate) struct ReleaseGateHookAudit;
 
 impl ReleaseGateHookAudit {
+    pub(crate) fn validate_pre_push_recipe_body(lines: &[&str]) -> Result<(), String> {
+        let headers = lines
+            .iter()
+            .enumerate()
+            .filter(|(_, line)| top_level_key(line).is_some_and(|key| key == "pre-push-check"))
+            .map(|(index, _)| index)
+            .collect::<Vec<_>>();
+        if headers.len() != 1 {
+            return Err("Justfile must contain exactly one pre-push-check recipe".to_string());
+        }
+
+        let start = headers[0];
+        let end = lines
+            .iter()
+            .enumerate()
+            .skip(start + 1)
+            .find(|(_, line)| {
+                !line.trim().is_empty()
+                    && !line.trim_start().starts_with('#')
+                    && !line.chars().next().is_some_and(char::is_whitespace)
+            })
+            .map_or(lines.len(), |(index, _)| index);
+        let actual = lines[start + 1..end]
+            .iter()
+            .map(|line| line.trim())
+            .filter(|line| !line.is_empty() && !line.starts_with('#'))
+            .collect::<Vec<_>>();
+        if actual
+            != [
+                "python3 -B scripts/governance/cli.py verify-clean-worktree",
+                "@echo \"pre-push checks passed\"",
+            ]
+        {
+            return Err(
+                "pre-push-check body must verify the clean worktree before its success postcheck"
+                    .to_string(),
+            );
+        }
+        Ok(())
+    }
+
     /* WHY: Lefthook の root override を許さず、監査対象を現在の固定 config に限定する。 */
     pub(crate) fn validate_pre_push_hook_sources(
         config: &str,
