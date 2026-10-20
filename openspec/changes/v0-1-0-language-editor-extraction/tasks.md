@@ -5,7 +5,9 @@
 - [x] 固定 source-closure と total semantic mapping から `emit-consumer-plan` を生成し、run ID / source-closure bytes hash / profile fingerprint を producer output まで保持する。profile plan は全 candidate の検証後に投影し、未検証の interaction を補完しない。mapping回帰8件・実KUC producer/source-plan回帰・strict Clippy・AST検査を確認した。
 - [x] `validate-consumer-artifact` は同じ canonical 入力から期待 plan を再構築し、全 leaf / interaction / profile / run、KUC stage と root revision の順序、media / Unicode hash、receipt の一意性、path / symlink を検証する。2-stage metadata契約と改変拒否5テストを確認した。canonical record の生成・公開合格とは区別する。
 - [x] execution kind を `katana_host` / `kuc_consumer_artifact` に分け、旧記録はhost扱い、未知kindは拒否、KUC実行ではhost coverageが成立しないことを3回帰で確認した。旧receipt形式を拒否する理由から、公開済みKUC #40待ちという誤った外部依存表示を除いた。workspace 706テスト成功、追加intake回帰5件成功。公開gateの新形式受入と全source completenessは未完了。
-- [ ] 三OS profile の受入結果を canonical execution / Storybook / release evidence へ結合する。
+- [/] 三OS profile の受入結果を canonical execution / Storybook / release evidence へ結合する。`join-consumer-artifacts`と新bundle verifierを実装し、canonical source/mappingから各planを再構築する。profile間receipt再利用、source snapshot/ハッシュ不一致、出力配列不一致、既存出力の置換を拒否する。consumer契約37回帰が成功し、全体729件・doctest41件成功後の追加変更もfocused検証した。これは結合実装の検証であり、実三OSの全leaf生成・full release合格は未完了。run 39358275448は三OS source captureが成功し、KLEのexecution-record未生成で失敗したもので、KUC待ちではない。
+- [x] 実run 39229018204のcanonical入力を新joinに渡すと、未解決inventory/T2/T3/structured populationを理由に拒否し、`target/rejected-incomplete-consumer-join`を生成しないことを確認した。既存資料の不完全な解析をpassingへ変換しない。
+- [ ] `docs/v0-1-0-source-anchor-design.md`に従って宣言・straightline test・実分岐・未実装extensionを区別し、認証AST anchorと動作routeを生成側／検証側へ接続する。宣言だけで置換やショートカットを対応済みにしない。
 - [ ] run 39229018204 の 283 candidates は全要件の完了母数ではない。未結合 requirement binding 10,213件、未結合 branch 8,342件、未解決 requirement 12件の意味分類を継続する。command inventory / 型宣言 / branch を持たない処理の参照分類と、実装がない user-mandated replace 機能は個別に扱う。件数の削減を完了条件にせず、各要件と実入力・効果の根拠を検証する。
 
 ## 2026-10-03 KUC v0.4.1 再開

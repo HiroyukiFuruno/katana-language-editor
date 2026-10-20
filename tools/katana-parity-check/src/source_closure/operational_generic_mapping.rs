@@ -5,6 +5,13 @@ use super::artifact_model::{BranchCatalogArtifact, LeafManifestArtifact, SourceC
 use super::generic_interaction_mapping;
 use super::operational_cli::CliOptions;
 
+#[path = "operational_consumer_join.rs"]
+mod consumer_join;
+
+pub(super) fn join_consumer_artifacts(options: &CliOptions) -> Result<(), String> {
+    consumer_join::publish(options)
+}
+
 struct ImmutableMappingInputs {
     manifest: LeafManifestArtifact,
     branches: BranchCatalogArtifact,
@@ -32,6 +39,7 @@ pub(super) fn validate_consumer_artifact(options: &CliOptions) -> Result<(), Str
         &bytes,
         Path::new(options.one("artifact-dir")?),
     )
+    .map(|_| ())
 }
 
 fn verified_consumer_plan(

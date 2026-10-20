@@ -21,7 +21,7 @@ fn accepts_two_stage_contract() -> Result<(), String> {
     let (plan, root) = fixture()?;
     let result = ConsumerArtifactIntake::validate_profile_artifact(&plan, &root);
     fs::remove_dir_all(root).map_err(|error| error.to_string())?;
-    result
+    result.map(|_| ())
 }
 
 #[test]

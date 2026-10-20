@@ -39,17 +39,17 @@ pub(super) struct Evidence {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(super) struct EvidenceStage {
-    pub(super) leaf_id: String,
-    pub(super) interaction: String,
-    pub(super) stage_id: String,
-    pub(super) media_path: String,
-    pub(super) media_sha256: String,
-    pub(super) pixel_hash: String,
-    pub(super) root_record_hash: String,
-    pub(super) accesskit_snapshot_hash: String,
-    pub(super) unicode_evidence_hash: String,
-    pub(super) root_revision: u64,
+pub(crate) struct EvidenceStage {
+    pub(crate) leaf_id: String,
+    pub(crate) interaction: String,
+    pub(crate) stage_id: String,
+    pub(crate) media_path: String,
+    pub(crate) media_sha256: String,
+    pub(crate) pixel_hash: String,
+    pub(crate) root_record_hash: String,
+    pub(crate) accesskit_snapshot_hash: String,
+    pub(crate) unicode_evidence_hash: String,
+    pub(crate) root_revision: u64,
 }
 
 #[derive(Debug, Deserialize)]

@@ -23,7 +23,7 @@ const KUC_INTERACTIONS: [&str; 10] = [
 pub(super) fn validate_profile_artifact(
     plan_bytes: &[u8],
     artifact_dir: &Path,
-) -> Result<(), String> {
+) -> Result<(Evidence, BTreeSet<String>), String> {
     let plan: Plan = serde_json::from_slice(plan_bytes)
         .map_err(|error| format!("consumer artifact plan is invalid: {error}"))?;
     validate_plan(&plan)?;
@@ -35,7 +35,7 @@ pub(super) fn validate_profile_artifact(
     for stage in stages.values() {
         files::validate_stage(&root, stage, &mut receipts)?;
     }
-    Ok(())
+    Ok((evidence, receipts))
 }
 
 fn validate_plan(plan: &Plan) -> Result<(), String> {

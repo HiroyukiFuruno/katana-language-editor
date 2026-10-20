@@ -81,6 +81,20 @@ pub(super) fn run_cli(args: &[String]) -> Result<(), String> {
             ])?;
             super::operational_generic_mapping::validate_consumer_artifact(&options)
         }
+        "join-consumer-artifacts" => {
+            options.reject_unknown(&[
+                "input",
+                "source-closure",
+                "branches",
+                "mapping",
+                "run-id",
+                "macos-artifact",
+                "windows-artifact",
+                "linux-artifact",
+                "output-dir",
+            ])?;
+            super::operational_generic_mapping::join_consumer_artifacts(&options)
+        }
         "audit-requirement-bindings" => {
             options.reject_unknown(&["katana-repo", "output"])?;
             super::requirement_diagnostic::audit_requirement_bindings(&options)

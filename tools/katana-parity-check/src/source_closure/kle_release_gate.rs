@@ -29,13 +29,6 @@ pub(super) fn validate(
             return;
         }
     };
-    let evidence = match parse_and_validate_integrity(artifact_root, &evidence_bytes) {
-        Ok(evidence) => evidence,
-        Err(error) => {
-            errors.push(format!("KLE release evidence integrity: {error}"));
-            return;
-        }
-    };
     let source_closure_bytes = match std::fs::read(&artifacts.source_closure) {
         Ok(bytes) => bytes,
         Err(error) => {
@@ -43,6 +36,36 @@ pub(super) fn validate(
                 "KLE release evidence cannot read canonical source closure {}: {error}",
                 artifacts.source_closure.display()
             ));
+            return;
+        }
+    };
+    if serde_json::from_slice::<serde_json::Value>(&evidence_bytes)
+        .ok()
+        .and_then(|value| {
+            value
+                .get("schema")
+                .and_then(serde_json::Value::as_str)
+                .map(str::to_owned)
+        })
+        .as_deref()
+        == Some("kle.consumer-release-evidence.v1")
+    {
+        if let Err(error) =
+            super::consumer_release_evidence::ConsumerReleaseEvidenceVerifier::validate(
+                artifact_root,
+                loaded,
+                &source_closure_bytes,
+                &evidence_bytes,
+            )
+        {
+            errors.push(format!("KLE consumer release evidence: {error}"));
+        }
+        return;
+    }
+    let evidence = match parse_and_validate_integrity(artifact_root, &evidence_bytes) {
+        Ok(evidence) => evidence,
+        Err(error) => {
+            errors.push(format!("KLE release evidence integrity: {error}"));
             return;
         }
     };

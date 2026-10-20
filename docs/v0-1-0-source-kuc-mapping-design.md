@@ -100,6 +100,36 @@ with complete leaf/profile coverage; downstream full parity counts only host
 executions and must never accept consumer stages as host-effect proof. The
 separate source completeness and consumer evidence integrity gates still apply.
 
+## Consumer Release Bundle
+
+The new `kle.consumer-release-evidence.v1` bundle stores the run ID, the exact
+source-closure SHA-256, the exact mapping SHA-256, and one record per canonical
+profile with its fingerprint, reconstructed plan SHA-256, and producer evidence
+file SHA-256. Mapping bytes are stored as `generic-interaction-mapping.json`;
+profile artifacts are stored under `consumer/<canonical-profile-id>/`. These
+paths are derived by the verifier rather than supplied by the bundle.
+
+The release gate reconstructs every plan from the immutable canonical binding
+and stored mapping, reruns profile intake, and compares all final leaf,
+execution and Storybook fields with the reconstruction. A passing leaf retains
+`downstream_required` host state and a null host execution ID. KUC stage IDs
+must agree across the required profiles of a leaf. Media hashes in canonical
+Storybook records use the existing `sha256:` prefix; producer hashes remain
+the KUC lowercase hexadecimal form. Legacy before/after receipt records never
+satisfy this consumer bundle contract.
+
+Join output is built in a newly reserved staging directory beside the intended
+destination. Source and mapping bytes are copied unchanged; only files accepted
+by intake are copied from each profile. Intake is rerun against the copies and
+the complete artifact validator must pass before publication. Existing output
+is never replaced, and a failed join never publishes a partial destination.
+Publication uses `renamore::rename_exclusive`, not a check followed by
+`std::fs::rename`: the OS must enforce no replacement even if another writer
+creates the destination after inspection. An unsupported atomic operation is
+an error; the non-atomic fallback API is not used.
+Unresolved source population, branch classification, native-input requirements,
+or downstream host work are not satisfied by bundle assembly.
+
 ## Annotation Catalog
 
 `source-closure emit-generic-annotation-catalog` derives a

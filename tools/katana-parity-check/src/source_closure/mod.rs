@@ -11,6 +11,8 @@ mod branch_catalog;
 mod canonical_leaf_binding;
 mod canonical_leaf_projection;
 mod consumer_artifact_intake;
+mod consumer_join_publication;
+mod consumer_release_evidence;
 mod context_menu_manifest;
 mod edge_model;
 mod execution_coverage;
