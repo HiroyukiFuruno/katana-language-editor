@@ -1,0 +1,41 @@
+{
+  "schema_version": "1",
+  "extensions": [
+    {
+      "leaf_id": "replace.current",
+      "requirement_anchor": "docs/v0-1-0-editor-requirements.md#explicit-user-mandated-extensions",
+      "kuc_component": "SearchStrip",
+      "katana_direct_ui_origin": false,
+      "katana_host_route": {
+        "action": "AppAction::ReplaceText",
+        "dispatch": "crates/katana-ui/src/app/action/dispatch.rs",
+        "handler": "DocumentEditOps::handle_replace_text"
+      },
+      "prohibitions": [
+        "kle_query_state",
+        "kle_match_engine",
+        "kle_range_or_byte_conversion",
+        "kle_content_mutation",
+        "katana_direct_ui_claim"
+      ]
+    },
+    {
+      "leaf_id": "replace.all",
+      "requirement_anchor": "docs/v0-1-0-editor-requirements.md#explicit-user-mandated-extensions",
+      "kuc_component": "SearchStrip",
+      "katana_direct_ui_origin": false,
+      "katana_host_route": {
+        "action": "AppAction::ReplaceText",
+        "dispatch": "crates/katana-ui/src/app/action/dispatch.rs",
+        "handler": "DocumentEditOps::handle_replace_text"
+      },
+      "prohibitions": [
+        "kle_query_state",
+        "kle_match_engine",
+        "kle_range_or_byte_conversion",
+        "kle_content_mutation",
+        "katana_direct_ui_claim"
+      ]
+    }
+  ]
+}

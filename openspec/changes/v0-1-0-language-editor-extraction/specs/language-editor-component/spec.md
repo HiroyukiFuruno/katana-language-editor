@@ -1,5 +1,38 @@
 ## ADDED Requirements
 
+### Requirement: opaque provider契約の定義元をneutral crateに一本化しなければならない
+
+KLE MUST define `HostProjectionProvider` と `HostProjectionProviderError` をneutral
+crateだけに置く。providerは関連型`Lease`/`Error`とretain/synchronize操作を持ち、
+vendor型、payload表現、Clone/Debug/Serialize要件をneutral traitへ追加してはならない。
+egui adapterは同一定義を再exportし、実KUC leaseとの型等価制約をMUST enforceする。
+旧neutral DTO/controlの残存は別の未完了移行であり、一本化だけで全境界完了としない。
+
+#### Scenario: adapterがprovider契約を再定義する
+
+- **WHEN** 正規neutral module外のproduction Rustに同名trait又は型の定義を追加する
+- **THEN** 通常のASTゲートはprivate/nested/raw identifierでも拒否する
+- **AND** 同一定義のre-exportとコメント・文字列内の名前は拒否しない
+- **AND** この構文検査を別名の意味的複製や機能互換性の証明として扱わない
+
+#### Scenario: UI依存を持たないconsumerがprovider契約を実装する
+
+- **WHEN** consumerがneutral crateだけに依存し、自身のopaque lease/error型を指定する
+- **THEN** KUC/eguiを参照せずコンパイルでき、Clone/Debug等の不要なtrait実装を要求されない
+- **THEN** このcompile-only確認をKatanA実入力や全機能互換の証拠にしない
+
+#### Scenario: egui editorへ異なるlease型を渡す
+
+- **WHEN** consumerがKUCのconcrete leaseと異なる関連型を指定したproviderを渡す
+- **THEN** public editor/bindingの構築はコンパイルエラーになる
+- **THEN** AnyやStringへの変換、同名の別trait、fallback実装で受け入れない
+
+#### Scenario: 実KUC leaseを消費してframeを表示する
+
+- **WHEN** public editorがproviderからretain又はsynchronize leaseを取得する
+- **THEN** leaseを所有権移動し、同じleaseの再利用は型システムで拒否する
+- **THEN** 既存のtyped stale/errorと一度だけのevent forwardingを保持し、実KUC回帰で検証する
+
 ### Requirement: LanguageEditor trait と SyntaxHighlighter 注入で言語非依存エディタを提供しなければならない
 
 システムは、`LanguageEditor` trait（neutral interface）、`SyntaxHighlighter` trait（言語非依存ハイライト契約）、`EditorConfig`（`syntax_highlighter` を含む）、`HighlightedText` DTO を `katana-language-editor` neutral crate として提供し、ホストが `MarkdownSyntaxHighlighter` 等を実装して注入できるようにしなければならない（MUST）。
@@ -15,37 +48,48 @@
 - **WHEN** `cargo tree -p katana-language-editor` を実行する
 - **THEN** `egui` は含まれない
 
-### Requirement: katana-language-editor-egui が egui MVP 実装を提供しなければならない
+### Requirement: katana-language-editor-egui が KUC-backed full editor implementation を提供しなければならない
 
-システムは、egui TextEdit ベースの editor widget と行番号・シンタックスハイライト描画・絵文字フォント workaround を `katana-language-editor-egui` impl crate として提供しなければならない（MUST）。KatanA は `EditorConfig` を構築して widget を配置するだけで editor を利用できる。
+システムは、retained KUC `TextSurface` / `CommandChrome` / `ContextMenu` root を使う editor widget と、行番号・syntax span・Japanese IME・exact `⭐️` VS16 color glyph・diagnostics・search/replace・AccessKit を `katana-language-editor-egui` impl crate として提供しなければならない（MUST）。KatanA は host presentation と typed host action を注入して widget を利用できる。KLE 独自の `egui::TextEdit` renderer、font workaround、又は fallback pixel path を持ってはならない（MUST NOT）。
 
 #### Scenario: editor を egui 上に表示する
 
 - **WHEN** ホストが `EguiLanguageEditor::show(ui)` を呼ぶ
-- **THEN** egui ui に TextEdit が描画される
-- **THEN** 行番号・シンタックスハイライトが表示される
+- **THEN** KUC retained root surface が一度だけ描画される
+- **THEN** 行番号・シンタックス span・IME/emoji・command chrome・context menu・AccessKit が同じ KUC frame record と composited artifact に現れる
 
-#### Scenario: egui MVP の既知制約
+#### Scenario: KUC platform text contract
 
 - **WHEN** ユーザーが日本語入力 / カラー絵文字を使う
-- **THEN** egui TextEdit の IME 不完全とカラー絵文字非対応の制約が適用される
-- **THEN** 制約は docs に明記され、`katana-language-editor-floem` 実装で根本解決する
+- **THEN** KUC platform text raster と IME contract が exact code-point sequence、selection/caret、color-glyph pixel、AccessKit を同じ frame で返す
+- **THEN** `⭐️` を `☆` 又は monochrome substitute に置換してはならない
 
-### Requirement: EditorConfig は必須 DI フィールドだけで構成されなければならない
+### Requirement: KLE configにgeneric UI設定の二重所有を残してはならない
 
-`EditorConfig` は `theme` / `strings` / `locale` / `typography` / `spacing` / `settings` / `syntax_highlighter` を **non-nullable** で保持しなければならない（MUST）。`Option<Theme>` などのフォールバックを許してはならない（MUST NOT）。preset は host (KDV) が提供する。
+KLE MUST NOT `EditorConfig` / `EditorConfigInput` に `typography` / `spacing` /
+`settings` / `theme` / `strings` / `locale` を保持する。private fieldやOption、別名storeへの退避でも同じである。
+theme/string/locale/font/spacingのgeneric実行責務はKUC root、semantic descriptorは
+hostに置く。旧configの残存fieldや公開設定型も移行対象であり、fieldの除去だけで
+config全体の責務解消と見なしてはならない。未接続の旧Storybook factoryも再利用しない。
 
-#### Scenario: host が preset を渡さない構築は型レベルで失敗する
+#### Scenario: 旧設定fieldをconfigに再追加する
 
-- **WHEN** host が `EditorConfig` を `theme` 無しで構築しようとする
-- **THEN** Rust の型システムがコンパイルエラーで拒否する
-- **THEN** KLE crate 内に default preset は存在せず、host が必ず渡す
+- **WHEN** neutral crateの対象config structへ禁止6fieldのいずれかを追加する
+- **THEN** AST lintが実fieldの再導入を拒否する
+- **THEN** raw identifierやprivate可視性でも拒否し、無関係なstructや文字列は誤検出しない
 
-#### Scenario: KLE crate 内に default preset が存在しない
+#### Scenario: 旧style DTOの再導入を拒否する
 
-- **WHEN** `katana-language-editor` の crate を検索する
-- **THEN** `Theme::default()` / `Strings::default()` / `Typography::default()` 相当の default 実装が公開されていない
-- **THEN** default は `kdv-presets` 側に存在する
+- **WHEN** consumerがneutral root又はtypes moduleからTypography又はSpacingをimportする
+- **THEN** 各型・各パスの独立したcompile-fail検査で拒否する
+- **AND** neutral内の同名struct/enum/type aliasの再導入はASTゲートで拒否する
+- **AND** フォント・余白・計測・hit testの機能要件はKUC/hostで引き続き検証対象とする
+
+#### Scenario: hostのpresentationを実KUC rootで扱う
+
+- **WHEN** hostが既存KUC公開契約へrevisioned projectionを渡す
+- **THEN** KLEはopaque relayだけを行い、KDV固有presetやKLE defaultで補完しない
+- **THEN** 必要なdescriptor不足や未検証leafを構築成功だけで合格にしない
 
 ### Requirement: Floem 実装は git dependency 固定で取り込まなければならない
 
@@ -73,11 +117,11 @@
 - **THEN** editor は対応する位置までスクロールし、指定位置にテキストを挿入する
 - **THEN** これらの API は public で、UI フレームワーク非依存の DTO のみを引数に取る
 
-#### Scenario: egui MVP で未対応の API は明示的に Unsupported を返す
+#### Scenario: v0.1.0 target API has no Unsupported escape
 
-- **WHEN** host が egui 実装上で `EditorDecorationsSink::push(...)` のような未実装 API を呼ぶ
-- **THEN** `Result<_, EditorError::Unsupported>` を返す
-- **THEN** Floem 実装で全機能を提供する旨が docs に書かれている
+- **WHEN** host が v0.1.0 target API を呼ぶ
+- **THEN** KUC/KLE/host の実装済み typed path が実行される
+- **THEN** `EditorError::Unsupported`、future Floem、又は host fallback を成功結果として使用してはならない
 
 ### Requirement: Neutral interface に UI フレームワーク型を漏らしてはならない
 

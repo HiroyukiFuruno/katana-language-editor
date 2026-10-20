@@ -58,3 +58,7 @@ impl<'ast> Visit<'ast> for ProhibitedAttributeVisitor {
         syn::visit::visit_attribute(self, node);
     }
 }
+
+#[cfg(test)]
+#[path = "attributes_tests.rs"]
+mod attributes_tests;

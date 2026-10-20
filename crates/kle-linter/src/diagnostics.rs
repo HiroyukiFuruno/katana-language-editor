@@ -8,6 +8,8 @@ pub struct Violation {
     pub column: usize,
     pub rule: &'static str,
     pub message: String,
+    pub literal: Option<String>,
+    pub hint: Option<String>,
 }
 
 impl Violation {
@@ -24,7 +26,19 @@ impl Violation {
             column,
             rule,
             message: message.into(),
+            literal: None,
+            hint: None,
         }
+    }
+
+    pub fn with_literal_hint(
+        mut self,
+        literal: impl Into<String>,
+        hint: impl Into<String>,
+    ) -> Self {
+        self.literal = Some(literal.into());
+        self.hint = Some(hint.into());
+        self
     }
 }
 
@@ -42,6 +56,12 @@ impl ViolationReport {
                 violation.rule,
                 violation.message
             ));
+            if let Some(literal) = &violation.literal {
+                report.push_str(&format!("  literal: {literal:?}\n"));
+            }
+            if let Some(hint) = &violation.hint {
+                report.push_str(&format!("  hint: {hint:?}\n"));
+            }
         }
         report
     }
@@ -62,6 +82,12 @@ pub enum KleLintError {
         column: usize,
         message: String,
     },
+    #[error("failed to resolve diagnostic span in {path}:{line}:{column}")]
+    DiagnosticSpan {
+        path: PathBuf,
+        line: usize,
+        column: usize,
+    },
     #[error("failed to parse TOML in {path}: {source}")]
     TomlParse {
         path: PathBuf,
@@ -71,3 +97,7 @@ pub enum KleLintError {
     #[error("workspace root could not be resolved from {path}")]
     WorkspaceRoot { path: PathBuf },
 }
+
+#[cfg(test)]
+#[path = "diagnostics_tests.rs"]
+mod diagnostics_tests;

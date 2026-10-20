@@ -10,7 +10,25 @@ pre-commit:
       glob: "*.rs"
       run: just fmt
 
+commit-msg:
+  scripts:
+    issue-trailer.sh:
+      runner: bash
+      args: '"{1}"'
+
 pre-push:
-  commands:
-    check-strict:
-      run: just JOBS=2 check
+  parallel: false
+  piped: true
+  jobs:
+    - name: issue-and-dependency
+      script: issue-and-dependency.sh
+      runner: bash
+      use_stdin: true
+    - name: check-strict
+      script: check-strict.sh
+      runner: bash
+
+post-merge:
+  scripts:
+    release-cleanup.sh:
+      runner: bash

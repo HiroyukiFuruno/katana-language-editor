@@ -18,24 +18,36 @@
 #### Scenario: 違反は file_path:line:column と該当リテラルを示す
 
 - **WHEN** ルールが違反を検出する
-- **THEN** Violation は `path`、`line`、`column`、`literal`、`hint`（"Use theme.colors.* instead"）を含む
+- **THEN** Violationはpath/line/column、該当literal、hintを含み、hintはKUCがhost presentationの色を解決する境界を示す
 - **THEN** 開発者は出力だけで該当箇所を特定できる
 
-### Requirement: 例外は preset crate とテストコードのみに限定しなければならない
+#### Scenario: 日本語や複数行を含むsourceのliteralを報告する
 
-`prohibited-color-literal` ルールは、`kdv-presets` 配下、`tests/` 配下、`#[cfg(test)]` 内、明示的に `#[allow(kle_lint::prohibited_color_literal)]` が付いたスコープでのみ色リテラルを許可する（MUST）。それ以外の crate では `Theme` 経由を強制する。
+- **WHEN** 同一SourceFile由来のASTで色constant/call/stringの違反を検出する
+- **THEN** literalは対応spanの元ソースを保持し、constructorは引数を含むcall全体を示す
+- **AND** 日本語・emoji・CRLF・raw string・複数行でもbyte/columnを混同しない
+- **AND** reportの補足literal/hintは改行等をescapeして別の診断行を偽装させない
 
-#### Scenario: kdv-presets では色リテラル可
+#### Scenario: 診断spanがsource範囲外である
 
-- **WHEN** `kdv-presets/src/theme/dark.rs` が `Color::rgb(0x1e, 0x1e, 0x1e)` を含む
-- **THEN** ルールは違反として報告しない
-- **THEN** ただし対象ファイルが preset 用途であることがディレクトリで判定される
+- **WHEN** AST spanから元ソースを取得できない
+- **THEN** DiagnosticSpanエラーを返し、空literalや部分一覧を成功として返さない
+- **AND** literal/hintを持たない既存ruleの診断表示は変更しない
 
-#### Scenario: 明示 allow
+### Requirement: allowやpath名によるproduction検査回避を許してはならない
 
-- **WHEN** やむを得ない理由で実装 crate に色リテラルを置く（例: GPU shader bind の placeholder）
-- **THEN** 該当スコープに `#[allow(kle_lint::prohibited_color_literal)]` を付けると例外として扱われる
-- **THEN** allow には PR レビューで根拠コメントを残すことを docs で要求する
+色ruleはneutral/egui/floemのsrc境界内を検査し、allow又はtests/kdv-presetsというpath componentで除外してはならない（MUST NOT）。既存の明示的cfg(test) module/functionのunit fixture処理のみを維持し、KUC/hostの色処理をKLEに複製しない。
+
+#### Scenario: checkout祖先とsubmodule名で検査を回避できない
+
+- **WHEN** 対象crateのsrc内又はcheckout祖先にtests/kdv-presetsというpath名がある
+- **THEN** productionの色literalを検出する
+- **AND** 対象外crateを走査しただけでKLE libraryの色ruleを適用することはない
+
+#### Scenario: 色専用allowも拒否する
+
+- **WHEN** file/itemにallow(kle_lint::prohibited_color_literal)を付ける
+- **THEN** attribute ruleはallow自体を拒否し、color ruleもfileを検査対象から除外しない
 
 ### Requirement: ルールは KLE workspace の CI / Justfile から自動実行されなければならない
 
@@ -55,4 +67,4 @@
 
 - **WHEN** `katana-language-editor-floem/src/lib.rs` に `Color::rgb8(255, 255, 255)` が現れる
 - **THEN** `kle-linter` が違反として報告する
-- **THEN** `theme.colors.*` 経由への置き換えを要求する
+- **THEN** KUC/host所有の色処理へ修正するよう案内し、KLEのTheme再導入を勧めない
